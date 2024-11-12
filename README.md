@@ -5,9 +5,8 @@ Welcome to the Cooperativa project! This README will help you understand what th
 ## Table of Contents
 - [Introduction](#introduction)
 - [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
 - [License](#license)
+- [Laravel Setup](#laravel-setup)
 
 ## Introduction
 Cooperativa is a project aimed at [brief description of the project]. It helps users to [main functionality or purpose].
