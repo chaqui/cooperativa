@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tipos_tasa', function (Blueprint $table) {
+        Schema::create('tasa__interes', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre');
+            $table->float('tasa');
+            $table->date('fecha_inicio');
+            $table->date('fecha_fin');
             $table->timestamps();
         });
     }
@@ -23,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tipo_tasas');
+        Schema::dropIfExists('tasa__interes');
     }
 };

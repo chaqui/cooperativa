@@ -17,8 +17,8 @@ return new class extends Migration
             $table->float('monto');
             $table->float('fecha_pago');
             $table->boolean('realizado');
-            $table->integer('prestamo')->unsigned();
-            $table->foreign('prestamo')->references('id')->on('prestamo_hipotecarios');
+            $table->integer('id_prestamo')->unsigned();
+            $table->foreign('id_prestamo')->references('id')->on('prestamo_hipotecarios');
             $table->timestamps();
         });
     }
