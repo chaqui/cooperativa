@@ -24,22 +24,22 @@ class Inversion extends Model
         return $this->hasMany(Pago::class, 'inversion');
     }
 
-    public function tipo_taza()
+    public function tipoTaza()
     {
         return $this->belongsTo(Tipo_Tasa_Interes::class, 'tipo_taza');
     }
 
-    public function tipo_plazo()
+    public function tipoPlazo()
     {
         return $this->belongsTo(Tipo_Plazo::class, 'tipo_plazo');
     }
 
-    public function tipo_inversion()
+    public function tipoInversion()
     {
         return $this->belongsTo(Tipo_Inversion::class, 'tipo_inversion');
     }
 
-    public function pagos_inversion()
+    public function pagosInversion()
     {
         return $this->hasMany(Pago_Inversion::class, 'inversion_id');
     }
