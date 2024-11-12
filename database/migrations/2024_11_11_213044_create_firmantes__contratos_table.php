@@ -11,14 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pago_inversions', function (Blueprint $table) {
+        Schema::create('firmantes__contratos', function (Blueprint $table) {
             $table->id();
-            $table->date('fecha');
-            $table->float('monto');
-            $table->float('fecha_pago');
-            $table->boolean('realizado');
-            $table->integer('inversion_id')->unsigned();
-            $table->foreign('inversion_id')->references('id')->on('inversiones');
+            $table->integer('id_contrato')->unsigned();
+            $table->integer('dpi_firmante')->unsigned();
+            $table->foreign('id_contrato')->references('id')->on('contratos');
+            $table->foreign('dpi_firmante')->references('dpi')->on('client');
             $table->timestamps();
         });
     }
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('pago__inversions');
+        Schema::dropIfExists('firmantes__contratos');
     }
 };

@@ -11,14 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pago_inversions', function (Blueprint $table) {
+        Schema::create('tipo_fiducias', function (Blueprint $table) {
             $table->id();
-            $table->date('fecha');
-            $table->float('monto');
-            $table->float('fecha_pago');
-            $table->boolean('realizado');
-            $table->integer('inversion_id')->unsigned();
-            $table->foreign('inversion_id')->references('id')->on('inversiones');
+            $table->string('nombre');
             $table->timestamps();
         });
     }
@@ -28,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('pago__inversions');
+        Schema::dropIfExists('tipo__fiducias');
     }
 };
