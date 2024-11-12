@@ -9,7 +9,7 @@ class Propiedad extends Model
     protected $table = 'propiedades';
     protected $fillable = ['Direccion', 'Descripcion', 'Valor_tasacion', 'Valor_comercial', 'tipo_propiedad'];
 
-    public function tipo_propiedad()
+    public function tipoPropiedad()
     {
         return $this->belongsTo(Tipo_Propiedad::class, 'tipo_propiedad');
     }

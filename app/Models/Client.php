@@ -44,4 +44,9 @@ class Client extends Model
     {
         return $this->hasMany(Cuenta_Bancaria::class, 'dpi_cliente');
     }
+
+    public function prestamosHipotecarios()
+    {
+        return $this->hasMany(Prestamo_Hipotecario::class, 'dpi_cliente');
+    }
 }
