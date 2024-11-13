@@ -35,4 +35,9 @@ class Contrato extends Model
     {
         return $this->belongsTo(Client::class, 'dpi_cliente');
     }
+
+    public function firmantes()
+    {
+        return $this->hasMany(Firmantes_Contrato::class, 'id_contrato');
+    }
 }

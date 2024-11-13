@@ -37,8 +37,7 @@ class EstadoClienteResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Nombre')
-                    ->primary(),
+                    ->label('Nombre'),
             ])
             ->filters([
                 //
@@ -56,7 +55,7 @@ class EstadoClienteResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            'clientes' => RelationManagers\ClientsRelationManager::class,
         ];
     }
 

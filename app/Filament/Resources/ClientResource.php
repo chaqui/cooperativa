@@ -6,6 +6,7 @@ use App\Filament\Resources\ClientResource\Pages;
 use App\Filament\Resources\ClientResource\RelationManagers;
 use App\Models\Client;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -100,11 +101,8 @@ class ClientResource extends Resource
                     ->placeholder('Profesion')
                     ->required()
                     ->rules('max:255'),
-                TextInput::make('fecha_nacimiento')
-                    ->label('Fecha de Nacimiento')
-                    ->placeholder('YYYY-MM-DD')
-                    ->required()
-                    ->rules('date'),
+                DatePicker::make('fecha_nacimiento')
+                    ->label('Fecha de Nacimiento'),
                 Select::make('etado_cliente')
                     ->label('Estado del Cliente')
                     ->placeholder('Seleccione una opcion')
@@ -154,9 +152,8 @@ class ClientResource extends Resource
                         'E' => 'E',
                     ])
                     ->required(),
-                TextInput::make('fecha_actualizacion_calificacion')
+                    DatePicker::make('fecha_actualizacion_calificacion')
                     ->label('Fecha de Actualizacion de Calificacion')
-                    ->placeholder('YYYY-MM-DD')
                     ->required()
                     ->readOnly()
                     ->default(now()->format('Y-m-d'))
@@ -193,6 +190,8 @@ class ClientResource extends Resource
     {
         return [
             RelationManagers\CuentasBancariasRelationManager::class,
+            RelationManagers\ContratoRelationManager::class,
+            RelationManagers\PrestamoHipotecarioRelationManager::class,
         ];
     }
 
