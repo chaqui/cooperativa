@@ -35,6 +35,8 @@ class CuentasBancariasRelationManager extends RelationManager
             ->recordTitleAttribute('numero_cuenta')
             ->columns([
                 Tables\Columns\TextColumn::make('numero_cuenta'),
+                Tables\Columns\TextColumn::make('nombre_banco')
+                ->label('Nombre del Banco'),
             ])
             ->filters([
                 //

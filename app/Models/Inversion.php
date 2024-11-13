@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class Inversion extends Model
 {
     protected $table = 'inversiones';
-    protected $fillable = ['monto', 'interes', 'plazo', 'fecha_inicio', 'fecha_fin', 'cliente', 'estado'];
+    protected $fillable = ['monto', 'interes', 'plazo', 'fecha',  'cliente', 'estado'];
 
     public function cliente()
     {
-        return $this->belongsTo(Client::class, 'cliente');
+        return $this->belongsTo(Client::class, 'dpi_cliente');
     }
 
     public function estado()
@@ -42,6 +42,11 @@ class Inversion extends Model
     public function pagosInversion()
     {
         return $this->hasMany(Pago_Inversion::class, 'inversion_id');
+    }
+
+    public function cuentaRecaudadora()
+    {
+        return $this->belongsTo(Cuenta_Bancaria::class, 'cuenta_recaudadora');
     }
 
 

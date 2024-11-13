@@ -6,6 +6,7 @@ use App\Filament\Resources\InversionResource\Pages;
 use App\Filament\Resources\InversionResource\RelationManagers;
 use App\Models\Inversion;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -25,7 +26,7 @@ class InversionResource extends Resource
     {
         return $form
             ->schema([
-                Select::make('cliente')
+                Select::make('dpi_cliente')
                 ->relationship('cliente', 'nombres')
                 ->label('Cliente')
                 ->required()
@@ -35,10 +36,11 @@ class InversionResource extends Resource
                     ->prefix('Q')
                     ->numeric()
                     ->required()
-                    ->rules('max:255'),
+                    ->minValue(0),
                 TextInput::make('Interes')
                     ->label('Interes')
                     ->numeric()
+                    ->postfix('%')
                     ->required()
                     ->rules('max:255'),
                 TextInput::make('plazo')
@@ -54,19 +56,16 @@ class InversionResource extends Resource
                     ->relationship('tipoTaza', 'nombre')
                     ->label('Tipo de Taza')
                     ->required(),
-                TextInput::make('fecha_inicio')
+                DatePicker::make('fecha')
                     ->label('Fecha de Inicio')
-                    ->date()
-                    ->required()
-                    ->rules('max:255'),
-                TextInput::make('fecha_fin')
-                    ->label('Fecha de Fin')
-                    ->date()
-                    ->required()
-                    ->rules('max:255'),
+                    ->required(),
                 Select::make('tipo_inversion')
                     ->relationship('tipoInversion', 'nombre')
                     ->label('Tipo de Inversion')
+                    ->required(),
+                Select::make('cuenta_recaudadora')
+                    ->relationship('cuentaRecaudadora', 'numero_cuenta')
+                    ->label('Cuenta Recaudadora')
                     ->required(),
             ]);
     }
