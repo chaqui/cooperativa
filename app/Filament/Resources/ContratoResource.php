@@ -55,10 +55,7 @@ class ContratoResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('fecha')
-                    ->label('Fecha')
-                    ->format(function ($value) {
-                        return $value->format('d/m/Y');
-                    }),
+                    ->label('Fecha'),
                 Tables\Columns\TextColumn::make('numero_contrato')
                     ->label('Número de Contrato'),
                 Tables\Columns\TextColumn::make('cliente.dpi')

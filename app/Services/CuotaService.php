@@ -15,7 +15,7 @@ class CuotaService
         $interes = $prestamoHipotecario->interes;
         $plazo = $prestamoHipotecario->plazo;
         $tipoTaza = $prestamoHipotecario->tipoTaza->valor;
-        $tipoPlazo = $prestamoHipotecario->tipo_plazo->valor;
+        $tipoPlazo = $prestamoHipotecario->tipoPlazo->nombre;
 
         $cuota = $this->calcularCuota($monto, $interes, $plazo, $tipoTaza, $tipoPlazo);
 
@@ -33,7 +33,7 @@ class CuotaService
 
             $pago = new Pago();
             $pago->monto = round($cuota, 2);
-            $pago->fecha = $fecha;
+            $pago->fecha_pago = $fecha;
             $pago->realizado = false;
             $pago->id_prestamo = $prestamoHipotecario->id;
             $pago->save();

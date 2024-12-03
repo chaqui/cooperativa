@@ -2,11 +2,10 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\EstadoClienteResource\Pages;
-use App\Filament\Resources\EstadoClienteResource\RelationManagers;
-use App\Models\Estado_Cliente;
+use App\Filament\Resources\EstadoInversionResource\Pages;
+use App\Filament\Resources\EstadoInversionResource\RelationManagers;
+use App\Models\Estado_Inversion;
 use Filament\Forms;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -14,9 +13,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class EstadoClienteResource extends Resource
+class EstadoInversionResource extends Resource
 {
-    protected static ?string $model = Estado_Cliente::class;
+    protected static ?string $model = Estado_Inversion::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
@@ -24,9 +23,9 @@ class EstadoClienteResource extends Resource
     {
         return $form
             ->schema([
-                TextInput::make('name')
-                    ->label('Name')
-                    ->placeholder('Name')
+                Forms\Components\TextInput::make('nombre')
+                    ->label('Nombre')
+                    ->placeholder('Nombre')
                     ->required()
                     ->rules('max:255'),
             ]);
@@ -36,7 +35,7 @@ class EstadoClienteResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                Tables\Columns\TextColumn::make('nombre')
                     ->label('Nombre'),
             ])
             ->filters([
@@ -55,16 +54,16 @@ class EstadoClienteResource extends Resource
     public static function getRelations(): array
     {
         return [
-             RelationManagers\ClientsRelationManager::class,
+            RelationManagers\InversionRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListEstadoClientes::route('/'),
-            'create' => Pages\CreateEstadoCliente::route('/create'),
-            'edit' => Pages\EditEstadoCliente::route('/{record}/edit'),
+            'index' => Pages\ListEstadoInversions::route('/'),
+            'create' => Pages\CreateEstadoInversion::route('/create'),
+            'edit' => Pages\EditEstadoInversion::route('/{record}/edit'),
         ];
     }
 }

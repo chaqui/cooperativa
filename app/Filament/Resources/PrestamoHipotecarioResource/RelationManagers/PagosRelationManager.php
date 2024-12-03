@@ -25,17 +25,10 @@ class PagosRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('monto')
             ->columns([
-                Tables\Columns\TextColumn::make('fecha')
-                    ->dateTime(),
-
+                Tables\Columns\TextColumn::make('fecha_pago')
+                ->dateTime(),
                 Tables\Columns\TextColumn::make('monto')
                     ->prefix('Q'),
-                Tables\Columns\TextColumn::make('fecha_pago')
-                    ->dateTime(),
-                Tables\Columns\TextColumn::make('realizado')
-                    ->formatStateUsing(function ($value) {
-                        return $value ? 'Realizado' : 'Pendiente';
-                    }),
             ])
             ->filters([
                 //
@@ -44,8 +37,8 @@ class PagosRelationManager extends RelationManager
 
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('cobrar')
+                    ->label('Cobrar'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

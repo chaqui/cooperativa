@@ -7,7 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 class Inversion extends Model
 {
     protected $table = 'inversiones';
-    protected $fillable = ['monto', 'interes', 'plazo', 'fecha',  'cliente', 'estado'];
+    protected $fillable = [
+        'monto',
+        'interes',
+        'plazo',
+        '   ',
+        'cliente',
+        'id_estado',
+        'tipo_taza',
+        'tipo_plazo',
+        'tipo_inversion',
+        'cuenta_recaudadora',
+        'dpi_cliente'
+    ];
 
     public function cliente()
     {
@@ -16,12 +28,7 @@ class Inversion extends Model
 
     public function estado()
     {
-        return $this->belongsTo(Estado_Inversion::class, 'estado');
-    }
-
-    public function pagos()
-    {
-        return $this->hasMany(Pago::class, 'inversion');
+        return $this->belongsTo(Estado_Inversion::class, 'id_estado');
     }
 
     public function tipoTaza()
@@ -48,6 +55,4 @@ class Inversion extends Model
     {
         return $this->belongsTo(Cuenta_Bancaria::class, 'cuenta_recaudadora');
     }
-
-
 }

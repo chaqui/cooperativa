@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\InversionResource\RelationManagers;
+namespace App\Filament\Resources\EstadoInversionResource\RelationManagers;
 
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -10,15 +10,15 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class PagosInversionRelationManager extends RelationManager
+class InversionRelationManager extends RelationManager
 {
-    protected static string $relationship = 'pagosInversion';
+    protected static string $relationship = 'inversiones';
 
     public function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('monto')
+                Forms\Components\TextInput::make('id')
                     ->required()
                     ->maxLength(255),
             ]);
@@ -27,11 +27,14 @@ class PagosInversionRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('monto')
+            ->recordTitleAttribute('id')
             ->columns([
-                Tables\Columns\TextColumn::make('fecha_pago')
-                    ->label('Fecha de Pago'),
+                Tables\Columns\TextColumn::make('id'),
                 Tables\Columns\TextColumn::make('monto'),
+                Tables\Columns\TextColumn::make('fecha')
+                ->label('Fecha de Inversión'),
+                Tables\Columns\TextColumn::make('cliente.nombres')
+                    ->label('Nombre del Cliente')
             ])
             ->filters([
                 //
@@ -39,8 +42,8 @@ class PagosInversionRelationManager extends RelationManager
             ->headerActions([
             ])
             ->actions([
-                Tables\Actions\Action::make('cobrar')
-                    ->label('Cobrar'),
+                Tables\Actions\Action::make('ver')
+                    ->label('Ver'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

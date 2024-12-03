@@ -167,7 +167,8 @@ class ClientResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('dpi')
-                    ->label('DPI'),
+                    ->label('DPI')
+                    ->searchable(),
                 TextColumn::make('nombres')
                     ->label('Nombres'),
                 TextColumn::make('apellidos')
@@ -192,6 +193,7 @@ class ClientResource extends Resource
             RelationManagers\CuentasBancariasRelationManager::class,
             RelationManagers\ContratoRelationManager::class,
             RelationManagers\PrestamoHipotecarioRelationManager::class,
+            RelationManagers\InversionRelationManager::class,
         ];
     }
 

@@ -27,22 +27,26 @@ class InversionResource extends Resource
         return $form
             ->schema([
                 Select::make('dpi_cliente')
-                ->relationship('cliente', 'nombres')
-                ->label('Cliente')
-                ->required()
-                ->rules('max:255'),
+                    ->relationship('cliente', 'nombres')
+                    ->label('Cliente')
+                    ->required()
+                    ->rules('max:255'),
                 TextInput::make('monto')
                     ->label('Monto')
                     ->prefix('Q')
                     ->numeric()
                     ->required()
                     ->minValue(0),
-                TextInput::make('Interes')
+                TextInput::make('interes')
                     ->label('Interes')
                     ->numeric()
                     ->postfix('%')
                     ->required()
                     ->rules('max:255'),
+                Select::make("tipo_taza")
+                    ->relationship('tipoTaza', 'nombre')
+                    ->label('Tipo de Taza')
+                    ->required(),
                 TextInput::make('plazo')
                     ->label('Plazo')
                     ->numeric()
@@ -51,10 +55,6 @@ class InversionResource extends Resource
                 Select::make("tipo_plazo")
                     ->relationship('tipoPlazo', 'nombre')
                     ->label('Tipo de Plazo')
-                    ->required(),
-                Select::make("tipo_taza")
-                    ->relationship('tipoTaza', 'nombre')
-                    ->label('Tipo de Taza')
                     ->required(),
                 DatePicker::make('fecha')
                     ->label('Fecha de Inicio')
@@ -67,13 +67,36 @@ class InversionResource extends Resource
                     ->relationship('cuentaRecaudadora', 'numero_cuenta')
                     ->label('Cuenta Recaudadora')
                     ->required(),
+                Select::make('id_estado')
+                    ->relationship('estado', 'nombre')
+                    ->label('Estado')
+                    ->default('1')
+                    ->disableOptionWhen(function (string $value) {
+                        return true;
+                    })
+                    ->required(),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
-            ->columns([])
+            ->columns([
+                Tables\Columns\TextColumn::make('monto')
+                    ->label('Monto'),
+                Tables\Columns\TextColumn::make('interes')
+                    ->label('Interes'),
+                Tables\Columns\TextColumn::make('plazo')
+                    ->label('Plazo'),
+                Tables\Columns\TextColumn::make('fecha')
+                    ->label('Fecha de Inicio'),
+                Tables\Columns\TextColumn::make('cliente.nombres')
+                    ->label('Nombres del Cliente'),
+                    Tables\Columns\TextColumn::make('cliente.apellidos')
+                    ->label('Apellidos del Cliente'),
+                Tables\Columns\TextColumn::make('estado.nombre')
+                    ->label('Estado'),
+            ])
             ->filters([
                 //
             ])
@@ -90,7 +113,7 @@ class InversionResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\PagosInversionRelationManager::class,
         ];
     }
 

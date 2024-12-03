@@ -54,4 +54,9 @@ class Client extends Model
     {
         return $this->hasMany(Contrato::class, 'dpi_cliente');
     }
+
+    public function inversiones()
+    {
+        return $this->hasMany(Inversion::class, 'dpi_cliente');
+    }
 }

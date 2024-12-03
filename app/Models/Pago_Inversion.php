@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Pago_Inversion extends Model
 {
-    protected $table = 'pagos_inversiones';
+    protected $table = 'pago_inversions';
     protected $fillable = ['monto', 'fecha', "fecha_pago", "realizado", "inversion_id"];
 
     public function inversion()

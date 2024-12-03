@@ -5,7 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\PrestamoHipotecarioResource\Pages;
 use App\Filament\Resources\PrestamoHipotecarioResource\RelationManagers;
 use App\Models\Prestamo_Hipotecario;
-use Faker\Provider\ar_EG\Text;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -24,55 +24,67 @@ class PrestamoHipotecarioResource extends Resource
     {
         return $form
             ->schema([
+                Select::make('dpi_cliente')
+                    ->relationship('cliente', 'nombres')
+                    ->label('Cliente')
+                    ->required(),
                 TextInput::make('monto')
                     ->label('Monto')
                     ->required()
-                    ->rules('max:255'),
+                    ->numeric()
+                    ->minValue(0)
+                    ->inputMode('decimal')
+                    ->default(0)
+                    ->prefix('Q'),
                 TextInput::make('interes')
                     ->label('Interes')
                     ->required()
-                    ->rules('max:255'),
+                    ->inputMode('decimal')
+                    ->numeric()
+                    ->postfix('%')
+                    ->default(1)
+                    ->minValue(1),
+                Select::make('tipo_taza')
+                    ->relationship('tipoTaza', 'nombre')
+                    ->label('Tipo de Taza')
+                    ->required(),
                 TextInput::make('plazo')
                     ->label('Plazo')
                     ->required()
-                    ->rules('max:255'),
-                TextInput::make('cuota')
-                    ->label('Cuota')
-                    ->required()
-                    ->rules('max:255'),
-                TextInput::make('fecha_inicio')
+                    ->numeric(),
+                Select::make('tipo_plazo')
+                    ->relationship('tipoPlazo', 'nombre')
+                    ->label('Tipo de Plazo')
+                    ->required(),
+                DatePicker::make('fecha_inicio')
                     ->label('Fecha de Inicio')
-                    ->required()
-                    ->rules('max:255'),
-                TextInput::make('fecha_fin')
-                    ->label('Fecha de Fin')
-                    ->required()
-                    ->rules('max:255'),
-                Select::make('cliente')
-                    ->relationship('cliente', 'nombres')
-                    ->label('Cliente')
-                    ->required()
-                    ->rules('max:255'),
-                Select::make('propiedad')
-                    ->relationship('propiedad', 'direccion')
+                    ->required(),
+
+                Select::make('propiedad_id')
+                    ->relationship('propiedad', 'Direccion')
                     ->createOptionForm(function () {
                         return [
-                            TextInput::make('direccion')
+                            TextInput::make('Direccion')
                                 ->label('Direccion')
                                 ->required()
                                 ->rules('max:255'),
-                            TextInput::make('descripcion')
+                            TextInput::make('Descripcion')
                                 ->label('Descripcion')
                                 ->required()
                                 ->rules('max:255'),
                             TextInput::make('Valor_tasacion')
                                 ->label('Valor de Tasacion')
                                 ->required()
-                                ->rules('max:255'),
-                            TextInput::make('fecha_tasacion')
-                                ->label('Fecha de Tasacion')
+                                ->numeric()
+                                ->minValue(0),
+                            TextInput::make('Valor_comercial')
+                                ->label('Valor Comercial')
                                 ->required()
-                                ->rules('max:255'),
+                                ->numeric()
+                                ->minValue(0),
+                            DatePicker::make('fecha_tasacion')
+                                ->label('Fecha de Tasacion')
+                                ->required(),
                             Select::make('tipo_propiedad')
                                 ->label('Tipo de Propiedad')
                                 ->placeholder('Seleccione una opcion')
@@ -92,21 +104,14 @@ class PrestamoHipotecarioResource extends Resource
                         ];
                     })
                     ->required(),
-                Select::make('estado')
+                Select::make('estado_id')
                     ->relationship('estado', 'nombre')
                     ->label('Estado')
-                    ->required()
-                    ->rules('max:255'),
-                Select::make('tipo_taza')
-                    ->relationship('tipoTaza', 'nombre')
-                    ->label('Tipo de Taza')
-                    ->required()
-                    ->rules('max:255'),
-                Select::make('tipo_plazo')
-                    ->relationship('tipoPlazo', 'nombre')
-                    ->label('Tipo de Plazo')
-                    ->required()
-                    ->rules('max:255'),
+                    ->default(1)
+                    ->disableOptionWhen(function (string $value) {
+                        return true;
+                    })
+                    ->required(),
             ]);
     }
 
@@ -143,7 +148,7 @@ class PrestamoHipotecarioResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\PagosRelationManager::class,
         ];
     }
 
