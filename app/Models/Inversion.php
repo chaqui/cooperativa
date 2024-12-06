@@ -11,7 +11,6 @@ class Inversion extends Model
         'monto',
         'interes',
         'plazo',
-        '   ',
         'cliente',
         'id_estado',
         'tipo_taza',

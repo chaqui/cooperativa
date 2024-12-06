@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-use App\Http\Resources\Client as ClientResource;
 use App\Services\ClientService;
+use App\Http\Requests\StoreClientRequest;
+use App\Http\Resources\Client as ClientResource;
 
 class ClientController extends Controller
 {
@@ -35,7 +36,7 @@ class ClientController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreClientRequest $request)
     {
         $this->clientService->createClient($request->all());
         return response()->json(['message' => 'Client created successfully'], 201);
