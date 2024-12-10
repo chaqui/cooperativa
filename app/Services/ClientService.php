@@ -7,10 +7,7 @@ use App\Models\Client;
 
 class ClientService {
     public function createClient($data) {
-        $client = new Client();
-        $client->name = $data['name'];
-        $client->email = $data['email'];
-        $client->phone = $data['phone'];
+        $client = Client::generateCliente($data);
         $client->save();
     }
 

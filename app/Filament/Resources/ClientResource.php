@@ -158,6 +158,46 @@ class ClientResource extends Resource
                     ->readOnly()
                     ->default(now()->format('Y-m-d'))
                     ->rules('date'),
+                TextInput::make('nit')
+                    ->label('NIT')
+                    ->placeholder('123456789')
+                    ->rules('max:15'),
+                TextInput::make('puesto')
+                    ->label('Puesto')
+                    ->placeholder('Puesto')
+                    ->rules('max:255'),
+                DatePicker::make('fechaInicio')
+                    ->label('Fecha de Inicio')
+                    ->rules('date'),
+                Select::make('tipoCliente')
+                    ->label('Tipo de Cliente')
+                    ->placeholder('Seleccione una opcion')
+                    ->options([
+                        'Empresario' => '390',
+                        'Asalariado' => '391',
+                    ])
+                    ->required(),
+                TextInput::make('otrosIngresos')
+                    ->label('Otros Ingresos')
+                    ->placeholder('1000.00')
+                    ->rules('numeric'),
+                TextInput::make('numeroPatente')
+                    ->label('Numero de Patente')
+                    ->placeholder('123456789')
+                    ->rules('max:15'),
+                TextInput::make('nombreEmpresa')
+                    ->label('Nombre de la Empresa')
+                    ->placeholder('Nombre de la Empresa')
+                    ->rules('max:255'),
+                TextInput::make('telefonoEmpresa')
+                    ->label('Telefono de la Empresa')
+                    ->placeholder('12345678')
+                    ->rules('max:8'),
+                TextInput::make('direccionEmpresa')
+                    ->label('Direccion de la Empresa')
+                    ->placeholder('Ciudad, Zona, Calle, Casa')
+                    ->rules('max:255'),
+
 
             ]);
     }
