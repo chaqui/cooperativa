@@ -86,9 +86,10 @@ class Client extends Model
         $client->nivel_academico = $data['nivel_academico'];
         $client->profesion = $data['profesion'];
         $client->fecha_nacimiento = $data['fecha_nacimiento'];
-        $client->ingresos_mensuales = $data['ingresos_mensuales'];
-        $client->egresos_mensuales = $data['egresos_mensuales'];
+        $client->ingresos_mensuales = $data['ingresosMensuales'];
+        $client->egresos_mensuales = $data['egresosMensuales'];
         $client->fechaInicio = $data['fechaInicio'];
+        $client->tipoCliente = $data['tipoCliente'];
         $client->etado_cliente  = 1;
         return $client;
     }
@@ -99,7 +100,7 @@ class Client extends Model
         $client->nit = $data['nit'];
         $client->direccionEmpresa = $data['direccionEmpresa'];
         $client->nombreEmpresa = $data['nombreEmpresa'];
-        $client->numeroPatente = $data['numeroPatente'];
+        $client->numeroPatente = $data['patente'];
         $client->telefonoEmpresa = $data['telefonoEmpresa'];
         return $client;
     }

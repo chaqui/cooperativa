@@ -59,7 +59,6 @@ class StoreClientRequest extends FormRequest
      */
     private function getRulesEmpresario($rules): array{
         $rules['nit'] = 'required|string|max:15';
-        $rules['otrosIngresos'] = 'required|numeric';
         $rules['nombreEmpresa'] = 'required|string|max:255';
         $rules['telefonoEmpresa'] = 'required|string|max:20';
         $rules['direccionEmpresa'] = 'required|string|max:255';

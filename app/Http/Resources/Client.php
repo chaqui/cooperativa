@@ -32,11 +32,25 @@ class Client extends JsonResource
             'estado' => $this->estadoCliente->name,
             'limite_credito' => $this->limite_credito,
             'credito_disponible' => $this->credito_disponible,
-            'ingresos_mensuales' => $this->ingresos_mensuales,
+            'ingresosMensuales' => $this->ingresos_mensuales,
             'egresos_mensuales' => $this->egresos_mensuales,
             'capacidad_pago' => $this->capacidad_pago,
             'calificacion' => $this->calificacion,
             'fecha_actualizacion_calificacion' => $this->fecha_actualizacion_calificacion,
+            'nit' => $this->nit,
+            'puesto' => $this->puesto,
+            'fechaInicio' => $this->fechaInicio,
+            'tipoCliente' => $this->tipoCliente,
+            'otrosIngresos' => $this->otrosIngresos,
+            'numeroPatente' => $this->numeroPatente,
+            'nombreEmpresa' => $this->nombreEmpresa,
+            'telefonoEmpresa' => $this->telefonoEmpresa,
+            'direccionEmpresa' => $this->direccionEmpresa,
+            'egresosMensuales' => $this->egresos_mensuales,
+            'patente' => $this->numeroPatente,
+
+
+
         ];
     }
 
