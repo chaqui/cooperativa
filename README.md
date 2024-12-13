@@ -55,4 +55,12 @@ If you are using Laravel for this project, follow these additional steps to set 
     php artisan serve
     ```
 
+4.1. Para correr para pruebas en la red local:
+    ```sh
+    php artisan serve --host=0.0.0.0 --port=8000
+    ```
+5. Visit the application in your browser at `http://localhost:8000`.
+
+
+
 For more detailed Laravel-specific instructions, refer to the [Laravel documentation](https://laravel.com/docs).
