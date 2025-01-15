@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Services\ClientService;
 use App\Http\Requests\StoreClientRequest;
 use App\Http\Resources\Client as ClientResource;
+use App\Http\Resources\CuentaBancaria as CuentaBancariaResource;
 
 class ClientController extends Controller
 {
@@ -75,5 +76,11 @@ class ClientController extends Controller
     {
         $this->clientService->deleteClient($id);
         return response()->json(['message' => 'Client deleted successfully'], 200);
+    }
+
+    public function cuentasBancarias(string $id)
+    {
+        $cuentasBancarias = $this->clientService->getCuentasBancarias($id);
+        return CuentaBancariaResource::collection($cuentasBancarias);
     }
 }

@@ -31,4 +31,9 @@ class ClientService {
     public function getClients() {
         return Client::all();
     }
+
+    public function getCuentasBancarias($id) {
+        $client = Client::find($id);
+        return $client->cuentasBancarias;
+    }
 }
