@@ -4,23 +4,24 @@ namespace App\Services;
 
 abstract class CuotaService
 {
-    protected function calcularCuota($monto, $interes, $plazo, $tipoTaza, $tipoPlazo)
+    protected function gananciaDiaria($interes, $monto)
     {
-        $taza = $interes / 100;
-        $taza = $taza / 12;
+        $taza = $interes / 100 / 365;
+        return $monto * $taza;
+    }
 
-        $cuota = 0;
 
-        $plazo = $this->calcularPlazo($plazo, $tipoPlazo);
-        if ($tipoTaza == 'Fija') {
-            $cuota = $monto * ($taza / (1 - pow((1 + $taza), -$plazo)));
-        } else {
-            $cuota = $monto * ($taza / (1 - pow((1 + $taza), -$plazo)));
-        }
+    protected function calcularCuota($gananciaDiaria, $numeroMes, $fechaInicio){
+        $dias = $this->obtenerDiasDelMes($fechaInicio, $numeroMes);
 
-        $cuota = round($cuota, 2);
+        return $gananciaDiaria * $dias;
+    }
 
-        return $cuota;
+    private function obtenerDiasDelMes($fechaInicio, $numeroMes)
+    {
+        $fecha = new \DateTime($fechaInicio);
+        $fecha->modify("+$numeroMes month");
+        return cal_days_in_month(CAL_GREGORIAN, $fecha->format('m'), $fecha->format('Y'));
     }
 
     protected  function calcularPlazo($plazo, $tipoPlazo)

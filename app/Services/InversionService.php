@@ -3,9 +3,17 @@
 namespace App\Services;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\Inversion;
 class InversionService{
+
+    private  CuotaInversionService $cuotaInversionService;
+
+    public function __construct(CuotaInversionService $cuotaInversionService)
+    {
+        $this->cuotaInversionService = $cuotaInversionService;
+    }
 
     public function getInversion(string $id): Inversion
     {
@@ -17,9 +25,20 @@ class InversionService{
         return Inversion::all();
     }
 
+    /**
+     *
+     * Method to create a new inversion and calculate the cuota inversion
+     * @param array $inversionData
+     * @return \App\Models\Inversion
+     */
     public function createInversion(array $inversionData): Inversion
     {
-        return Inversion::create($inversionData);
+        DB::beginTransaction();
+        $inversionData['fecha_inicio'] = now();
+        $inversion = Inversion::create($inversionData);
+        $this->cuotaInversionService->calcularCuotaInversion($inversion);
+        DB::commit();
+        return $inversion;
     }
 
     public function updateInversion(Inversion $inversion, array $inversionData): Inversion
@@ -28,9 +47,13 @@ class InversionService{
         return $inversion;
     }
 
-    public function deleteInversion(Inversion $inversion): void
+    public function deleteInversion( $id): void
     {
+        DB::beginTransaction();
+        $this->cuotaInversionService->deletePagoInversion($id);
+        $inversion = Inversion::findOrFail($id);
         $inversion->delete();
+        DB::commit();
     }
 
 }

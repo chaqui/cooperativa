@@ -20,6 +20,7 @@ class Inversion extends JsonResource
             'tasa' => $this->tasa,
             'plazo' => $this->plazo,
             'fecha_inicio' => $this->fecha,
+            'dpi_cliente' => $this->dpi_cliente,
             'cliente' => $this->cliente->nombres . ' ' . $this->cliente->apellidos,
         ];
     }

@@ -75,8 +75,8 @@ class InversionController extends Controller
      */
     public function destroy(string $id)
     {
-        $inversion = $this->inversionService->getInversion($id);
-        $this->inversionService->deleteInversion($inversion);
+
+        $this->inversionService->deleteInversion($id);
         return response()->json(['message' => 'Inversion deleted successfully'], 200);
     }
 

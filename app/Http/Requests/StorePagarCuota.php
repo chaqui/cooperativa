@@ -4,14 +4,14 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreInversionRequest extends FormRequest
+class StorePagarCuota extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,11 +22,7 @@ class StoreInversionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'monto' => ['required', 'numeric'],
-            'tasa' => ['required', 'numeric'],
-            'plazo' => ['required', 'numeric'],
-            'fecha_inicio' => ['required', 'date'],
-            'dpi_cliente' => ['required', 'string'],
+            'no_boleta' => ['required', 'string'],
         ];
     }
 }

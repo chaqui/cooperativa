@@ -11,13 +11,13 @@ class Inversion extends Model
         'monto',
         'interes',
         'plazo',
-        'cliente',
         'id_estado',
         'tipo_taza',
         'tipo_plazo',
         'tipo_inversion',
         'cuenta_recaudadora',
-        'dpi_cliente'
+        'dpi_cliente',
+        'fecha'
     ];
 
     public function cliente()

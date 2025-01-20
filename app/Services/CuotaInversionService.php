@@ -15,25 +15,20 @@ class CuotaInversionService extends CuotaService
         $plazo = $inversion->plazo;
         $tipoTaza = $inversion->tipoTaza->valor;
         $tipoPlazo = $inversion->tipoPlazo->valor;
+        $fecha_inicio = $inversion->fecha_inicio;
 
-        $cuota = $this->calcularCuota($monto, $interes, $plazo, $tipoTaza, $tipoPlazo);
-        $this->generarCuotasInversion($inversion, $cuota);
-    }
+        $plazo = $this->calcularPlazo($plazo, $tipoPlazo);
+        $cuotaDiaria = $this->gananciaDiaria($interes, $monto);
 
-    private function generarCuotasInversion(Inversion $inversion, $cuota)
-    {
-        $plazo = $this->calcularPlazo($inversion->plazo, $inversion->tipoPlazo->nombre);
-        $fecha = $inversion->fecha_inicio;
-
-        for ($i = 0; $i < $plazo; $i++) {
-            $fecha = date('Y-m-d', strtotime($fecha . ' + 1 month'));
-
-            $pago = new Pago_Inversion();
-            $pago->monto = round($cuota, 2);
-            $pago->fecha = $fecha;
-            $pago->realizado = false;
-            $pago->inversion_id = $inversion->id;
-            $pago->save();
+        for ($i = 1; $i <= $plazo; $i++) {
+            $cuota = $this->calcularCuota($cuotaDiaria, $i, $fecha_inicio);
+            $fecha_inicio = $fecha_inicio->addMonth();
+            Pago_Inversion::create([
+                'inversion_id' => $inversion->id,
+                'monto' => $cuota,
+                'fecha_pago' => $fecha_inicio,
+                'realizado' => false
+            ]);
         }
     }
 
@@ -42,9 +37,11 @@ class CuotaInversionService extends CuotaService
         return Pago_Inversion::where('inversion_id', $inversion->id)->get();
     }
 
-    public function realizarPago(Pago_Inversion $pago)
+    public function realizarPago($id, $no_boleta)
     {
+        $pago = Pago_Inversion::findOrFail($id);
         $pago->realizado = true;
+        $pago->no_boleta = $no_boleta;
         $pago->save();
     }
 
@@ -53,5 +50,8 @@ class CuotaInversionService extends CuotaService
         return Pago_Inversion::findOrFail($id);
     }
 
-
+    public function deletePagoInversion(string $idInversion): void
+    {
+        Pago_Inversion::where('inversion_id', $idInversion)->delete();
+    }
 }
