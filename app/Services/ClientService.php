@@ -36,4 +36,9 @@ class ClientService {
         $client = Client::find($id);
         return $client->cuentasBancarias;
     }
+
+    public function getInversiones($id) {
+        $client = Client::find($id);
+        return $client->inversiones;
+    }
 }

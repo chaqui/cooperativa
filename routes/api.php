@@ -10,6 +10,7 @@ use App\Http\Controllers\CuotaController;
 //clientes
 Route::resource('clients', ClientController::class);
 Route::get('clients/{id}/cuentas-bancarias', [ClientController::class, 'cuentasBancarias']);
+Route::get('clients/{id}/inversiones', [ClientController::class, 'inversiones']);
 
 //inversiones
 Route::resource('inversiones', InversionController::class);

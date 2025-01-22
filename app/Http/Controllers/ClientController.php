@@ -8,6 +8,7 @@ use App\Services\ClientService;
 use App\Http\Requests\StoreClientRequest;
 use App\Http\Resources\Client as ClientResource;
 use App\Http\Resources\CuentaBancaria as CuentaBancariaResource;
+use App\Http\Resources\Inversion as InversionResource;
 
 class ClientController extends Controller
 {
@@ -82,5 +83,11 @@ class ClientController extends Controller
     {
         $cuentasBancarias = $this->clientService->getCuentasBancarias($id);
         return CuentaBancariaResource::collection($cuentasBancarias);
+    }
+
+    public function inversiones(string $id)
+    {
+        $inversiones = $this->clientService->getInversiones($id);
+        return InversionResource::collection($inversiones);
     }
 }
