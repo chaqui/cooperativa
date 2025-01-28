@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreInversionRequest extends FormRequest
+class StoreReference extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,13 +22,9 @@ class StoreInversionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'monto' => ['required', 'numeric'],
-            'interes' => ['required', 'numeric'],
-            'plazo' => ['required', 'numeric'],
-            'fecha_inicio' => ['required', 'date'],
-            'dpi_cliente' => ['required', 'string'],
-            'cuenta_recaudadora' => ['required', 'string'],
-            'tipo_plazo' => ['required', 'numeric'],
+            'nombre' => 'required|string|max:255',
+            'telefono' => 'required|string|max:20',
+            'tipo'=> 'required|string|max:20',
         ];
     }
 }

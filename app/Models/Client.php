@@ -123,4 +123,14 @@ class Client extends Model
             return Client::generateClienteAsalariado($data);
         }
     }
+
+    public function references()
+    {
+        return $this->hasMany(Reference::class, 'dpi_cliente', 'dpi');
+    }
+
+    public function getFullNameAttribute()
+    {
+        return $this->nombres . ' ' . $this->apellidos;
+    }
 }

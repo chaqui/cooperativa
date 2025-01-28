@@ -9,6 +9,7 @@ use App\Http\Requests\StoreClientRequest;
 use App\Http\Resources\Client as ClientResource;
 use App\Http\Resources\CuentaBancaria as CuentaBancariaResource;
 use App\Http\Resources\Inversion as InversionResource;
+use App\Http\Resources\Reference as ReferenceResource;
 
 class ClientController extends Controller
 {
@@ -31,9 +32,7 @@ class ClientController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-    }
+    public function create() {}
 
     /**
      * Store a newly created resource in storage.
@@ -56,10 +55,7 @@ class ClientController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
-    {
-
-    }
+    public function edit(string $id) {}
 
     /**
      * Update the specified resource in storage.
@@ -79,15 +75,39 @@ class ClientController extends Controller
         return response()->json(['message' => 'Client deleted successfully'], 200);
     }
 
+    /**
+     * Summary of cuentasBancarias
+     * @param string $id    The id of the client.
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
     public function cuentasBancarias(string $id)
     {
         $cuentasBancarias = $this->clientService->getCuentasBancarias($id);
         return CuentaBancariaResource::collection($cuentasBancarias);
     }
 
+    /**
+     *
+     * Summary of inversiones
+     * @param string $id The id of the client.
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
     public function inversiones(string $id)
     {
         $inversiones = $this->clientService->getInversiones($id);
         return InversionResource::collection($inversiones);
+    }
+
+    /**
+     *
+     * Summary of referencias
+     * @param string $id The id of the client.
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
+    public function referencias(string $id)
+    {
+        $referencias = $this->clientService->getReferencias($id);
+        \Log::info($referencias);
+        return ReferenceResource::collection($referencias);
     }
 }

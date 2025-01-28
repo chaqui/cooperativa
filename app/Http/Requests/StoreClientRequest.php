@@ -22,17 +22,22 @@ class StoreClientRequest extends FormRequest
      */
     public function rules()
     {
-            $rules = $this->getBasicRules();
-            if($this->input('tipoCliente') === TipoCliente::$EMPRESARIO){
-                $rules = $this->getRulesEmpresario(rules: $rules);
-            }
-            else{
-                $rules = $this->getRulesAsalariado(rules: $rules);
-            }
-            return $rules;
+        $rules = $this->getBasicRules();
+        if ($this->input('tipoCliente') === TipoCliente::$EMPRESARIO) {
+            $rules = $this->getRulesEmpresario(rules: $rules);
+        } else {
+            $rules = $this->getRulesAsalariado(rules: $rules);
+        }
+        return $rules;
     }
 
-    private function getBasicRules(){
+    /**
+     *
+     * Obtiene las reglas de validación básicas para un cliente.
+     * @return array{apellidos: string, ciudad: string, correo: string, departamento: string, direccion: string, dpi: string, estado_civil: string, fechaInicio: string, fecha_nacimiento: string, genero: string, nivel_academico: string, nombres: string, profesion: string, referencias: string, referencias.*.nombre: string, referencias.*.telefono: string, referencias.*.tipo: string, telefono: string, tipoCliente: string}
+     */
+    private function getBasicRules()
+    {
         return [
             'nombres' => 'required|string|max:255',
             'apellidos' => 'required|string|max:255',
@@ -48,7 +53,11 @@ class StoreClientRequest extends FormRequest
             'profesion' => 'required|string|max:50',
             'fecha_nacimiento' => 'required|date',
             'fechaInicio' => 'required|date',
-            'tipoCliente'=> 'required|string|max:20',
+            'tipoCliente' => 'required|string|max:20',
+            'referencias' => 'required|array',
+            'referencias.*.nombre' => 'required|string|max:255',
+            'referencias.*.telefono' => 'required|string|max:20',
+            'referencias.*.tipo' => 'required|string|max:20',
         ];
     }
 
@@ -57,7 +66,8 @@ class StoreClientRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-    private function getRulesEmpresario($rules): array{
+    private function getRulesEmpresario($rules): array
+    {
         $rules['nit'] = 'required|string|max:15';
         $rules['nombreEmpresa'] = 'required|string|max:255';
         $rules['telefonoEmpresa'] = 'required|string|max:20';
@@ -70,11 +80,11 @@ class StoreClientRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-    private function getRulesAsalariado($rules): array{
+    private function getRulesAsalariado($rules): array
+    {
         $rules['puesto'] = 'required|string|max:50';
         $rules['otrosIngresos'] = 'required|numeric';
         $rules['nombreEmpresa'] = 'required|string|max:255';
         return $rules;
     }
-
 }

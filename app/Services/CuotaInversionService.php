@@ -13,7 +13,6 @@ class CuotaInversionService extends CuotaService
         $monto = $inversion->monto;
         $interes = $inversion->interes;
         $plazo = $inversion->plazo;
-        $tipoTaza = $inversion->tipoTaza->valor;
         $tipoPlazo = $inversion->tipoPlazo->valor;
         $fecha_inicio = $inversion->fecha_inicio;
 
