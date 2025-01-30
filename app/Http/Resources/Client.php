@@ -48,7 +48,7 @@ class Client extends JsonResource
             'direccionEmpresa' => $this->direccionEmpresa,
             'egresosMensuales' => $this->egresos_mensuales,
             'patente' => $this->numeroPatente,
-
+            'path' => $this->path,
 
 
         ];

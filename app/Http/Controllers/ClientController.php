@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Services\ClientService;
+use App\Services\FotografiaService;
 use App\Http\Requests\StoreClientRequest;
+use App\Http\Requests\StoreFotografiaRequest;
 use App\Http\Resources\Client as ClientResource;
 use App\Http\Resources\CuentaBancaria as CuentaBancariaResource;
 use App\Http\Resources\Inversion as InversionResource;
@@ -15,10 +17,14 @@ class ClientController extends Controller
 {
 
     private $clientService;
+    private $fotografiaService;
 
-    public function __construct(ClientService $clientService)
-    {
+    public function __construct(
+        ClientService $clientService,
+        FotografiaService $fotografiaService
+    ) {
         $this->clientService = $clientService;
+        $this->fotografiaService = $fotografiaService;
     }
     /**
      * Display a listing of the resource.
@@ -107,7 +113,26 @@ class ClientController extends Controller
     public function referencias(string $id)
     {
         $referencias = $this->clientService->getReferencias($id);
-        \Log::info($referencias);
         return ReferenceResource::collection($referencias);
+    }
+
+    /**
+     * Method to upload a photo, it receives a file and the id of the client, It don't validate existence of the client
+     * @param \Illuminate\Http\Request $request
+     * @param string $id
+     * @return \App\Http\Resources\Fotografia
+     */
+    public function uploadFoto(StoreFotografiaRequest $request, string $id)
+    {
+        $foto = $request->file('fotografia');
+        $path = $this->fotografiaService->uploadFotografia($foto, $id);
+        return response()->json(["data" => ["path" => $path]], 200);
+    }
+
+    public function generateClientPdf($id)
+    {
+        $this->clientService->generatePdf($id);
+
+        return response()->json(['message' => 'PDF generado con éxito'], 200);
     }
 }

@@ -13,36 +13,37 @@ class Client extends Model
     public $incrementing = false;
     public $timestamps = true;
     protected $fillable = [
-        'dpi',
-        'nombres',
-        'apellidos',
-        'telefono',
-        'correo',
-        'direccion',
-        'ciudad',
-        'departamento',
-        'estado_civil',
-        'genero',
-        'nivel_academico',
-        'profesion',
-        'fecha_nacimiento',
-        'etado_cliente',
-        'limite_credito',
-        'credito_disponible',
-        'ingresos_mensuales',
-        'egresos_mensuales',
-        'capacidad_pago',
-        'calificacion',
-        'fecha_actualizacion_calificacion',
-        'nit',
-        'puesto',
-        'fechaInicio',
-        'tipoCliente',
-        'otrosIngresos',
-        'numeroPatente',
-        'nombreEmpresa',
-        'telefonoEmpresa',
-        'direccionEmpresa',
+        'dpi', //
+        'nombres', //
+        'apellidos', //
+        'telefono', //
+        'correo', //
+        'direccion', //
+        'ciudad', //
+        'departamento', //
+        'estado_civil', //
+        'genero', //
+        'nivel_academico', //
+        'profesion', //
+        'fecha_nacimiento', //
+        'etado_cliente',  //-
+        'limite_credito', //-
+        'credito_disponible', //-
+        'ingresos_mensuales', //
+        'egresos_mensuales', //
+        'capacidad_pago', //=
+        'calificacion', //-
+        'fecha_actualizacion_calificacion', //-
+        'nit', //
+        'puesto', //
+        'fechaInicio', //
+        'tipoCliente', //-
+        'otrosIngresos', //
+        'numeroPatente', //
+        'nombreEmpresa', //
+        'telefonoEmpresa', //
+        'direccionEmpresa', //
+        'path' //
     ];
 
     public function estadoCliente()
@@ -70,9 +71,8 @@ class Client extends Model
         return $this->hasMany(Inversion::class, 'dpi_cliente');
     }
 
-    public static function generateClienteBasic($data): Client
+    public static function generateClienteBasic($data, $client): Client
     {
-        $client = new Client();
         $client->dpi = $data['dpi'];
         $client->nombres = $data['nombres'];
         $client->apellidos = $data['apellidos'];
@@ -90,13 +90,14 @@ class Client extends Model
         $client->egresos_mensuales = $data['egresosMensuales'];
         $client->fechaInicio = $data['fechaInicio'];
         $client->tipoCliente = $data['tipoCliente'];
+        $client->path = $data['path'];
         $client->etado_cliente  = 1;
         return $client;
     }
 
-    public static function generateClienteComercial($data)
+    public static function generateClienteComercial($data, $client)
     {
-        $client = Client::generateClienteBasic($data);
+        $client = Client::generateClienteBasic($data, $client);
         $client->nit = $data['nit'];
         $client->direccionEmpresa = $data['direccionEmpresa'];
         $client->nombreEmpresa = $data['nombreEmpresa'];
@@ -105,9 +106,9 @@ class Client extends Model
         return $client;
     }
 
-    public static function generateClienteAsalariado($data)
+    public static function generateClienteAsalariado($data, $client)
     {
-        $client = Client::generateClienteBasic($data);
+        $client = Client::generateClienteBasic($data, $client);
         $client->puesto = $data['puesto'];
         $client->fechaInicio = $data['fechaInicio'];
         $client->nombreEmpresa = $data['nombreEmpresa'];
@@ -117,10 +118,11 @@ class Client extends Model
 
     public static function generateCliente($data)
     {
+        $client = new Client();
         if ($data['tipoCliente'] == TipoCliente::$EMPRESARIO) {
-            return Client::generateClienteComercial($data);
+            return Client::generateClienteComercial($data, $client);
         } else {
-            return Client::generateClienteAsalariado($data);
+            return Client::generateClienteAsalariado($data, $client);
         }
     }
 
@@ -132,5 +134,14 @@ class Client extends Model
     public function getFullNameAttribute()
     {
         return $this->nombres . ' ' . $this->apellidos;
+    }
+
+    public static function updateData($data, $client)
+    {
+        if ($data['tipoCliente'] == TipoCliente::$EMPRESARIO) {
+            return Client::generateClienteComercial($data, $client);
+        } else {
+            return Client::generateClienteAsalariado($data, $client);
+        }
     }
 }

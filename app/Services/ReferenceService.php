@@ -23,8 +23,9 @@ class ReferenceService
         return Reference::create($referenceData);
     }
 
-    public function updateReference(Reference $reference, array $referenceData): Reference
+    public function updateReference( $id, array $referenceData): Reference
     {
+        $reference = $this->getReference($id);
         $reference->update($referenceData);
         return $reference;
     }

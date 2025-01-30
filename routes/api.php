@@ -9,12 +9,16 @@ use App\Http\Controllers\TipoPlazoController;
 use App\Http\Controllers\InversionController;
 use App\Http\Controllers\ReferenceController;
 use App\Http\Controllers\CuentaBancariaController;
+use App\Http\Controllers\FotografiaController;
 
 //clientes
 Route::resource('clients', ClientController::class);
 Route::get('clients/{id}/cuentas-bancarias', [ClientController::class, 'cuentasBancarias']);
 Route::get('clients/{id}/inversiones', [ClientController::class, 'inversiones']);
 Route::get('clients/{id}/references', [ClientController::class, 'referencias']);
+Route::get('clients/{id}/pdf', [ClientController::class, 'generateClientPdf']);
+Route::post('clients/{id}/fotografia', [ClientController::class, 'uploadFoto']);
+
 
 //inversiones
 Route::resource('inversiones', InversionController::class);
@@ -32,3 +36,7 @@ Route::get('tipos-plazo/{id}', [TipoPlazoController::class, 'show']);
 
 //referencias
 Route::resource('references', ReferenceController::class);
+
+//fotografia
+Route::delete('fotografia/', [FotografiaController::class, 'deleteFotografia']);
+Route::get('fotografia/', [FotografiaController::class, 'getFotografia']);

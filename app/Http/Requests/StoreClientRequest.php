@@ -54,6 +54,7 @@ class StoreClientRequest extends FormRequest
             'fecha_nacimiento' => 'required|date',
             'fechaInicio' => 'required|date',
             'tipoCliente' => 'required|string|max:20',
+            'path' => 'required|string',
             'referencias' => 'required|array',
             'referencias.*.nombre' => 'required|string|max:255',
             'referencias.*.telefono' => 'required|string|max:20',
