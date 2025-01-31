@@ -131,8 +131,9 @@ class ClientController extends Controller
 
     public function generateClientPdf($id)
     {
-        $this->clientService->generatePdf($id);
 
-        return response()->json(['message' => 'PDF generado con éxito'], 200);
+        $pdf =$this->clientService->generatePdf($id);
+        \Log::info("PDF generado");
+        return response($pdf, 200)->header('Content-Type', 'application/pdf');
     }
 }

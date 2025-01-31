@@ -144,8 +144,9 @@ class ClientService
     {
         $client = $this->getClient($id);
         $client = $this->getDataByClient($client);
-        $html = view('pdf.client', compact('client'))->render();
-        $this->pdfService->generatePdf($html, "client-$id.pdf");
+        $html = view('pdf.client', data: compact('client'))->render();
+        $pdf = $this->pdfService->generatePdf($html);
+        return $pdf;
     }
 
     private function getDataByClient($client): Client

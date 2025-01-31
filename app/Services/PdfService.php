@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use Dompdf\Dompdf;
@@ -6,7 +7,7 @@ use Dompdf\Options;
 
 class PdfService
 {
-    public function generatePdf($html, $filename = 'document.pdf')
+    public function generatePdf($html)
     {
         // Configurar opciones de Dompdf
         $options = new Options();
@@ -24,8 +25,7 @@ class PdfService
 
         // Renderizar el HTML como PDF
         $dompdf->render();
-
-        // Salida del PDF generado al navegador
-        $dompdf->stream($filename, ['Attachment' => false]);
+        $pdf = $dompdf->output();
+        return $pdf;
     }
 }
