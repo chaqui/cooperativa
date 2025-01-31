@@ -4,7 +4,7 @@
 set -e
 
 # Run database migrations
-php artisan migrate --force
+php artisan migrate
 
 # Start PHP-FPM
 php-fpm
