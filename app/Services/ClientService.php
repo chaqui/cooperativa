@@ -45,6 +45,7 @@ class ClientService
         }
 
         DB::commit();
+        \Log::info('Client created successfully');
     }
 
     /**
