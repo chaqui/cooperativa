@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('fiducias', function (Blueprint $table) {
             $table->id();
             $table->integer('id_tipo_fiducia')->unsigned();
-            $table->integer('id_cliente')->unsigned();
+            $table->string('id_cliente')->unsigned();
             $table->float('monto');
             $table->integer('plazo');
             $table->date('fecha_inicio');
@@ -23,9 +23,9 @@ return new class extends Migration
             $table->integer('id_estado_fiducia')->unsigned();
             $table->float('interes');
             $table->float('interes_mora');
-            $table->float('id_tipo_interes')->unsigned();
+            $table->integer('id_tipo_interes')->unsigned();
             $table->foreign('id_tipo_fiducia')->references('id')->on('tipo_fiducias');
-            $table->foreign('id_cliente')->references('id')->on('clientes');
+            $table->foreign('id_cliente')->references('dpi')->on('clients');
             $table->foreign('id_tipo_plazo')->references('id')->on('tipo_plazos');
             $table->foreign('id_estado_fiducia')->references('id')->on('estado_prestamos');
             $table->foreign('id_tipo_interes')->references('id')->on('tipo_tasa_interes');

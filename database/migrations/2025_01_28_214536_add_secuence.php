@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         // Crear la secuencia
-        //TODO: descomentar cuando se cambie a Postgres
-        //DB::statement('CREATE SEQUENCE correlativo_cliente START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;');
+
+        DB::statement('CREATE SEQUENCE correlativo_cliente START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;');
     }
 
     /**
@@ -22,6 +22,6 @@ return new class extends Migration
     public function down(): void
     {
         // Eliminar la secuencia
-      //  DB::statement('DROP SEQUENCE IF EXISTS correlativo_cliente;');
+      DB::statement('DROP SEQUENCE IF EXISTS correlativo_cliente;');
     }
 };

@@ -18,17 +18,17 @@ return new class extends Migration
             $table->float('interes');
             $table->integer('plazo');
             $table->integer('estado')->unsigned();
-            $table->integer('cliente')->unsigned();
+            $table->string('cliente')->unsigned();
             $table->integer('tipo_taza')->unsigned();
             $table->integer('tipo_plazo')->unsigned();
             $table->integer('tipo_inversion')->unsigned();
-            $table->integer('cuenta_recaudadora')->unsigned();
+            $table->string('cuenta_recaudadora')->unsigned();
             $table->foreign('tipo_inversion')->references('id')->on('tipo_inversiones');
             $table->foreign('tipo_taza')->references('id')->on('tipo_tasa_interes');
             $table->foreign('tipo_plazo')->references('id')->on('tipo_plazos');
             $table->foreign('estado')->references('id')->on('estado_inversiones');
-            $table->foreign('cliente')->references('dpi')->on('clientes');
-            $table->foreign('cuenta_recaudadora')->references('id')->on('cuentas');
+            $table->foreign('cliente')->references('dpi')->on('clients');
+            $table->foreign('cuenta_recaudadora')->references('numero_cuenta')->on('cuenta__bancarias');
             $table->timestamps();
         });
     }

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->dropForeign(['cliente']);
             $table->dropColumn('cliente');
             $table->string('dpi_cliente');
-            $table->foreign('dpi_cliente')->references('dpi')->on('clientes');
+            $table->foreign('dpi_cliente')->references('dpi')->on('clients');
         });
     }
 
