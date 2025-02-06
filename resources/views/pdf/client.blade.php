@@ -57,7 +57,7 @@
 
 <body>
     <div class="header">
-        <img src="{{ public_path('images/logo.png') }}" alt="Logo" class="logo">
+        <img src="{{ asset('storage/images/logoNegro.png') }}" alt="Logo" class="logo">
         <h1>Información del Cliente</h1>
         @if($client->path)
             <img src="{{ asset('storage/' . $client->path) }}" alt="Fotografía del Cliente" class="client-photo">

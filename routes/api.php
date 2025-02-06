@@ -1,15 +1,16 @@
 <?php
 
-
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\CuotaController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\TipoPlazoController;
 use App\Http\Controllers\InversionController;
 use App\Http\Controllers\ReferenceController;
-use App\Http\Controllers\CuentaBancariaController;
 use App\Http\Controllers\FotografiaController;
+use App\Http\Controllers\CuentaBancariaController;
 
 //clientes
 Route::resource('clients', ClientController::class);
@@ -41,3 +42,9 @@ Route::resource('references', ReferenceController::class);
 //fotografia
 Route::delete('fotografia/', [FotografiaController::class, 'deleteFotografia']);
 Route::get('fotografia/', [FotografiaController::class, 'getFotografia']);
+
+//Users
+Route::resource('users', UserController::class);
+
+//Auth
+Route::post('login', [AuthController::class, 'login']);
