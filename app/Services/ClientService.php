@@ -33,19 +33,44 @@ class ClientService
     public function createClient($data)
     {
         DB::beginTransaction();
+
+        //create the client
+        $data['codigo'] = $this->generateCode();
         $client = Client::generateCliente($data);
-
         $client->save();
-        $references = $data['referencias'];
 
+        //create the references
+        $references = $data['referencias'];
+        $this->addReferences($client, $references);
+
+        DB::commit();
+        \Log::info('Client created successfully');
+    }
+
+    /**
+     * Add the references to the client
+     * @param mixed $client The client
+     * @param mixed $references List of references
+     * @return void
+     */
+    private function addReferences($client, $references)
+    {
         foreach ($references as $reference) {
             $reference['dpi_cliente'] = $client->dpi;
             $reference = $this->referenceService->createReference($reference);
             $client->references()->save($reference);
         }
+    }
 
-        DB::commit();
-        \Log::info('Client created successfully');
+    /**
+     * Generate the code of the client, example: CCP-1
+     * @return mixed The code of the client
+     */
+    private function generateCode()
+    {
+        $result = DB::select('SELECT nextval(\'correlativo_cliente\') AS correlativo');
+        $correlativo = $result[0]->correlativo;
+        return 'CCP-' . $correlativo;
     }
 
     /**
@@ -79,6 +104,13 @@ class ClientService
     {
         $client = Client::find($id);
         $client->delete();
+    }
+
+    public function inactivarClient($id)
+    {
+        $client = Client::find($id);
+        $client->etado_cliente = 2;
+        $client->save();
     }
 
     /**

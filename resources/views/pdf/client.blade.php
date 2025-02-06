@@ -63,7 +63,7 @@
             <img src="{{ asset('storage/' . $client->path) }}" alt="Fotografía del Cliente" class="client-photo">
         @endif
         <h2>
-            Cliente: {{ $client->nombres }} {{ $client->apellidos }} (codigo)
+            Cliente: {{ $client->nombres }} {{ $client->apellidos }} ({{ $client->codigo }})
         </h2>
 
     </div>
@@ -225,11 +225,8 @@
                 <strong>{{ $client->telefono }}</strong>
                 y correo electrónico <strong>{{ $client->correo }}</strong> de estado civil
                 <strong>{{ $client->estadoCivil }}</strong> con fecha de nacimiento
-                <strong>{{ Carbon::parse($client->fecha_nacimiento)->format('d F Y') }}</strong> indico que los datos
-                proporcionados son verdaderos y autorizo a la cooperativa a verificar la información proporcionada.
-                <br />
-                En caso de que la información proporcionada sea falsa, autorizo a la cooperativa a tomar las medidas
-                necesarias para la cancelación de la solicitud.
+                <strong>{{ Carbon::parse($client->fecha_nacimiento)->format('d F Y') }}</strong> declaro de forma expresa
+                que todos los datos e información que ahí apartados son veraces y que han sido consignados de forma voluntaria.
             </td>
         </tr>
         <tr>

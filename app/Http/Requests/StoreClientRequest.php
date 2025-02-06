@@ -44,7 +44,7 @@ class StoreClientRequest extends FormRequest
             'dpi' => 'required|string|max:20|unique:clients,dpi',
             'telefono' => 'required|string|max:20',
             'direccion' => 'required|string|max:255',
-            'correo' => 'email|unique:clients,email',
+            'correo' => 'required|email|max:255',
             'ciudad' => 'required|string|max:50',
             'departamento' => 'required|string|max:25',
             'estado_civil' => 'required|string|max:20',

@@ -81,6 +81,12 @@ class ClientController extends Controller
         return response()->json(['message' => 'Client deleted successfully'], 200);
     }
 
+    public function inactivar(string $id)
+    {
+        $this->clientService->inactivarClient($id);
+        return response()->json(['message' => 'Client inactivated successfully'], 200);
+    }
+
     /**
      * Summary of cuentasBancarias
      * @param string $id    The id of the client.

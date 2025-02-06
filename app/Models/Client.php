@@ -43,7 +43,8 @@ class Client extends Model
         'nombreEmpresa', //
         'telefonoEmpresa', //
         'direccionEmpresa', //
-        'path' //
+        'path', //
+        'codigo'
     ];
 
     public function estadoCliente()
@@ -91,6 +92,7 @@ class Client extends Model
         $client->fechaInicio = $data['fechaInicio'];
         $client->tipoCliente = $data['tipoCliente'];
         $client->path = $data['path'];
+        $client->codigo = $data['codigo'];
         $client->etado_cliente  = 1;
         return $client;
     }

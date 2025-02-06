@@ -18,6 +18,7 @@ Route::get('clients/{id}/inversiones', [ClientController::class, 'inversiones'])
 Route::get('clients/{id}/references', [ClientController::class, 'referencias']);
 Route::get('clients/{id}/pdf', [ClientController::class, 'generateClientPdf']);
 Route::post('clients/{id}/fotografia', [ClientController::class, 'uploadFoto']);
+Route::put('clients/inactivar/{id}', [ClientController::class, 'inactivar']);
 
 
 //inversiones

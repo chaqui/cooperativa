@@ -13,7 +13,7 @@ return new class extends Migration
     {
         // Crear la secuencia
 
-        DB::statement('CREATE SEQUENCE correlativo_cliente START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;');
+        DB::statement('CREATE SEQUENCE correlativo_cliente START WITH 10001 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;');
     }
 
     /**

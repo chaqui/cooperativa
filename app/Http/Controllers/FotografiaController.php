@@ -25,14 +25,11 @@ class FotografiaController extends Controller
     public function getFotografia(Request $request)
     {
         $path = $request->input('path');
+        $file = $this->fotografiaService->getFotografia($path);
+        $extension = explode('.', $path)[1];
 
-        if (Storage::disk('public')->exists($path)) {
-            $file = Storage::disk('public')->get($path);
-            $mimeType = 'image/png';
+        $mimeType = 'image/' . $extension;
 
-            return response($file, 200)->header('Content-Type', $mimeType);
-        }
-
-        return response()->json(['message' => 'File not found'], 404);
+        return response($file, 200)->header('Content-Type', $mimeType);
     }
 }
