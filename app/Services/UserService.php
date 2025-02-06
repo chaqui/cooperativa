@@ -3,12 +3,14 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Traits\Loggable;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class UserService
 {
 
-
+    use Loggable;
 
     public function createUser($data)
     {
@@ -38,11 +40,17 @@ class UserService
         if ($user) {
             return $user;
         }
-        throw new \Exception('User not found');
+        throw new ModelNotFoundException('User not found');
     }
 
     public function generateToken(User $user)
     {
+        $this->log('Generating token for user: ' . $user->email);
         return JWTAuth::fromUser($user);
+    }
+
+    public function logout()
+    {
+        JWTAuth::invalidate(JWTAuth::getToken());
     }
 }

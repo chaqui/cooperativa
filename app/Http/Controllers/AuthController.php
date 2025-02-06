@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\UserService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
@@ -27,5 +28,15 @@ class AuthController extends Controller
         $token = $this->userService->generateToken($user);
 
         return response()->json(compact('token'));
+    }
+
+    public function logout(): JsonResponse
+    {
+        try {
+            $this->userService->logout();
+            return response()->json(['message' => 'Successfully logged out']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to logout', 'message' => $e->getMessage()], 500);
+        }
     }
 }

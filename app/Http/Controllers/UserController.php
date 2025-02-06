@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUser;
-use Illuminate\Http\Request;
+use App\Traits\SqlMesage;
 use App\Services\UserService;
+use App\Http\Resources\User as UserResource;
 
 class UserController extends Controller
 {
 
+    use SqlMesage;
     private $userService;
 
     public function __construct(UserService $userService)
@@ -20,7 +22,8 @@ class UserController extends Controller
      */
     public function index()
     {
-
+        $users = $this->userService->getUsers();
+        return UserResource::collection($users);
     }
 
     /**
@@ -36,8 +39,12 @@ class UserController extends Controller
      */
     public function store(StoreUser $request)
     {
-        $user = $this->userService->createUser($request->all());
-        return response()->json($user, 201);
+        try {
+            $user = $this->userService->createUser($request->all());
+            return response()->json($user, 201);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $this->sqlMessageError($e)], 400);
+        }
     }
 
     /**
@@ -46,7 +53,7 @@ class UserController extends Controller
     public function show(string $id)
     {
         $user = $this->userService->getUserById($id);
-        return response()->json($user, 200);
+        return new UserResource($user);
     }
 
     /**
@@ -60,7 +67,7 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(StoreUser $request, string $id)
     {
         $user = $this->userService->updateUser($request->all(), $id);
         return response()->json($user, 200);

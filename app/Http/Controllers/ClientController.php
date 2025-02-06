@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Traits\Loggable;
 use Illuminate\Http\Request;
 
 use App\Services\ClientService;
@@ -15,6 +16,7 @@ use App\Http\Resources\Reference as ReferenceResource;
 
 class ClientController extends Controller
 {
+    use Loggable;
 
     private $clientService;
     private $fotografiaService;
@@ -139,7 +141,7 @@ class ClientController extends Controller
     {
 
         $pdf =$this->clientService->generatePdf($id);
-        \Log::info("PDF generado");
+        $this->log('Generando PDF del cliente con id: ' . $id);
         return response($pdf, 200)->header('Content-Type', 'application/pdf');
     }
 }

@@ -4,10 +4,12 @@ namespace App\Services;
 
 use App\Models\Client;
 
+use App\Traits\Loggable;
 use Illuminate\Support\Facades\DB;
 
 class ClientService
 {
+    use Loggable;
     private $referenceService;
 
     private $pdfService;
@@ -44,7 +46,7 @@ class ClientService
         $this->addReferences($client, $references);
 
         DB::commit();
-        \Log::info('Client created successfully');
+        $this->log('Client created successfully');
     }
 
     /**

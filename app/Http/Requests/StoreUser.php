@@ -2,16 +2,17 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
+use App\Traits\Authorizable;
+use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreUser extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
+    use Authorizable;
     public function authorize(): bool
     {
-        return true;
+        return $this->authorizeRol([Roles::$ADMIN]);
     }
 
     /**
@@ -25,6 +26,7 @@ class StoreUser extends FormRequest
             'name' => ['required', 'string'],
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
+            'role_id' => ['required', 'integer'],
         ];
     }
 }
