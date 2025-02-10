@@ -6,6 +6,7 @@ use Tymon\JWTAuth\Http\Middleware\Authenticate;
 
 use App\Constants\Roles;
 use App\Http\Middleware\CheckRole;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CuotaController;
 use App\Http\Controllers\ClientController;
@@ -94,7 +95,13 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
 
 //Users
 Route::resource('users', UserController::class)->middleware(CheckRole::class . ':' . Roles::$ADMIN);
+Route::post('users/{id}/inactivate', [UserController::class, 'inactivate'])->middleware(CheckRole::class . ':' . Roles::$ADMIN);
 
 //Auth
 Route::post('login', [AuthController::class, 'login']);
 Route::post('logout', [AuthController::class, 'logout'])->middleware(Authenticate::class);
+
+//Roles
+Route::middleware(CheckRole::class . ':' . Roles::$ADMIN)->group(function () {
+    Route::resource('roles', RoleController::class);
+});

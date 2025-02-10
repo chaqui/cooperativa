@@ -13,14 +13,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('roles', function (Blueprint $table) {
-            $table->id();
+            $table->integer('id');
             $table->string('name');
             $table->timestamps();
+            $table->primary('id');
         });
         DB::table('roles')->insert([
-            ['name' => 'admin'],
-            ['name' => 'asesor'],
-            ['name' => 'cajero'],
+            ['id' => 1, 'name' => 'admin'],
+            ['id' => 2, 'name' => 'asesor'],
+            ['id' => 3, 'name' => 'cajero'],
         ]);
         Schema::table('users', function (Blueprint $table) {
             $table->integer('role_id')->nullable()->unsigned();

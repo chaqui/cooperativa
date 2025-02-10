@@ -45,6 +45,9 @@ class UserService
 
     public function generateToken(User $user)
     {
+        if(!$user->active) {
+            throw new \Exception('User is not active');
+        }
         $this->log('Generating token for user: ' . $user->email);
         return JWTAuth::fromUser($user);
     }
@@ -52,5 +55,12 @@ class UserService
     public function logout()
     {
         JWTAuth::invalidate(JWTAuth::getToken());
+    }
+
+    public function inactivateUser($id)
+    {
+        $user = $this->getUserById($id);
+        $user->active = false;
+        $user->save();
     }
 }
