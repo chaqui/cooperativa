@@ -14,6 +14,7 @@ class UserService
 
     public function createUser($data)
     {
+        $this->log($data);
         User::create($data);
     }
 
