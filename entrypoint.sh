@@ -6,5 +6,7 @@ set -e
 # Run database migrations
 php artisan migrate
 
+php artisan make:filament-user --name="chaqui" --email="josue.chaqui@gmail.com" --password="test123" --roleid="1"
+
 # Start PHP-FPM
 php-fpm
