@@ -33,6 +33,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Copy existing application directory contents
 COPY . /var/www
 
+RUN mv /var/www/app/constants /var/www/app/Constants
+
 # Adjust ownership and permissions
 RUN chown -R www-data:www-data /var/www
 RUN chmod -R 775 /var/www
