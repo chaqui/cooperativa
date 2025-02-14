@@ -58,6 +58,11 @@ class UserService
         JWTAuth::invalidate(JWTAuth::getToken());
     }
 
+    public function validateToken()
+    {
+        return JWTAuth::parseToken()->checkOrFail();
+    }
+
     public function inactivateUser($id)
     {
         $user = $this->getUserById($id);

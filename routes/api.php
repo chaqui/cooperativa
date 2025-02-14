@@ -100,6 +100,7 @@ Route::post('users/{id}/inactivate', [UserController::class, 'inactivate'])->mid
 //Auth
 Route::post('login', [AuthController::class, 'login']);
 Route::post('logout', [AuthController::class, 'logout'])->middleware(Authenticate::class);
+Route::post('validate-token', [AuthController::class, 'validateToken'])->middleware(Authenticate::class);
 
 //Roles
 Route::middleware(CheckRole::class . ':' . Roles::$ADMIN)->group(function () {

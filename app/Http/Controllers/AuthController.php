@@ -39,4 +39,13 @@ class AuthController extends Controller
             return response()->json(['error' => 'Failed to logout', 'message' => $e->getMessage()], 500);
         }
     }
+
+    public function validateToken(): JsonResponse
+    {
+        $valid = $this->userService->validateToken();
+        if ($valid) {
+            return response()->json(['message' => 'Token is valid']);
+        }
+        return response()->json(['error' => 'Token is invalid'], 401);
+    }
 }
