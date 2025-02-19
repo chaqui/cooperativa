@@ -3,10 +3,13 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Storage;
+use App\Traits\Loggable;
 
 
 class FotografiaService
 {
+
+    use Loggable;
 
 
     /**
@@ -27,6 +30,7 @@ class FotografiaService
 
         $path = $file->storeAs('fotografias', $filename, 'public');
 
+        $this->log('Uploaded photo: ' . $path);
         return $path;
     }
 
