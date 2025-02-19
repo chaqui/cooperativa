@@ -60,7 +60,7 @@ class UserService
 
     public function validateToken()
     {
-        return JWTAuth::parseToken()->checkOrFail();
+        return JWTAuth::check();
     }
 
     public function inactivateUser($id)
