@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Traits\Loggable;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class CatologoService
 {
@@ -26,11 +27,16 @@ class CatologoService
             $this->log('Obteniendo item');
             $uri = "v1/item/{$id}";
             $this->log('URI completa: ' . $this->client->getConfig('base_uri') . $uri);
-            $response = $this->client->request('GET', $uri);
+            $response = $this->client->request('GET', $uri, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . JWTAuth::getToken()
+                ]
+            ]);
             $data = json_decode($response->getBody(), true);
             $this->log($data);
             return $data;
         } catch (RequestException $e) {
+            $this->logError($e->getMessage());
             // Manejar la excepción
             return ['error' => $e->getMessage()];
         }
