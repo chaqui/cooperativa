@@ -25,7 +25,7 @@ class CatologoService
 
         try {
             $this->log('Obteniendo item');
-            $uri = "v1/item/{$id}";
+            $uri = "/api/v1/item/{$id}";
             $this->log('URI completa: ' . $this->client->getConfig('base_uri') . $uri);
             $response = $this->client->request('GET', $uri, [
                 'headers' => [
