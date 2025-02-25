@@ -1,4 +1,9 @@
-<!DOCTYPE html>
+<!-- filepath: /Users/macbook/Documents/personal/cooperativa/resources/views/pdf/client.blade.php -->
+@php
+    use Carbon\Carbon;
+    setlocale(LC_TIME, 'es_GT.UTF-8');
+@endphp
+<<!DOCTYPE html>
 <html>
 
 <head>
