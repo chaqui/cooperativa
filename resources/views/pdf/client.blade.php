@@ -1,7 +1,7 @@
 <!-- filepath: /Users/macbook/Documents/personal/cooperativa/resources/views/pdf/client.blade.php -->
 @php
     use Carbon\Carbon;
-    setlocale(LC_TIME, 'es_ES.UTF-8');
+    setlocale(LC_TIME, 'es_GT.UTF-8');
 @endphp
 <!DOCTYPE html>
 <html>
@@ -96,7 +96,7 @@
         </tr>
         <tr>
             <td><strong>Fecha de Nacimiento:</strong></td>
-            <td>{{ Carbon::parse($client->fecha_nacimiento)->format('d F Y') }}</td>
+            <td>{{ Carbon::parse($client->fecha_nacimiento)->format('d/m/Y') }}</td>
             <td><strong>Genero:</strong></td>
             <td>{{ $client->genero }}</td>
             <td><strong>Estado Civil:</strong></td>
@@ -117,7 +117,7 @@
             <td><strong>Nombre de la Empresa:</strong></td>
             <td>{{ $client->nombreEmpresa }}</td>
             <td><strong>Fecha de Inicio:</strong></td>
-            <td>{{ Carbon::parse($client->fechaInicio)->format('d F Y') }}</td>
+            <td>{{ Carbon::parse($client->fechaInicio)->format('d/m/Y') }}</td>
 
         </tr>
         <tr>
@@ -225,7 +225,7 @@
                 <strong>{{ $client->telefono }}</strong>
                 y correo electrónico <strong>{{ $client->correo }}</strong> de estado civil
                 <strong>{{ $client->estadoCivil }}</strong> con fecha de nacimiento
-                <strong>{{ Carbon::parse($client->fecha_nacimiento)->format('d F Y') }}</strong> declaro de forma expresa
+                <strong>{{ Carbon::parse($client->fecha_nacimiento)->format('d/m/Y') }}</strong> declaro de forma expresa
                 que todos los datos e información que ahí apartados son veraces y que han sido consignados de forma voluntaria.
             </td>
         </tr>
