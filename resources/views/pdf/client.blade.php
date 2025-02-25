@@ -64,6 +64,7 @@
 <body>
     <div class="header">
         <img src="{{ base64Image('images/logoNegro.png') }}" alt="Logo" class="logo">
+        fullpath:
         {{$fullPath }}
         <h1>Información del Cliente</h1>
         @if($client->path)
