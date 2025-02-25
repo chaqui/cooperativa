@@ -3,7 +3,7 @@
     setlocale(LC_TIME, 'es_GT.UTF-8');
 
     function base64Image($path) {
-        $fullPath = storage_path($path);
+        $fullPath = storage_path("app/public/".$path);
         $type = pathinfo($fullPath, PATHINFO_EXTENSION);
         $data = file_get_contents($fullPath);
         return 'data:image/' . $type . ';base64,' . base64_encode($data);
