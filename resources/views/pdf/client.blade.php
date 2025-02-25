@@ -1,9 +1,8 @@
-<!-- filepath: /Users/macbook/Documents/personal/cooperativa/resources/views/pdf/client.blade.php -->
 @php
     use Carbon\Carbon;
     setlocale(LC_TIME, 'es_GT.UTF-8');
 @endphp
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -57,11 +56,11 @@
 
 <body>
     <div class="header">
-        <img src="{{ public_path('storage/images/logoNegro.png') }}" alt="Logo" class="logo">
-        {{ public_path('storage/images/logoNegro.png') }}
+        <img  src="data:image/png;base64,{{ storage_path('storage/images/logoNegro.png') }}" alt="Logo" class="logo">
+        {{ storage_path('storage/images/logoNegro.png') }}
         <h1>Información del Cliente</h1>
         @if($client->path)
-            <img src="{{ asset('storage/' . $client->path) }}" alt="Fotografía del Cliente" class="client-photo">
+            <img  src="data:image/png;base64,{{ storage_path('storage/' . $client->path) }}" alt="Fotografía del Cliente" class="client-photo">
         @endif
         <h2>
             Cliente: {{ $client->nombres }} {{ $client->apellidos }} ({{ $client->codigo }})
@@ -231,5 +230,6 @@
         </tr>
     </table>
 </body>
+
 
 </html>
