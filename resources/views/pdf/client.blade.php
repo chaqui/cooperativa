@@ -1,7 +1,6 @@
 @php
     use Carbon\Carbon;
     setlocale(LC_TIME, 'es_GT.UTF-8');
-
     function base64Image($path) {
         $fullPath = storage_path("app/public/".$path);
         $type = pathinfo($fullPath, PATHINFO_EXTENSION);
@@ -64,8 +63,6 @@
 <body>
     <div class="header">
         <img src="{{ base64Image('images/logoNegro.png') }}" alt="Logo" class="logo">
-        fullpath:
-        {{$fullPath }}
         <h1>Información del Cliente</h1>
         @if($client->path)
             <img src="{{ base64Image($client->path) }}" alt="Fotografía del Cliente" class="client-photo">
