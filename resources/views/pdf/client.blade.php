@@ -1,8 +1,3 @@
-<!-- filepath: /Users/macbook/Documents/personal/cooperativa/resources/views/pdf/client.blade.php -->
-@php
-    use Carbon\Carbon;
-    setlocale(LC_TIME, 'es_GT.UTF-8');
-@endphp
 <!DOCTYPE html>
 <html>
 
@@ -58,6 +53,7 @@
 <body>
     <div class="header">
         <img src="{{ asset('storage/images/logoNegro.png') }}" alt="Logo" class="logo">
+        {{ asset('storage/images/logoNegro.png') }}
         <h1>Información del Cliente</h1>
         @if($client->path)
             <img src="{{ asset('storage/' . $client->path) }}" alt="Fotografía del Cliente" class="client-photo">
@@ -65,7 +61,6 @@
         <h2>
             Cliente: {{ $client->nombres }} {{ $client->apellidos }} ({{ $client->codigo }})
         </h2>
-
     </div>
     <table class="content">
         <tr>
@@ -112,13 +107,11 @@
         </tr>
     </table>
     <table class="content">
-
         <tr>
             <td><strong>Nombre de la Empresa:</strong></td>
             <td>{{ $client->nombreEmpresa }}</td>
             <td><strong>Fecha de Inicio:</strong></td>
             <td>{{ Carbon::parse($client->fechaInicio)->format('d/m/Y') }}</td>
-
         </tr>
         <tr>
             <td><strong>Direccion de la Empresa:</strong></td>
@@ -155,8 +148,6 @@
         @endif
     </table>
 
-
-    </table>
     @if ($client->tipoCliente != '390')
         <h3>Referencias Laborales</h3>
         <table class="content">
@@ -170,7 +161,6 @@
                     <td>{{ $reference->telefono }}</td>
                 </tr>
             @endforeach
-
         </table>
     @else
         <h3>Referencias Comerciales</h3>
