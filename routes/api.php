@@ -96,6 +96,7 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
 //Users
 Route::resource('users', UserController::class)->middleware(CheckRole::class . ':' . Roles::$ADMIN);
 Route::post('users/{id}/inactivate', [UserController::class, 'inactivate'])->middleware(CheckRole::class . ':' . Roles::$ADMIN);
+Route::post('users/{id}/change-password', [UserController::class, 'changePassword'])->middleware(CheckRole::class . ':' . Roles::$ADMIN);
 
 //Auth
 Route::post('login', [AuthController::class, 'login']);

@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreUser;
 use App\Traits\SqlMesage;
+use Illuminate\Http\Request;
 use App\Services\UserService;
+use App\Http\Requests\StoreUser;
 use App\Http\Resources\User as UserResource;
 
 class UserController extends Controller
@@ -86,5 +87,12 @@ class UserController extends Controller
     {
         $this->userService->inactivateUser($id);
         return response()->json(['message' => 'User inactivated successfully'], 200);
+    }
+
+    public function changePassword(Request $request, $id)
+    {
+        $password = $request->input('password');
+        $this->userService->changePassword($id, $password);
+        return response()->json(['message' => 'Password changed successfully'], 200);
     }
 }

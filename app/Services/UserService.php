@@ -69,4 +69,18 @@ class UserService
         $user->active = false;
         $user->save();
     }
+
+    public function activateUser($id)
+    {
+        $user = $this->getUserById($id);
+        $user->active = true;
+        $user->save();
+    }
+
+    public function changePassword($id, $password)
+    {
+        $user = $this->getUserById($id);
+        $user->password = bcrypt($password);
+        $user->save();
+    }
 }
