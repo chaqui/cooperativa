@@ -171,6 +171,17 @@ class ClientService
     }
 
     /**
+     * Get the properties of a client
+     * @param mixed $id The id of the client
+     * @return mixed
+     */
+    public function getPropiedades($id): mixed
+    {
+        $client = $this->getClient($id);
+        return $client->propiedades;
+    }
+
+    /**
      * Get the PDF of a client
      * @param mixed $id The id of the client
      * @return void

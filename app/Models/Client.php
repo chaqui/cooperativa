@@ -72,6 +72,11 @@ class Client extends Model
         return $this->hasMany(Inversion::class, 'dpi_cliente');
     }
 
+    public function propiedades()
+    {
+        return $this->hasMany(Propiedad::class, 'dpi_cliente');
+    }
+
     public static function generateClienteBasic($data, $client): Client
     {
         $client->dpi = $data['dpi'];

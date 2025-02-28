@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\Roles;
 use App\Constants\TipoCliente;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -12,7 +13,7 @@ class StoreClientRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->authorizeRol([Roles::$ADMIN, Roles::$ASESOR]);
     }
 
     /**

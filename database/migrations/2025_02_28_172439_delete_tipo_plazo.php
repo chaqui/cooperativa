@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('prestamo_hipotecarios', function (Blueprint $table) {
-            $table->dropColumn('fecha_fin');
-            $table->date('fecha_fin')->nullable();
+            $table->dropForeign(['tipo_plazo']);
+
         });
     }
 
@@ -23,8 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('prestamo_hipotecarios', function (Blueprint $table) {
-            $table->dropColumn('fecha_fin');
-            $table->date('fecha_fin');
+            $table->foreign('tipo_plazo')->references('id')->on('tipo_plazos');
         });
     }
 };

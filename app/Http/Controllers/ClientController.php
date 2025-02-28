@@ -13,6 +13,7 @@ use App\Http\Resources\Client as ClientResource;
 use App\Http\Resources\CuentaBancaria as CuentaBancariaResource;
 use App\Http\Resources\Inversion as InversionResource;
 use App\Http\Resources\Reference as ReferenceResource;
+use App\Http\Resources\Propiedad as PropiedadResource;
 
 class ClientController extends Controller
 {
@@ -124,6 +125,12 @@ class ClientController extends Controller
         return ReferenceResource::collection($referencias);
     }
 
+    public function propiedades(string $id)
+    {
+        $propiedades = $this->clientService->getPropiedades($id);
+        return PropiedadResource::collection($propiedades);
+    }
+
     /**
      * Method to upload a photo, it receives a file and the id of the client, It don't validate existence of the client
      * @param \Illuminate\Http\Request $request
@@ -140,7 +147,7 @@ class ClientController extends Controller
     public function generateClientPdf($id)
     {
 
-        $pdf =$this->clientService->generatePdf($id);
+        $pdf = $this->clientService->generatePdf($id);
         $this->log('Generando PDF del cliente con id: ' . $id);
         return response($pdf, 200)->header('Content-Type', 'application/pdf');
     }

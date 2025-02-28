@@ -13,6 +13,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\TipoPlazoController;
 use App\Http\Controllers\InversionController;
 use App\Http\Controllers\ReferenceController;
+use App\Http\Controllers\PropiedadController;
 use App\Http\Controllers\FotografiaController;
 use App\Http\Controllers\CuentaBancariaController;
 
@@ -26,6 +27,7 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::delete('clients/{id}', [ClientController::class, 'destroy']);
     Route::put('clients/inactivar/{id}', [ClientController::class, 'inactivar']);
     Route::post('clients/{id}/fotografia', [ClientController::class, 'uploadFoto']);
+    Route::get('clients/{id}/propiedades', [ClientController::class, 'propiedades']);
 });
 
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
@@ -106,4 +108,11 @@ Route::post('validate-token', [AuthController::class, 'validateToken'])->middlew
 //Roles
 Route::middleware(CheckRole::class . ':' . Roles::$ADMIN)->group(function () {
     Route::resource('roles', RoleController::class);
+});
+
+//propiedades
+Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
+    Route::post('propiedades', [PropiedadController::class, 'store']);
+    Route::put('propiedades/{id}', [PropiedadController::class, 'update']);
+    Route::delete('propiedades/{id}', [PropiedadController::class, 'destroy']);
 });

@@ -16,7 +16,6 @@ class Prestamo_Hipotecario extends Model
         'fecha_fin',
         'estado_id',
         'propiedad_id',
-        'tipo_taza',
         'tipo_plazo',
     ];
 
@@ -33,16 +32,6 @@ class Prestamo_Hipotecario extends Model
     public function estado()
     {
         return $this->belongsTo(Estado_Prestamo::class, 'estado_id');
-    }
-
-    public function tipoTaza()
-    {
-        return $this->belongsTo(Tipo_Tasa_Interes::class, 'tipo_taza');
-    }
-
-    public function tipoPlazo()
-    {
-        return $this->belongsTo(Tipo_Plazo::class, 'tipo_plazo');
     }
 
     public function pagos()

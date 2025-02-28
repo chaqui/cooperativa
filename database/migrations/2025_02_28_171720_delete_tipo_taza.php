@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('prestamo_hipotecarios', function (Blueprint $table) {
-            $table->dropColumn('fecha_fin');
-            $table->date('fecha_fin')->nullable();
+            $table->dropColumn('tipo_taza');
         });
     }
 
@@ -23,8 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('prestamo_hipotecarios', function (Blueprint $table) {
-            $table->dropColumn('fecha_fin');
-            $table->date('fecha_fin');
+            $table->string('tipo_taza');
         });
     }
 };
