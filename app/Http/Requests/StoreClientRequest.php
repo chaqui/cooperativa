@@ -4,10 +4,12 @@ namespace App\Http\Requests;
 
 use App\Constants\Roles;
 use App\Constants\TipoCliente;
+use App\Traits\Authorizable;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreClientRequest extends FormRequest
 {
+    use Authorizable;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -45,7 +47,6 @@ class StoreClientRequest extends FormRequest
             'dpi' => 'required|string|max:20|unique:clients,dpi',
             'telefono' => 'required|string|max:20',
             'direccion' => 'required|string|max:255',
-            'correo' => 'required|email|max:255',
             'ciudad' => 'required|string|max:50',
             'departamento' => 'required|string|max:25',
             'estado_civil' => 'required|string|max:20',
