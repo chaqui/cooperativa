@@ -17,6 +17,14 @@ class Prestamo_Hipotecario extends Model
         'estado_id',
         'propiedad_id',
         'tipo_plazo',
+        'fiador_dpi',
+        'destino',
+        'uso_prestamo',
+        'fecha_aprobacion',
+        'fecha_desembolso',
+        'fecha_finalizacion',
+        'fecha_cancelacion',
+        'razon_cancelacion'
     ];
 
     public function cliente()
@@ -37,5 +45,10 @@ class Prestamo_Hipotecario extends Model
     public function pagos()
     {
         return $this->hasMany(Pago::class, 'id_prestamo');
+    }
+
+    public function fiador()
+    {
+        return $this->belongsTo(Client::class, 'fiador_dpi');
     }
 }

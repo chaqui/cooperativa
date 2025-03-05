@@ -202,6 +202,7 @@ class ClientService
         $client->estadoCivil = $this->catalogoService->getCatalogo($client->estado_civil)['value'];
         $client->genero = $this->catalogoService->getCatalogo($client->genero)['value'];
         $client->nombreTipoCliente = $this->catalogoService->getCatalogo($client->tipoCliente)['value'];
+        $client->casa_donde_vive = $this->catalogoService->getCatalogo($client->tipo_vivienda)['value'];
         // Filtrar referencias por tipo
         $client->referenciasPersonales = $client->references->filter(function ($reference) {
             return $reference->tipo === 'personal';

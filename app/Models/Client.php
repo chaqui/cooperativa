@@ -44,7 +44,13 @@ class Client extends Model
         'telefonoEmpresa', //
         'direccionEmpresa', //
         'path', //
-        'codigo'
+        'codigo',
+        'conyuge',
+        'cargas_familiares',
+        'integrantes_nucleo_familiar',
+        'tipo_vivienda',
+        'estabilidad_domiciliaria'
+
     ];
 
     public function estadoCliente()

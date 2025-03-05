@@ -1,8 +1,9 @@
 @php
     use Carbon\Carbon;
     setlocale(LC_TIME, 'es_GT.UTF-8');
-    function base64Image($path) {
-        $fullPath = storage_path("app/public/".$path);
+    function base64Image($path)
+    {
+        $fullPath = storage_path("app/public/" . $path);
         $type = pathinfo($fullPath, PATHINFO_EXTENSION);
         $data = file_get_contents($fullPath);
         return 'data:image/' . $type . ';base64,' . base64_encode($data);
@@ -157,6 +158,24 @@
         @endif
     </table>
 
+    @if ($client->estado_civil == '18')
+        <h3>Información Familiar</h3>
+        <table class="content">
+            <tr>
+                <td><strong>CARGAS FAMILIARES:</strong></td>
+                <td></td>{{ $client->cargas_familiares }}</td>
+                <td><strong>No. INTEGRANTES DE SU NUCLEO FAMILIAR</strong></td>
+            </tr>
+            <tr>
+                <td>{{ $client->integrantes_nucleo_familiar }}</td>
+                <td><strong>LA CASA DONDE VIVE ES:</strong></td>
+                <td></td>{{ $client->casa_donde_vive }}</td>
+                <td><strong>TIEMPO DE ESTABILIDAD DOMICILIAR:</strong></td>
+                <td></td>{{ $client->tiempo_estabilidad_domiciliar }} año(s)</td>
+            </tr>
+        </table>
+
+    @endif
     @if ($client->tipoCliente != '390')
         <h3>Referencias Laborales</h3>
         <table class="content">
@@ -210,29 +229,30 @@
             <tr>
                 <td>{{ $reference->nombre }}</td>
                 <td>{{ $reference->telefono }}</td>
-            @endforeach
-        </table>
+        @endforeach
+    </table>
 
-        <table class="content">
-            <tr>
-                <td>
-                    Yo <strong>{{ $client->nombres }} {{ $client->apellidos }}</strong> con CUI
-                    <strong>{{ $client->dpi }}</strong> originario de <strong>{{ $client->nombreMunicipio }}</strong> del
-                    departamento de <strong>{{ $client->nombreDepartamento }}</strong> con domicilio en
-                    <strong>{{ $client->direccion }}</strong> con número de teléfono
-                    <strong>{{ $client->telefono }}</strong>
-                    y correo electrónico <strong>{{ $client->correo }}</strong> de estado civil
-                    <strong>{{ $client->estadoCivil }}</strong> con fecha de nacimiento
-                    <strong>{{ Carbon::parse($client->fecha_nacimiento)->format('d/m/Y') }}</strong> declaro de forma expresa
-                    que todos los datos e información que ahí apartados son veraces y que han sido consignados de forma voluntaria.
-                </td>
-            </tr>
-            <tr>
-                <td class="signature"> F. ______________________ <br />
-                    {{ $client->nombres }} {{ $client->apellidos }} <br />
-                    CUI. {{$client->dpi}} </td>
-            </tr>
-        </table>
+    <table class="content">
+        <tr>
+            <td>
+                Yo <strong>{{ $client->nombres }} {{ $client->apellidos }}</strong> con CUI
+                <strong>{{ $client->dpi }}</strong> originario de <strong>{{ $client->nombreMunicipio }}</strong> del
+                departamento de <strong>{{ $client->nombreDepartamento }}</strong> con domicilio en
+                <strong>{{ $client->direccion }}</strong> con número de teléfono
+                <strong>{{ $client->telefono }}</strong> de estado civil
+                <strong>{{ $client->estadoCivil }}</strong> con fecha de nacimiento
+                <strong>{{ Carbon::parse($client->fecha_nacimiento)->format('d/m/Y') }}</strong> declaro de forma
+                expresa
+                que todos los datos e información que ahí apartados son veraces y que han sido consignados de forma
+                voluntaria.
+            </td>
+        </tr>
+        <tr>
+            <td class="signature"> F. ______________________ <br />
+                {{ $client->nombres }} {{ $client->apellidos }} <br />
+                CUI. {{$client->dpi}} </td>
+        </tr>
+    </table>
 </body>
 
 </html>

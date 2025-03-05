@@ -50,7 +50,11 @@ class Client extends JsonResource
             'patente' => $this->numeroPatente,
             'path' => $this->path,
             'codigo' => $this->codigo,
-
+            'conyuge' => $this->conyuge,
+            'cargas_familiares' => $this->cargas_familiares,
+            'integrantes_nucleo_familiar' => $this->integrantes_nucleo_familiar,
+            'tipo_vivienda' => $this->tipo_vivienda,
+            'estabilidad_domiciliaria' => $this->estabilidad_domiciliaria
 
         ];
     }
