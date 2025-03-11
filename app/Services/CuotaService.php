@@ -6,18 +6,18 @@ abstract class CuotaService
 {
     protected function gananciaDiaria($interes, $monto)
     {
-        $taza = $interes / 100 / 365;
+        $taza = $this->calcularTaza($interes)/ 365;
         return $monto * $taza;
     }
 
 
-    protected function calcularCuota($gananciaDiaria, $numeroMes, $fechaInicio){
+    protected function calcularCuotaInversion($gananciaDiaria, $numeroMes, $fechaInicio){
         $dias = $this->obtenerDiasDelMes($fechaInicio, $numeroMes);
 
         return $gananciaDiaria * $dias;
     }
 
-    private function obtenerDiasDelMes($fechaInicio, $numeroMes)
+    protected function obtenerDiasDelMes($fechaInicio, $numeroMes)
     {
         $fecha = new \DateTime($fechaInicio);
         $fecha->modify("+$numeroMes month");
@@ -30,5 +30,10 @@ abstract class CuotaService
             $plazo = $plazo * 12;
         }
         return $plazo;
+    }
+
+    protected function calcularTaza($interes)
+    {
+        return $interes / 100;
     }
 }

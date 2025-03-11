@@ -6,9 +6,8 @@ use App\Constants\Roles;
 use App\Traits\Authorizable;
 use Illuminate\Foundation\Http\FormRequest;
 
-class PropiedadRequest extends FormRequest
+class EstadoRequest extends FormRequest
 {
-    use Authorizable;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -24,13 +23,19 @@ class PropiedadRequest extends FormRequest
      */
     public function rules(): array
     {
+        $validaciones = $this->validacionesPrincipales();
+        if($this->input("estado") === "RECHAZADO") {
+            $validaciones = array_merge($validaciones, $this->validacionesRechazado());
+        }
+
+        return $validaciones;
+    }
+
+    private function validacionesPrincipales(): array
+    {
         return [
-            'Direccion' => 'required|string|max:255',
-            'Descripcion' => 'required|string|max:255',
-            'Valor_tasacion' => 'required|numeric',
-            'Valor_comercial' => 'required|numeric',
-            'tipo_propiedad' => 'required|string|max:50',
-            'dpi_cliente' => 'required|string|max:20',
+            'estado' => 'required|string',
         ];
     }
+
 }

@@ -20,11 +20,8 @@ class Prestamo_Hipotecario extends Model
         'fiador_dpi',
         'destino',
         'uso_prestamo',
-        'fecha_aprobacion',
-        'fecha_desembolso',
-        'fecha_finalizacion',
-        'fecha_cancelacion',
-        'razon_cancelacion'
+        'tipo_garante',
+        'frecuencia_pago',
     ];
 
     public function cliente()
@@ -50,5 +47,10 @@ class Prestamo_Hipotecario extends Model
     public function fiador()
     {
         return $this->belongsTo(Client::class, 'fiador_dpi');
+    }
+
+    public function historial()
+    {
+        return $this->hasMany(HistorialEstado::class, 'id_prestamo');
     }
 }

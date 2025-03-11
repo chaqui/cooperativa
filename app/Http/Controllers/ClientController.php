@@ -14,6 +14,7 @@ use App\Http\Resources\CuentaBancaria as CuentaBancariaResource;
 use App\Http\Resources\Inversion as InversionResource;
 use App\Http\Resources\Reference as ReferenceResource;
 use App\Http\Resources\Propiedad as PropiedadResource;
+use App\Http\Resources\Prestamo as PrestamoResource;
 
 class ClientController extends Controller
 {
@@ -129,6 +130,12 @@ class ClientController extends Controller
     {
         $propiedades = $this->clientService->getPropiedades($id);
         return PropiedadResource::collection($propiedades);
+    }
+
+    public function prestamos(string $id)
+    {
+        $prestamos = $this->clientService->getPrestamos($id);
+        return PrestamoResource::collection($prestamos);
     }
 
     /**

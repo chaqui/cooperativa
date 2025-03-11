@@ -13,8 +13,8 @@ class PrestamoCreado extends EstadoBasePrestamo
         parent::__construct(null, EstadoPrestamo::$CREADO);
     }
 
-    public function cambiarEstado(Prestamo_Hipotecario $prestamo, $razon = null)
+    public function cambiarEstado(Prestamo_Hipotecario $prestamo, $data)
     {
-        parent::cambiarEstado($prestamo);
+        parent::cambiarEstado($prestamo, $data);
     }
 }

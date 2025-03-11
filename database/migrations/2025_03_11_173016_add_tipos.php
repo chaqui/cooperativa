@@ -12,11 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('prestamo_hipotecarios', function (Blueprint $table) {
-            $table->dropForeign(['estado_id']);
-            $table->dropColumn('estado_id');
-            $table->integer('estado_id')->unsigned()->nullable( );
-            $table->foreign('estado_id')->references('id')->on('estado_prestamos');
-
+            $table->string('tipo_garante');
+            $table->string('frecuencia_pago');
         });
     }
 
@@ -26,10 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('prestamo_hipotecarios', function (Blueprint $table) {
-            $table->dropForeign(['estado_id']);
-            $table->dropColumn('estado_id');
-            $table->integer('estado_id')->unsigned();
-            $table->foreign('estado_id')->references('id')->on('estado_prestamos');
+            $table->dropColumn('tipo_garante');
+            $table->dropColumn('frecuencia_pago');
         });
     }
 };

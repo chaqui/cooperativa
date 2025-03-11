@@ -16,6 +16,7 @@ use App\Http\Controllers\ReferenceController;
 use App\Http\Controllers\PropiedadController;
 use App\Http\Controllers\FotografiaController;
 use App\Http\Controllers\CuentaBancariaController;
+use App\Http\Controllers\PrestamoController;
 
 $rolesEdicion = implode('|', [Roles::$ADMIN, Roles::$ASESOR]);
 $rolesSoloLectura = implode('|', [Roles::$ADMIN, Roles::$ASESOR, Roles::$CAJERO]);
@@ -28,6 +29,7 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::put('clients/inactivar/{id}', [ClientController::class, 'inactivar']);
     Route::post('clients/{id}/fotografia', [ClientController::class, 'uploadFoto']);
     Route::get('clients/{id}/propiedades', [ClientController::class, 'propiedades']);
+    Route::get('clients/{id}/prestamos', [ClientController::class, 'prestamos']);
 });
 
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
@@ -115,4 +117,16 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::post('propiedades', [PropiedadController::class, 'store']);
     Route::put('propiedades/{id}', [PropiedadController::class, 'update']);
     Route::delete('propiedades/{id}', [PropiedadController::class, 'destroy']);
+});
+
+//prestamos
+Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
+    Route::post('prestamos', [PrestamoController::class, 'store']);
+    Route::put('prestamos/{id}', [PrestamoController::class, 'update']);
+    Route::get('prestamos',action: [PrestamoController::class, 'index']);
+    Route::delete('prestamos/{id}', [PrestamoController::class, 'destroy']);
+    Route::put('prestamos/inactivar/{id}', [PrestamoController::class, 'inactivar']);
+    Route::get('prestamos/{id}/historial', [PrestamoController::class, 'historial']);
+    Route::post('prestamos/{id}/cambiar-estado', [PrestamoController::class, 'cambiarEstado']);
+    Route::get('estados/{estado}/prestamos', [PrestamoController::class, 'prestamosByEstado']);
 });

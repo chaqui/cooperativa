@@ -6,7 +6,7 @@ use App\Constants\Roles;
 use App\Traits\Authorizable;
 use Illuminate\Foundation\Http\FormRequest;
 
-class PropiedadRequest extends FormRequest
+class PrestamoRequest extends FormRequest
 {
     use Authorizable;
     /**
@@ -25,12 +25,17 @@ class PropiedadRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'Direccion' => 'required|string|max:255',
-            'Descripcion' => 'required|string|max:255',
-            'Valor_tasacion' => 'required|numeric',
-            'Valor_comercial' => 'required|numeric',
-            'tipo_propiedad' => 'required|string|max:50',
-            'dpi_cliente' => 'required|string|max:20',
+            'monto' => 'required|numeric',
+            'interes' => 'required|numeric',
+            'destino' => 'required|string',
+            'plazo' => 'required|numeric',
+            'tipo_plazo' => 'required|string',
+            'uso_prestamo' => 'required|string',
+            'dpi_cliente' => 'required|string',
+            'propiedad_id' => 'required|numeric',
+            'fiador_dpi' => 'required|string',
+            'tipo_garante' => 'required|string',
+            'frecuencia_pago' => 'required|string',
         ];
     }
 }

@@ -181,6 +181,12 @@ class ClientService
         return $client->propiedades;
     }
 
+    public function getPrestamos($id): mixed
+    {
+        $client = $this->getClient($id);
+        return $client->prestamosHipotecarios;
+    }
+
     /**
      * Get the PDF of a client
      * @param mixed $id The id of the client

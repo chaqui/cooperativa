@@ -13,10 +13,11 @@ class PrestamoCancelado extends EstadoBasePrestamo
         parent::__construct(EstadoPrestamo::$CREADO, EstadoPrestamo::$CANCELADO);
     }
 
-    public function cambiarEstado(Prestamo_Hipotecario $prestamo, $razon = null)
+    public function cambiarEstado(Prestamo_Hipotecario $prestamo, $data)
     {
-        $prestamo->fecha_cancelacion = now();
-        $prestamo->razon_cancelacion = $razon;
-        parent::cambiarEstado($prestamo, $razon);
+        if(!$data['razon']){
+            throw new \Exception('La razón es requerida');
+        }
+        parent::cambiarEstado($prestamo, $data);
     }
 }
