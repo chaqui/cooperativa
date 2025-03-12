@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\EstadoPrestamo;
 use App\Constants\Roles;
 use App\Traits\Authorizable;
 use Illuminate\Foundation\Http\FormRequest;
 
 class EstadoRequest extends FormRequest
 {
+
+    use Authorizable;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -24,10 +27,9 @@ class EstadoRequest extends FormRequest
     public function rules(): array
     {
         $validaciones = $this->validacionesPrincipales();
-        if($this->input("estado") === "RECHAZADO") {
-            $validaciones = array_merge($validaciones, $this->validacionesRechazado());
+        if ($this->input("estado") === EstadoPrestamo::$DESEMBOLZADO) {
+            $validaciones = array_merge($validaciones, $this->validacionesDesembolsado());
         }
-
         return $validaciones;
     }
 
@@ -37,5 +39,11 @@ class EstadoRequest extends FormRequest
             'estado' => 'required|string',
         ];
     }
-
+    private function validacionesDesembolsado(): array
+    {
+        return [
+            'no_documento_desembolso' => 'required|string',
+            'tipo_documento_desembolso' => 'required|string',
+        ];
+    }
 }

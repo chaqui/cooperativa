@@ -14,6 +14,14 @@ class HistoricoEstado extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'nombre' => $this->estado->nombre,
+            'razon' => $this->razon,
+            'anotacion' => $this->anotacion,
+            'no_documento_desembolso' => $this->no_documento_desembolso,
+            'tipo_documento_desembolso' => $this->tipo_documento_desembolso,
+            'fecha' => $this->fecha,
+        ];
     }
 }

@@ -83,4 +83,9 @@ class UserService
         $user->password = bcrypt($password);
         $user->save();
     }
+
+    public function getUserOfToken()
+    {
+        return  JWTAuth::parseToken()->authenticate();
+    }
 }

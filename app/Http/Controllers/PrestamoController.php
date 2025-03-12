@@ -89,5 +89,11 @@ class PrestamoController extends Controller
         return HistoricoEstadoResource::collection($this->prestamoService->getHistorial($id));
     }
 
+    public function generatePdf(string $id)
+    {
+        $pdf = $this->prestamoService->generatePdf($id);
+        return response($pdf, 200)->header('Content-Type', 'application/pdf');
+    }
+
 
 }

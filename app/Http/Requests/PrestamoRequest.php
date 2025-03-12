@@ -36,6 +36,7 @@ class PrestamoRequest extends FormRequest
             'fiador_dpi' => 'required|string',
             'tipo_garante' => 'required|string',
             'frecuencia_pago' => 'required|string',
+            'parentesco' => 'required|string',
         ];
     }
 }

@@ -123,10 +123,11 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::post('prestamos', [PrestamoController::class, 'store']);
     Route::put('prestamos/{id}', [PrestamoController::class, 'update']);
-    Route::get('prestamos',action: [PrestamoController::class, 'index']);
+    Route::get('prestamos', action: [PrestamoController::class, 'index']);
     Route::delete('prestamos/{id}', [PrestamoController::class, 'destroy']);
     Route::put('prestamos/inactivar/{id}', [PrestamoController::class, 'inactivar']);
-    Route::get('prestamos/{id}/historial', [PrestamoController::class, 'historial']);
-    Route::post('prestamos/{id}/cambiar-estado', [PrestamoController::class, 'cambiarEstado']);
+    Route::get('prestamos/{id}/estados', [PrestamoController::class, 'historial']);
+    Route::put('prestamos/{id}/estados', [PrestamoController::class, 'cambiarEstado']);
+    Route::get('prestamos/{id}/pdf', [PrestamoController::class, 'generatePdf']);
     Route::get('estados/{estado}/prestamos', [PrestamoController::class, 'prestamosByEstado']);
 });

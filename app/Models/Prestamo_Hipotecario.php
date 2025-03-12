@@ -22,6 +22,8 @@ class Prestamo_Hipotecario extends Model
         'uso_prestamo',
         'tipo_garante',
         'frecuencia_pago',
+        'id_usuario',
+        'parentesco',
     ];
 
     public function cliente()
@@ -52,5 +54,15 @@ class Prestamo_Hipotecario extends Model
     public function historial()
     {
         return $this->hasMany(HistorialEstado::class, 'id_prestamo');
+    }
+
+    public function tipoPlazo()
+    {
+        return $this->belongsTo(Tipo_Plazo::class, 'tipo_plazo');
+    }
+
+    public function asesor()
+    {
+        return $this->belongsTo(User::class, 'id_usuario');
     }
 }

@@ -29,7 +29,7 @@ class CuotaHipotecaService extends CuotaService
         }
 
         for ($i = 0; $i < $plazo; $i++) {
-            $pagoAnterior = $this->generarPago($cuota, $pagoAnterior, $prestamoHipotecario->id);
+            $pagoAnterior = $this->generarPago($cuota, $pagoAnterior, $prestamoHipotecario);
         }
     }
 

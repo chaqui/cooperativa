@@ -13,9 +13,15 @@ class PropiedadService
     private $clientService;
 
 
-    public function __construct(ClientService $clientService)
-    {
+    private $catalogoService;
+
+
+    public function __construct(
+        ClientService $clientService,
+        CatologoService $catalogoService
+    ) {
         $this->clientService = $clientService;
+        $this->catalogoService = $catalogoService;
     }
 
     public function getPropiedad(string $id): Propiedad
@@ -45,5 +51,10 @@ class PropiedadService
     {
         $propiedad = $this->getPropiedad($id);
         $propiedad->delete();
+    }
+
+    public function getDataPDF($garantia){
+        $garantia->nombreTipo = $this->catalogoService->getCatalogo($garantia->tipo_propiedad)['value'];
+        return $garantia;
     }
 }

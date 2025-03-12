@@ -194,11 +194,16 @@ class ClientService
      */
     public function generatePdf($id)
     {
-        $client = $this->getClient($id);
-        $client = $this->getDataByClient($client);
+        $client = $this->getDataForPDF($id);
         $html = view('pdf.client', data: compact('client'))->render();
         $pdf = $this->pdfService->generatePdf($html);
         return $pdf;
+    }
+
+    public function getDataForPDF($id)
+    {
+        $client = $this->getClient($id);
+        return $this->getDataByClient($client);
     }
 
     private function getDataByClient($client): Client
