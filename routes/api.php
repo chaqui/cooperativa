@@ -129,5 +129,10 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('prestamos/{id}/estados', [PrestamoController::class, 'historial']);
     Route::put('prestamos/{id}/estados', [PrestamoController::class, 'cambiarEstado']);
     Route::get('prestamos/{id}/pdf', [PrestamoController::class, 'generatePdf']);
+    Route::get('prestamos/{id}/pagos', [PrestamoController::class, 'pagos']);
+});
+
+//estados
+Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('estados/{estado}/prestamos', [PrestamoController::class, 'prestamosByEstado']);
 });

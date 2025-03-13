@@ -16,9 +16,12 @@ class Cuota extends JsonResource
     {
         return [
             'id' => $this->id,
-            'monto' => $this->monto,
-            'fecha' => $this->saldo,
+            'monto' => $this->monto(),
+            'fecha' => $this->fecha,
             'fecha_pago' => $this->fecha_pago,
+            'monto_interes' => $this->interes,
+            'amortizacion' => $this->capital,
+            'saldo' => $this->saldo,
             'realizado' => $this->realizado? 'Si': 'No',
         ];
     }

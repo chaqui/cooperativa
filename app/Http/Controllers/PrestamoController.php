@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Services\PrestamoService;
 use App\Http\Resources\Prestamo as PrestamoResource;
 use App\Http\Resources\HistoricoEstado as HistoricoEstadoResource;
+use App\Http\Resources\Cuota as PagoResource;
 
 class PrestamoController extends Controller
 {
@@ -93,6 +94,11 @@ class PrestamoController extends Controller
     {
         $pdf = $this->prestamoService->generatePdf($id);
         return response($pdf, 200)->header('Content-Type', 'application/pdf');
+    }
+
+    public function pagos(string $id)
+    {
+        return PagoResource::collection($this->prestamoService->getPagos($id));
     }
 
 

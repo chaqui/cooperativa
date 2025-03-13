@@ -112,4 +112,10 @@ class PrestamoService
         $prestamo->nombreFrecuenciaPago = $this->catalogoService->getCatalogo($prestamo->frecuencia_pago)['value'];
         return $prestamo;
     }
+
+    public function getPagos($id)
+    {
+        $prestamoHipotecario = $this->get($id);
+        return $prestamoHipotecario->pagos;
+    }
 }

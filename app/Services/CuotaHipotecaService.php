@@ -4,23 +4,27 @@ namespace App\Services;
 
 use App\Models\Prestamo_Hipotecario;
 use App\Models\Pago;
+use App\Traits\Loggable;
 
 class CuotaHipotecaService extends CuotaService
 {
 
+    use Loggable;
 
     public function calcularCuotas(Prestamo_Hipotecario $prestamoHipotecario)
     {
+        $plazo = $prestamoHipotecario->plazo;
+        $plazo = $this->calcularPlazo($plazo, $prestamoHipotecario->tipo_plazo);
 
-        $cuota = $this->calcularCuota($prestamoHipotecario->monto, $prestamoHipotecario->interes,  $prestamoHipotecario->plazo, $prestamoHipotecario->tipoPlazo->valor);
+        $cuota = $this->calcularCuota($prestamoHipotecario->monto, $prestamoHipotecario->interes,  $plazo);
 
-        $this->generarCuotas($prestamoHipotecario, $cuota);
+        $this->generarCuotas($prestamoHipotecario, $cuota, $plazo);
     }
 
-    private function generarCuotas(Prestamo_Hipotecario $prestamoHipotecario, $cuota)
+    private function generarCuotas(Prestamo_Hipotecario $prestamoHipotecario, $cuota, $plazo)
     {
+        $this->log('La cuota es de ' . $cuota);
 
-        $plazo = $prestamoHipotecario->plazo;
         $fecha = $prestamoHipotecario->fecha_inicio;
         $pagoAnterior = null;
 
@@ -37,12 +41,12 @@ class CuotaHipotecaService extends CuotaService
     {
         $pago = new Pago();
         $pago->id_prestamo = $prestamo->id;
-        $pago->interes = $this->calcularInteres($cuota,  $this->calcularTaza($prestamo->interes));
+        $pago->interes = $this->calcularInteres($pagoAnterior ? $pagoAnterior->saldo : $prestamo->monto,  $this->calcularTaza($prestamo->interes));
         $pago->capital = $cuota - $pago->interes;
         $pago->fecha = $this->obtenerFechaSiguienteMes($pagoAnterior->fecha);
-        $pago->saldo = $pagoAnterior->saldo - $pago->capital;
+        $pago->saldo = ($pagoAnterior ? $pagoAnterior->saldo : $prestamo->monto) - $pago->capital;
         $pago->realizado = false;
-        $pago->id_pago_anterior = $pagoAnterior->id;
+        $pago->id_pago_anterior = $pagoAnterior ? $pagoAnterior->id : null;
         $pago->save();
         return $pago;
     }
@@ -54,7 +58,7 @@ class CuotaHipotecaService extends CuotaService
         $pago = new Pago();
         $pago->id_prestamo = $prestamo->id;
         $pago->capital = 0;
-        $pago->interes = $this->calcularInteresDiario($prestamo->interes,  $fecha);
+        $pago->interes = $this->calcularInteres($this->calcularInteresDiario($prestamo->interes,  $fecha), $prestamo->monto);
         $pago->fecha = $this->obtenerFechaSiguienteMes($fecha);
         $pago->saldo = $prestamo->monto;
         $pago->realizado = false;
@@ -71,8 +75,8 @@ class CuotaHipotecaService extends CuotaService
     {
         $pago = $this->getPago($data['id']);
         $prestamo = $pago->prestamo();
-        if($pago->capital > $data['capital']){
-           throw new \Exception('El capital pagado no puede ser menor al capital de la cuota');
+        if ($pago->capital > $data['capital']) {
+            throw new \Exception('El capital pagado no puede ser menor al capital de la cuota');
         }
         $pago->fecha_pago = date('Y-m-d');
         $pago->realizado = true;
@@ -80,7 +84,7 @@ class CuotaHipotecaService extends CuotaService
         $pago->capital_pagado = $data['capital'];
         $pago->saldo = $pago->saldo - $pago->capital_pagado;
         $pago->save();
-        if($data['capital'] > $pago->capital && $pago->saldo > 0 && $pago->pagoSiguiente()){
+        if ($data['capital'] > $pago->capital && $pago->saldo > 0 && $pago->pagoSiguiente()) {
             $this->actualizarSiguentesPago($pago, $prestamo->first());
         }
     }
@@ -92,15 +96,14 @@ class CuotaHipotecaService extends CuotaService
         $pagoSiguiente->capital = $pago->saldo - $pagoSiguiente->interes;
         $pagoSiguiente->saldo = $pago->saldo - $pagoSiguiente->capital;
         $pagoSiguiente->save();
-        if($pagoSiguiente->saldo > 0){
+        if ($pagoSiguiente->saldo > 0) {
 
-        if($pagoSiguiente->pagoSiguiente()){
-            $this->actualizarSiguentesPago($pagoSiguiente,$prestamoHipotecario);
+            if ($pagoSiguiente->pagoSiguiente()) {
+                $this->actualizarSiguentesPago($pagoSiguiente, $prestamoHipotecario);
+            } else {
+                $this->generarPago($pagoSiguiente->saldo, $pagoSiguiente, $prestamoHipotecario);
+            }
         }
-        else{
-            $this->generarPago($pagoSiguiente->saldo, $pagoSiguiente, $prestamoHipotecario);
-        }
-    }
     }
 
     public function getPagos(Prestamo_Hipotecario $prestamoHipotecario)
@@ -111,13 +114,16 @@ class CuotaHipotecaService extends CuotaService
     private function esFechaValida($fecha)
     {
         $dia = date('j', strtotime($fecha));
+        $this->log('El dia es ' . $dia);
         return $dia >= 1 && $dia <= 5;
     }
 
-    private function calcularCuota($monto, $interes, $plazo, $tipoPlazo)
+    private function calcularCuota($monto, $interes, $plazo)
     {
         $tasaInteresMensual = $this->calcularTaza($interes);
-        $numeroPagos = $this->calcularPlazo($plazo, $tipoPlazo);
+        $numeroPagos = $plazo;
+        $this->log('La tasa de interes mensual es ' . $tasaInteresMensual);
+        $this->log('El numero de pagos es ' . $numeroPagos);
 
         return ($monto * $tasaInteresMensual) / (1 - pow(1 + $tasaInteresMensual, -$numeroPagos));
     }
@@ -130,7 +136,10 @@ class CuotaHipotecaService extends CuotaService
     private function calcularInteresDiario($interes, $fecha)
     {
 
-        return ($interes / $this->obtenerDiasDelMes($fecha, 0)) * $this->calcularDiasFaltantes($fecha);
+        $diasFaltantes = $this->calcularDiasFaltantes($fecha);
+        $diasDelMes = $this->obtenerDiasDelMes($fecha, 0);
+        $interes = $interes / $diasDelMes;
+        return  $this->calcularTaza($interes) * $diasFaltantes;
     }
 
     private function calcularDiasFaltantes($fecha)
@@ -138,7 +147,7 @@ class CuotaHipotecaService extends CuotaService
         $fechaActual = $fecha;
         $fechaSiguiente = $this->obtenerFechaSiguienteMes($fecha);
         $diferencia = $fechaActual->diff($fechaSiguiente);
-        return $diferencia->days;
+        return $diferencia->format("%a");
     }
     private function obtenerFechaSiguienteMes($fecha)
     {
