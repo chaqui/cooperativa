@@ -2,18 +2,15 @@
 
 namespace App\EstadosPrestamo;
 
+use App\Estado\Estado;
 use App\Models\Prestamo_Hipotecario;
 use App\Models\HistorialEstado;
 
-class EstadoBasePrestamo
+class EstadoBasePrestamo extends Estado
 {
-    private $estadoFin;
-    private $estadoInicio;
-
     public function __construct($estadoInicio, $estadoFin)
     {
-        $this->estadoInicio = $estadoInicio;
-        $this->estadoFin = $estadoFin;
+        parent::__construct($estadoInicio, $estadoFin);
     }
 
     public function cambiarEstado(Prestamo_Hipotecario $prestamo, $data)
@@ -28,7 +25,7 @@ class EstadoBasePrestamo
         else{
             throw new \Exception("El estado actual del prestamo no es el correcto");
         }
-        $historico=  HistorialEstado::generarHistorico($prestamo->id, $this->estadoFin, $data);
+        $historico=  HistorialEstado::generarHistoricoPrestamo($prestamo->id, $this->estadoFin, $data);
         $historico->save();
     }
 }

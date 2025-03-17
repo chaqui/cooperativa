@@ -7,7 +7,7 @@ class Cuenta_Interna extends Model{
     protected $table = 'cuenta_interna';
     protected $primaryKey = 'id';
     protected $fillable = ['ingreso', 'egreso', 'descripcion'];
-    public $timestamps = false;
+    public $timestamps = true;
 
     public function cliente()
     {

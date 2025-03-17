@@ -41,7 +41,7 @@ class InversionService
         $inversionData['fecha_inicio'] = now();
         $inversionData['fecha'] = $this->getFechaFinal(now(), $inversionData['plazo']);
         $inversion = Inversion::create($inversionData);
-        $this->cuotaInversionService->calcularCuotaInversion($inversion);
+      //  $this->cuotaInversionService->calcularCuotaInversion($inversion);
         DB::commit();
         return $inversion;
     }

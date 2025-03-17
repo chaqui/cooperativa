@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Prestamo_Hipotecario extends Model
 {
+    protected $id = 'id';
     protected $table = 'prestamo_hipotecarios';
     protected $fillable = [
         'dpi_cliente',
@@ -64,5 +65,10 @@ class Prestamo_Hipotecario extends Model
     public function asesor()
     {
         return $this->belongsTo(User::class, 'id_usuario');
+    }
+
+    public function cuotasPendientes()
+    {
+        return $this->hasMany(Pago::class, 'id_prestamo')->where('realizado', 0);
     }
 }

@@ -23,6 +23,7 @@ class Cuota extends JsonResource
             'amortizacion' => $this->capital,
             'saldo' => $this->saldo,
             'realizado' => $this->realizado? 'Si': 'No',
+            'id_prestamo' => $this->id_prestamo,
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Constants\TipoCliente;
+use Illuminate\Support\Facades\Log;
 
 class Client extends Model
 {
@@ -156,5 +157,18 @@ class Client extends Model
         } else {
             return Client::generateClienteAsalariado($data, $client);
         }
+    }
+
+    public function getCuotasPendientes()
+    {
+        $prestamos = $this->prestamosHipotecarios;
+        $cuotas = collect();
+        foreach ($prestamos as $prestamo) {
+            $cuotasPendientes = $prestamo->cuotasPendientes;
+            if ($cuotasPendientes->isNotEmpty()) {
+                $cuotas = $cuotas->merge($cuotasPendientes);
+            }
+        }
+        return $cuotas;
     }
 }

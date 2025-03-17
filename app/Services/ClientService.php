@@ -187,6 +187,13 @@ class ClientService
         return $client->prestamosHipotecarios;
     }
 
+    public function getCuotas($id): mixed
+    {
+        $client = $this->getClient($id);
+        $cuotas = $client->getCuotasPendientes();
+        return $cuotas;
+    }
+
     /**
      * Get the PDF of a client
      * @param mixed $id The id of the client

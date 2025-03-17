@@ -47,6 +47,7 @@ class CreateFilamentUser extends Command
                 'password' => bcrypt($password),
                 'role_id' => $role_id,
             ]);
+            $this->info('User updated successfully.');
         } else {
             $this->info('User does not exist. Creating user...');
             User::create([
@@ -55,6 +56,7 @@ class CreateFilamentUser extends Command
                 'password' => bcrypt($password),
                 'role_id' => $role_id,
             ]);
+            $this->info('User created successfully.');
         }
     }
 }

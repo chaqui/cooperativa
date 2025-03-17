@@ -5,11 +5,19 @@ namespace App\Services;
 use App\Models\Prestamo_Hipotecario;
 use App\Models\Pago;
 use App\Traits\Loggable;
+use Illuminate\Support\Facades\DB;
 
 class CuotaHipotecaService extends CuotaService
 {
 
     use Loggable;
+
+    private $cuentaInternaService;
+
+    public function __construct(CuentaInternaService $cuentaInternaService)
+    {
+        $this->cuentaInternaService = $cuentaInternaService;
+    }
 
     public function calcularCuotas(Prestamo_Hipotecario $prestamoHipotecario)
     {
@@ -23,7 +31,6 @@ class CuotaHipotecaService extends CuotaService
 
     private function generarCuotas(Prestamo_Hipotecario $prestamoHipotecario, $cuota, $plazo)
     {
-        $this->log('La cuota es de ' . $cuota);
 
         $fecha = $prestamoHipotecario->fecha_inicio;
         $pagoAnterior = null;
@@ -71,22 +78,42 @@ class CuotaHipotecaService extends CuotaService
         return Pago::findOrFail($id);
     }
 
-    public function realizarPago($data)
+    public function realizarPago($data, $id)
     {
-        $pago = $this->getPago($data['id']);
-        $prestamo = $pago->prestamo();
+        DB::beginTransaction();
+        $pago = $this->getPago($id);
+        $prestamo = $pago->prestamo; // Ensure 'prestamo' is a relationship returning a Prestamo_Hipotecario instance
         if ($pago->capital > $data['capital']) {
             throw new \Exception('El capital pagado no puede ser menor al capital de la cuota');
         }
+
+        $this->crearPago($data, $pago);
+
+        $dataCuenta = [
+            'ingreso' => $data['monto'],
+            'egreso' => 0,
+            'descripcion' => 'Pago de cuota de hipoteca con id ' . $pago->id . ' del prestamo con id ' . $prestamo->id . '  con fecha ' . $pago->fecha_pago . ' por un monto de ' . $data['monto'] . ' y un capital de ' . $data['capital'] . ' con un saldo de ' . $pago->saldo . ' y un interes de ' . $pago->interes,
+        ];
+        $this->cuentaInternaService->createCuenta($dataCuenta);
+
+
+        if ($data['capital'] > $pago->capital && $pago->saldo > 0 && $pago->pagoSiguiente()) {
+            $this->actualizarSiguentesPago($pago, $prestamo->first());
+        }
+        DB::commit();
+    }
+
+    private function crearPago($data, $pago)
+    {
         $pago->fecha_pago = date('Y-m-d');
         $pago->realizado = true;
         $pago->monto_pagado = $data['monto'];
         $pago->capital_pagado = $data['capital'];
         $pago->saldo = $pago->saldo - $pago->capital_pagado;
+        $pago->no_documento = $data['no_documento'];
+        $pago->tipo_documento = $data['tipo_documento'];
+        $pago->fecha_documento = $data['fecha_documento'];
         $pago->save();
-        if ($data['capital'] > $pago->capital && $pago->saldo > 0 && $pago->pagoSiguiente()) {
-            $this->actualizarSiguentesPago($pago, $prestamo->first());
-        }
     }
 
     private function actualizarSiguentesPago(Pago $pago, Prestamo_Hipotecario $prestamoHipotecario)

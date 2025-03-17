@@ -5,8 +5,6 @@ Welcome to the Cooperativa project! This README will help you understand what th
 ## Table of Contents
 - [Introduction](#introduction)
 - [Installation](#installation)
-- [License](#license)
-- [Laravel Setup](#laravel-setup)
 
 ## Introduction
 Cooperativa is a project for managing a cooperative society. It is built with Laravel and Vue.js.

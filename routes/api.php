@@ -6,17 +6,20 @@ use Tymon\JWTAuth\Http\Middleware\Authenticate;
 
 use App\Constants\Roles;
 use App\Http\Middleware\CheckRole;
+use App\Http\Controllers\PagoController;
+use App\Http\Controllers\CajaController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CuotaController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\PrestamoController;
 use App\Http\Controllers\TipoPlazoController;
 use App\Http\Controllers\InversionController;
 use App\Http\Controllers\ReferenceController;
 use App\Http\Controllers\PropiedadController;
 use App\Http\Controllers\FotografiaController;
 use App\Http\Controllers\CuentaBancariaController;
-use App\Http\Controllers\PrestamoController;
+
 
 $rolesEdicion = implode('|', [Roles::$ADMIN, Roles::$ASESOR]);
 $rolesSoloLectura = implode('|', [Roles::$ADMIN, Roles::$ASESOR, Roles::$CAJERO]);
@@ -30,6 +33,7 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::post('clients/{id}/fotografia', [ClientController::class, 'uploadFoto']);
     Route::get('clients/{id}/propiedades', [ClientController::class, 'propiedades']);
     Route::get('clients/{id}/prestamos', [ClientController::class, 'prestamos']);
+    Route::get('clients/{id}/cuotas', [ClientController::class, 'cuotas']);
 });
 
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
@@ -57,7 +61,7 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
 
 //pagos
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
-    Route::post('pagar-cuota/{id}', [CuotaController::class, 'pagarCuota']);
+    Route::put('pagos/{id}', [PagoController::class, 'pagarCuota']);
 });
 
 
@@ -136,3 +140,9 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('estados/{estado}/prestamos', [PrestamoController::class, 'prestamosByEstado']);
 });
+
+//caja
+Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
+    Route::get('caja', [CajaController::class, 'index']);
+});
+

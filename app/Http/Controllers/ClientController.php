@@ -15,6 +15,7 @@ use App\Http\Resources\Inversion as InversionResource;
 use App\Http\Resources\Reference as ReferenceResource;
 use App\Http\Resources\Propiedad as PropiedadResource;
 use App\Http\Resources\Prestamo as PrestamoResource;
+use App\Http\Resources\Cuota as CuotaResource;
 
 class ClientController extends Controller
 {
@@ -136,6 +137,13 @@ class ClientController extends Controller
     {
         $prestamos = $this->clientService->getPrestamos($id);
         return PrestamoResource::collection($prestamos);
+    }
+
+    public function cuotas(string $id)
+    {
+        $cuotas = $this->clientService->getCuotas($id);
+        \Log::info($cuotas);
+        return CuotaResource::collection($cuotas);
     }
 
     /**

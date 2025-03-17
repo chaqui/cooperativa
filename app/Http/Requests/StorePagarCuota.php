@@ -22,7 +22,12 @@ class StorePagarCuota extends FormRequest
     public function rules(): array
     {
         return [
-            'no_boleta' => ['required', 'string'],
+            'no_documento' => ['required', 'string'],
+            'tipo_documento' => ['required', 'string'],
+            'fecha_documento' => ['required', 'date'],
+            'monto' => ['required', 'numeric'],
+            'capital' => ['required', 'numeric'],
+
         ];
     }
 }
