@@ -33,7 +33,6 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::post('clients/{id}/fotografia', [ClientController::class, 'uploadFoto']);
     Route::get('clients/{id}/propiedades', [ClientController::class, 'propiedades']);
     Route::get('clients/{id}/prestamos', [ClientController::class, 'prestamos']);
-    Route::get('clients/{id}/cuotas', [ClientController::class, 'cuotas']);
 });
 
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
@@ -43,6 +42,7 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
     Route::get('clients/{id}/inversiones', [ClientController::class, 'inversiones']);
     Route::get('clients/{id}/references', [ClientController::class, 'referencias']);
     Route::get('clients/{id}/pdf', [ClientController::class, 'generateClientPdf']);
+    Route::get('clients/{id}/cuotas', [ClientController::class, 'cuotas']);
 });
 
 //inversiones
@@ -145,4 +145,3 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
     Route::get('caja', [CajaController::class, 'index']);
 });
-
