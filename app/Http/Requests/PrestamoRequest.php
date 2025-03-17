@@ -29,7 +29,7 @@ class PrestamoRequest extends FormRequest
             'interes' => 'required|numeric',
             'destino' => 'required|string',
             'plazo' => 'required|numeric',
-            'tipo_plazo' => 'required|string',
+            'tipo_plazo' => 'required|numeric',
             'uso_prestamo' => 'required|string',
             'dpi_cliente' => 'required|string',
             'propiedad_id' => 'required|numeric',

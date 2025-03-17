@@ -41,6 +41,7 @@ class PrestamoController extends Controller
     public function store(PrestamoRequest $request)
     {
         $this->prestamoService->create($request->all());
+        return response()->json(['message' => 'Prestamo creado correctamente'], 201);
     }
 
     /**
@@ -78,6 +79,7 @@ class PrestamoController extends Controller
     public function cambiarEstado(EstadoRequest $request, string $id)
     {
         $this->prestamoService->cambiarEstado($id, $request->all());
+        return response()->json(['message' => 'Estado cambiado correctamente'], 200);
     }
 
     public function prestamosByEstado(string $estado)
@@ -100,6 +102,4 @@ class PrestamoController extends Controller
     {
         return PagoResource::collection($this->prestamoService->getPagos($id));
     }
-
-
 }

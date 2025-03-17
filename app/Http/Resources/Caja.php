@@ -16,8 +16,8 @@ class Caja extends JsonResource
     {
         return [
             'id' => $this->id,
-            'ingreso' => $this->ingreso,
-            'egreso' => $this->egreso,
+            'ingreso' => (float) $this->ingreso,
+            'egreso' => (float) $this->egreso,
             'descripcion' => $this->descripcion,
             'fecha' => $this->created_at,
         ];
