@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Estado_Prestamo extends Model
+class Estado extends Model
 {
-    protected $table = 'estado_prestamos';
+    protected $table = 'estado';
     protected $fillable = ['nombre'];
 }

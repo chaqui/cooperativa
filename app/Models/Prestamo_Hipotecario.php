@@ -39,7 +39,7 @@ class Prestamo_Hipotecario extends Model
 
     public function estado()
     {
-        return $this->belongsTo(Estado_Prestamo::class, 'estado_id');
+        return $this->belongsTo(Estado::class, 'estado_id');
     }
 
     public function pagos()

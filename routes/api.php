@@ -50,12 +50,14 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::post('inversiones', [InversionController::class, 'store']);
     Route::put('inversiones/{id}', [InversionController::class, 'update']);
     Route::delete('inversiones/{id}', [InversionController::class, 'destroy']);
+    Route::put('inversiones/{id}/estados', [InversionController::class, 'cambiarEstado']);
 });
 
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
     Route::get('inversiones', [InversionController::class, 'index']);
     Route::get('inversiones/{id}', [InversionController::class, 'show']);
     Route::get('inversiones/{id}/cuotas', [InversionController::class, 'cuotas']);
+    Route::get('inversiones/{id}/estados', [InversionController::class, 'historico']);
 });
 
 
@@ -125,9 +127,9 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
 
 //prestamos
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
+    Route::get('prestamos', action: [PrestamoController::class, 'index']);
     Route::post('prestamos', [PrestamoController::class, 'store']);
     Route::put('prestamos/{id}', [PrestamoController::class, 'update']);
-    Route::get('prestamos', action: [PrestamoController::class, 'index']);
     Route::delete('prestamos/{id}', [PrestamoController::class, 'destroy']);
     Route::put('prestamos/inactivar/{id}', [PrestamoController::class, 'inactivar']);
     Route::get('prestamos/{id}/estados', [PrestamoController::class, 'historial']);
@@ -144,4 +146,5 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
 //caja
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
     Route::get('caja', [CajaController::class, 'index']);
+    Route::get('cuotas-hoy', [CuotaController::class, 'obtenerCuotasParaPagarHoy']);
 });

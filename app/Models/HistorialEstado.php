@@ -25,7 +25,7 @@ class HistorialEstado extends Model
 
     public function estado()
     {
-        return $this->belongsTo(Estado_Prestamo::class, 'id_estado');
+        return $this->belongsTo(Estado::class, 'id_estado');
     }
 
     /**

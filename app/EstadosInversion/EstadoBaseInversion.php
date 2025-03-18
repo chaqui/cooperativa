@@ -17,16 +17,16 @@ class EstadoBaseInversion extends Estado
     public function cambiarEstado(Inversion $inversion, $data)
     {
         if (!$this->estadoInicio) {
-            $inversion->estado_id = $this->estadoFin;
+            $inversion->id_estado = $this->estadoFin;
             $inversion->save();
-        } else if ($inversion->estado_id == $this->estadoInicio) {
-            $inversion->estado_id = $this->estadoFin;
+        } else if ($inversion->id_estado == $this->estadoInicio) {
+            $inversion->id_estado = $this->estadoFin;
             $inversion->save();
         }
         else{
             throw new \Exception("El estado actual de la inversion no es el correcto");
         }
-        $historico=  HistorialEstado::generarHistorico($inversion->id, $this->estadoFin, $data);
+        $historico=  HistorialEstado::generarHistoricoInversion($inversion->id, $this->estadoFin, $data);
         $historico->save();
     }
 }

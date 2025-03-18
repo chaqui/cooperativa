@@ -23,6 +23,7 @@ class Inversion extends JsonResource
             'dpi_cliente' => $this->dpi_cliente,
             'cliente' => $this->cliente->nombres . ' ' . $this->cliente->apellidos,
             'cuenta_recaudadora' => $this->cuentaRecaudadora->numero_cuenta,
+            'estado' => $this->estado->nombre,
         ];
     }
 }

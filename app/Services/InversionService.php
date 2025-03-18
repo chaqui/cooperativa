@@ -2,7 +2,8 @@
 
 namespace App\Services;
 
-use Carbon\Carbon;
+use App\Constants\EstadoInversion;
+use App\EstadosInversion\ControladorEstado;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -12,11 +13,16 @@ use App\Models\Inversion;
 class InversionService
 {
 
+
+
     private  CuotaInversionService $cuotaInversionService;
 
-    public function __construct(CuotaInversionService $cuotaInversionService)
+    private ControladorEstado $controladorEstado;
+
+    public function __construct(CuotaInversionService $cuotaInversionService, ControladorEstado $controladorEstado)
     {
         $this->cuotaInversionService = $cuotaInversionService;
+        $this->controladorEstado = $controladorEstado;
     }
 
     public function getInversion(string $id): Inversion
@@ -38,10 +44,9 @@ class InversionService
     public function createInversion(array $inversionData): Inversion
     {
         DB::beginTransaction();
-        $inversionData['fecha_inicio'] = now();
-        $inversionData['fecha'] = $this->getFechaFinal(now(), $inversionData['plazo']);
+        $inversionData['fecha'] = now();
         $inversion = Inversion::create($inversionData);
-      //  $this->cuotaInversionService->calcularCuotaInversion($inversion);
+        $this->controladorEstado->cambiarEstado($inversion, ['estado' => EstadoInversion::$CREADO]);
         DB::commit();
         return $inversion;
     }
@@ -61,9 +66,16 @@ class InversionService
         DB::commit();
     }
 
-    private function getFechaFinal($fechaInicio, $plazo)
+    public function cambiarEstado($id, $data)
     {
+        DB::beginTransaction();
+        $inversion = $this->getInversion($id);
+        $this->controladorEstado->cambiarEstado($inversion, $data);
+        DB::commit();
+    }
 
-        return Carbon::parse($fechaInicio)->addDays($plazo);
+    public function getHistoricoInversion($id)
+    {
+        return Inversion::findOrFail($id)->historial;
     }
 }

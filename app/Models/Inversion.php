@@ -14,10 +14,10 @@ class Inversion extends Model
         'id_estado',
         'tipo_taza',
         'tipo_plazo',
-        'tipo_inversion',
         'cuenta_recaudadora',
         'dpi_cliente',
-        'fecha'
+        'fecha',
+        'fecha_inicio',
     ];
 
     public function cliente()
@@ -27,7 +27,7 @@ class Inversion extends Model
 
     public function estado()
     {
-        return $this->belongsTo(Estado_Inversion::class, 'id_estado');
+        return $this->belongsTo(Estado::class, 'id_estado');
     }
 
     public function tipoTaza()
@@ -40,10 +40,6 @@ class Inversion extends Model
         return $this->belongsTo(Tipo_Plazo::class, 'tipo_plazo');
     }
 
-    public function tipoInversion()
-    {
-        return $this->belongsTo(Tipo_Inversion::class, 'tipo_inversion');
-    }
 
     public function pagosInversion()
     {
@@ -53,5 +49,10 @@ class Inversion extends Model
     public function cuentaRecaudadora()
     {
         return $this->belongsTo(Cuenta_Bancaria::class, 'cuenta_recaudadora');
+    }
+
+    public function historial()
+    {
+        return $this->hasMany(HistorialEstado::class, 'id_inversion');
     }
 }

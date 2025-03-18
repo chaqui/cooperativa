@@ -13,7 +13,9 @@ class Pago_Inversion extends Model
         "fecha_pago",
         "realizado",
         "inversion_id",
-        "no_boleta"
+        "no_boleta",
+        'montoInteres',
+        'montoISR'
     ];
 
     public function inversion()

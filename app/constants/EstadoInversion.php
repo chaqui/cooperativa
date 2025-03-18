@@ -6,6 +6,10 @@ class EstadoInversion extends Estado
 {
 
 
-    public static $DEPOSITADO = '3';
+    public static $DEPOSITADO = '7';
+
+
+
+
 
 }

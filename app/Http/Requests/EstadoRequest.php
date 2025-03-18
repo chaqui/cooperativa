@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Constants\EstadoInversion;
 use App\Constants\EstadoPrestamo;
 use App\Constants\Roles;
 use App\Traits\Authorizable;
@@ -27,7 +28,8 @@ class EstadoRequest extends FormRequest
     public function rules(): array
     {
         $validaciones = $this->validacionesPrincipales();
-        if ($this->input("estado") === EstadoPrestamo::$DESEMBOLZADO) {
+        if ($this->input("estado") === EstadoPrestamo::$DESEMBOLZADO
+            || $this->input("estado") === EstadoInversion::$DEPOSITADO) {
             $validaciones = array_merge($validaciones, $this->validacionesDesembolsado());
         }
         return $validaciones;

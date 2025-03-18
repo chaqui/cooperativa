@@ -142,7 +142,6 @@ class ClientController extends Controller
     public function cuotas(string $id)
     {
         $cuotas = $this->clientService->getCuotas($id);
-        \Log::info($cuotas);
         return CuotaResource::collection($cuotas);
     }
 

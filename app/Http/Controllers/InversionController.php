@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreInversionRequest;
+use App\Http\Requests\EstadoRequest;
 use Illuminate\Http\Request;
 
 use App\Services\InversionService;
 use App\Services\CuotaInversionService;
-use App\Http\Resources\Cuota as CuotaResource;
+use App\Http\Resources\CuotaInversion as CuotaResource;
 use App\Http\Resources\Inversion as InversionResource;
+use App\Http\Resources\HistoricoEstado as HistoricoEstadoResource;
 
 class InversionController extends Controller
 {
@@ -56,9 +58,7 @@ class InversionController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id) {
-
-    }
+    public function edit(string $id) {}
 
     /**
      * Update the specified resource in storage.
@@ -87,5 +87,15 @@ class InversionController extends Controller
         return CuotaResource::collection($cuotas);
     }
 
+    public function cambiarEstado(EstadoRequest $request, string $id)
+    {
+        $this->inversionService->cambiarEstado($id, $request->all());
+        return response()->json(['message' => 'Estado changed successfully'], 200);
+    }
 
+    public function historico(string $id)
+    {
+        $historico = $this->inversionService->getHistoricoInversion($id);
+        return HistoricoEstadoResource::collection($historico);
+    }
 }
