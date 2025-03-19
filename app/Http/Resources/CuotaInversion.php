@@ -24,6 +24,7 @@ class CuotaInversion extends JsonResource
             'no_boleta' => $this->no_boleta,
             'realizado' => $this->realizado? 'Si': 'No',
             'inversion_id' => $this->inversion_id,
+            'codigo_inversion' => $this->inversion->codigo,
         ];
     }
 }

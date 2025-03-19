@@ -24,6 +24,7 @@ class Cuota extends JsonResource
             'saldo' => $this->saldo,
             'realizado' => $this->realizado? 'Si': 'No',
             'id_prestamo' => $this->id_prestamo,
+            'codigo_prestamo' => $this->prestamo->codigo,
         ];
     }
 }
