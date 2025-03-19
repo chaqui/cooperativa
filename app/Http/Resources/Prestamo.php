@@ -32,6 +32,7 @@ class Prestamo extends JsonResource
             'tipo_garante' => $this->tipo_garante,
             'frecuencia_pago' => $this->frecuencia_pago,
             'parentesco' => $this->parentesco,
+            'codigo' => $this->codigo,
 
         ];
     }

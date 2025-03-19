@@ -3,19 +3,16 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\EstadoPrestamoResource\Pages;
-use App\Filament\Resources\EstadoPrestamoResource\RelationManagers;
-use App\Models\Estado_Prestamo;
+use App\Models\Estado;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class EstadoPrestamoResource extends Resource
 {
-    protected static ?string $model = Estado_Prestamo::class;
+    protected static ?string $model = Estado::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 

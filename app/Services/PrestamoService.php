@@ -39,7 +39,7 @@ class PrestamoService
         $this->clientService->getClient($data['dpi_cliente']);
         $this->clientService->getClient($data['fiador_dpi']);
         $this->propiedadService->getPropiedad($data['propiedad_id']);
-
+        $data['codigo'] = $this->createCode();
 
         $usuario = $this->userService->getUserOfToken();
         $data['id_usuario'] = $usuario->id;
@@ -117,5 +117,11 @@ class PrestamoService
     {
         $prestamoHipotecario = $this->get($id);
         return $prestamoHipotecario->pagos;
+    }
+
+    private function createCode(){
+        $result = DB::select('SELECT nextval(\'correlativo_prestamo\') AS correlativo');
+        $correlativo = $result[0]->correlativo;
+        return 'PCP-' . $correlativo;
     }
 }

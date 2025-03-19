@@ -24,6 +24,7 @@ class Inversion extends JsonResource
             'cliente' => $this->cliente->nombres . ' ' . $this->cliente->apellidos,
             'cuenta_recaudadora' => $this->cuentaRecaudadora->numero_cuenta,
             'estado' => $this->estado->nombre,
+            'codigo' => $this->codigo,
         ];
     }
 }

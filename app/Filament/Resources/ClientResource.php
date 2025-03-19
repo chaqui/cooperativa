@@ -231,7 +231,6 @@ class ClientResource extends Resource
     {
         return [
             RelationManagers\CuentasBancariasRelationManager::class,
-            RelationManagers\ContratoRelationManager::class,
             RelationManagers\PrestamoHipotecarioRelationManager::class,
             RelationManagers\InversionRelationManager::class,
         ];

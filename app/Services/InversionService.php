@@ -45,6 +45,7 @@ class InversionService
     {
         DB::beginTransaction();
         $inversionData['fecha'] = now();
+        $inversionData['codigo'] = $this->createCode();
         $inversion = Inversion::create($inversionData);
         $this->controladorEstado->cambiarEstado($inversion, ['estado' => EstadoInversion::$CREADO]);
         DB::commit();
@@ -77,5 +78,11 @@ class InversionService
     public function getHistoricoInversion($id)
     {
         return Inversion::findOrFail($id)->historial;
+    }
+
+    private function createCode(){
+        $result = DB::select('SELECT nextval(\'correlativo_inversion\') AS correlativo');
+        $correlativo = $result[0]->correlativo;
+        return 'ICP-' . $correlativo;
     }
 }
