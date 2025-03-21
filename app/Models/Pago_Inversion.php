@@ -20,6 +20,6 @@ class Pago_Inversion extends Model
 
     public function inversion()
     {
-        return $this->belongsTo(Inversion::class, 'inversion');
+        return $this->belongsTo(Inversion::class, 'inversion_id');
     }
 }

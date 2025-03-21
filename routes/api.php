@@ -19,7 +19,8 @@ use App\Http\Controllers\ReferenceController;
 use App\Http\Controllers\PropiedadController;
 use App\Http\Controllers\FotografiaController;
 use App\Http\Controllers\CuentaBancariaController;
-
+use App\Http\Controllers\DepositoController;
+use App\Http\Controllers\RetiroController;
 
 $rolesEdicion = implode('|', [Roles::$ADMIN, Roles::$ASESOR]);
 $rolesSoloLectura = implode('|', [Roles::$ADMIN, Roles::$ASESOR, Roles::$CAJERO]);
@@ -55,6 +56,7 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
 
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
     Route::get('inversiones', [InversionController::class, 'index']);
+    Route::get('inversiones/depositos', [InversionController::class, 'getDepositos']);
     Route::get('inversiones/{id}', [InversionController::class, 'show']);
     Route::get('inversiones/{id}/cuotas', [InversionController::class, 'cuotas']);
     Route::get('inversiones/{id}/estados', [InversionController::class, 'historico']);
@@ -129,6 +131,7 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('prestamos', action: [PrestamoController::class, 'index']);
     Route::post('prestamos', [PrestamoController::class, 'store']);
+    Route::get('prestamos/retiros', [PrestamoController::class, 'getRetirosPendientes']);
     Route::put('prestamos/{id}', [PrestamoController::class, 'update']);
     Route::delete('prestamos/{id}', [PrestamoController::class, 'destroy']);
     Route::put('prestamos/inactivar/{id}', [PrestamoController::class, 'inactivar']);
@@ -147,4 +150,6 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
     Route::get('caja', [CajaController::class, 'index']);
     Route::get('cuotas-hoy', [CuotaController::class, 'obtenerCuotasParaPagarHoy']);
+    Route::put('depositos/{id}', [DepositoController::class, 'depositar']);
+    Route::put('retiros/{id}', [RetiroController::class, 'retirar']);
 });

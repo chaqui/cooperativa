@@ -41,11 +41,6 @@ class EstadoRequest extends FormRequest
             'estado' => 'required|string',
         ];
     }
-    private function validacionesDesembolsado(): array
-    {
-        return [
-            'no_documento_desembolso' => 'required|string',
-            'tipo_documento_desembolso' => 'required|string',
-        ];
-    }
+
+
 }

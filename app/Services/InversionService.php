@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Constants\EstadoInversion;
 use App\EstadosInversion\ControladorEstado;
 
+use App\Traits\Loggable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -13,8 +14,7 @@ use App\Models\Inversion;
 class InversionService
 {
 
-
-
+    use Loggable;
     private  CuotaInversionService $cuotaInversionService;
 
     private ControladorEstado $controladorEstado;
@@ -80,9 +80,29 @@ class InversionService
         return Inversion::findOrFail($id)->historial;
     }
 
-    private function createCode(){
+    private function createCode()
+    {
         $result = DB::select('SELECT nextval(\'correlativo_inversion\') AS correlativo');
         $correlativo = $result[0]->correlativo;
         return 'ICP-' . $correlativo;
+    }
+
+    public function getDepositosPendientes()
+    {
+        $inversiones = Inversion::where('id_estado', EstadoInversion::$CREADO)->get();
+        $cuotasPendientes = collect();
+        foreach ($inversiones as $inversion) {
+            if (!$inversion->deposito) {
+                continue;
+            }
+            $cuotas = $inversion->deposito()->where('realizado', false)->get();
+            if ($cuotas->isNotEmpty()) {
+                foreach ($cuotas as $cuota) {
+                    $cuota->codigo_inversion = $inversion->codigo;
+                }
+                $cuotasPendientes = $cuotasPendientes->merge($cuotas);
+            }
+        }
+        return $cuotasPendientes;
     }
 }

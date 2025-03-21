@@ -31,4 +31,9 @@ class CuentaInternaService
         }
         return Cuenta_Interna::create($data);
     }
+
+    public function getSaldo()
+    {
+        return Cuenta_Interna::sum('ingreso') - Cuenta_Interna::sum('egreso');
+    }
 }

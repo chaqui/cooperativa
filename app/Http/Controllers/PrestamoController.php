@@ -9,6 +9,7 @@ use App\Services\PrestamoService;
 use App\Http\Resources\Prestamo as PrestamoResource;
 use App\Http\Resources\HistoricoEstado as HistoricoEstadoResource;
 use App\Http\Resources\Cuota as PagoResource;
+use App\Http\Resources\Retiro as RetiroResource;
 
 class PrestamoController extends Controller
 {
@@ -101,5 +102,10 @@ class PrestamoController extends Controller
     public function pagos(string $id)
     {
         return PagoResource::collection($this->prestamoService->getPagos($id));
+    }
+
+    public function getRetirosPendientes()
+    {
+        return RetiroResource::collection($this->prestamoService->getRetirosPendientes());
     }
 }

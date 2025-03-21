@@ -12,11 +12,14 @@ class CuotaHipotecaService extends CuotaService
 
     use Loggable;
 
-    private $cuentaInternaService;
+    private CuentaInternaService $cuentaInternaService;
 
-    public function __construct(CuentaInternaService $cuentaInternaService)
+    private DepositoService $depositoService;
+
+    public function __construct(CuentaInternaService $cuentaInternaService, DepositoService $depositoService)
     {
         $this->cuentaInternaService = $cuentaInternaService;
+        $this->depositoService = $depositoService;
     }
 
     public function calcularCuotas(Prestamo_Hipotecario $prestamoHipotecario)
@@ -87,7 +90,24 @@ class CuotaHipotecaService extends CuotaService
             throw new \Exception('El capital pagado no puede ser menor al capital de la cuota');
         }
 
-        $this->crearPago($data, $pago);
+        if ($pago->realizado) {
+            throw new \Exception('El pago ya ha sido realizado');
+        }
+
+        $pago->realizado = true;
+        $pago->monto_pagado = $data['monto'];
+        $pago->capital_pagado = $data['capital'];
+        $pago->realizado = true;
+        $pago->save();
+
+        $this->depositoService->crearDeposito([
+            'tipo_documento' => $data['tipo_documento'],
+            'id_pago' => $pago->id,
+            'monto' => $data['monto'],
+            'numero_documento' => $data['no_documento'],
+            'imagen' => $data['imagen'],
+
+        ]);
 
         $dataCuenta = [
             'ingreso' => $data['monto'],

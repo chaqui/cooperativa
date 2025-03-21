@@ -5,11 +5,13 @@ namespace App\Services;
 use App\Constants\EstadoPrestamo;
 use App\EstadosPrestamo\ControladorEstado;
 use App\Models\Prestamo_Hipotecario;
+use App\Traits\Loggable;
 use Illuminate\Support\Facades\DB;
 
 class PrestamoService
 {
 
+    use Loggable;
     private $controladorEstado;
 
     private $clientService;
@@ -123,5 +125,26 @@ class PrestamoService
         $result = DB::select('SELECT nextval(\'correlativo_prestamo\') AS correlativo');
         $correlativo = $result[0]->correlativo;
         return 'PCP-' . $correlativo;
+    }
+
+    public function getRetirosPendientes(){
+        $prestamos = Prestamo_Hipotecario::where('estado_id', EstadoPrestamo::$APROBADO)->get();
+        $retirosPendientes= collect();
+        $this->log( $prestamos->count());
+        foreach ($prestamos as $prestamo) {
+            if (!$prestamo->retiro) {
+                continue;
+            }
+           $retiros = $prestamo->retiro->where('realizado', false)->get();
+           if ($retiros->isNotEmpty()) {
+                foreach ($retiros as $retiro) {
+                    $retiro->codigo_prestamo = $prestamo->codigo;
+                }
+                $this->log($retiros);
+                $retirosPendientes = $retirosPendientes->merge($retiros);
+            }
+        }
+        $this->log($retirosPendientes);
+        return $retirosPendientes;
     }
 }

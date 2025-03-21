@@ -20,10 +20,10 @@ class InversionDepositada extends EstadoBaseInversion
 
     public function cambiarEstado(Inversion $inversion, $data)
     {
-        if (!$data['no_documento_desembolso']) {
+        if (!$data['numero_documento']) {
             throw new \Exception('El número de documento es requerido');
         }
-        if (!$data['tipo_documento_desembolso']) {
+        if (!$data['tipo_documento']) {
             throw new \Exception('El tipo de documento es requerido');
         }
         parent::cambiarEstado($inversion, $data);
@@ -31,8 +31,8 @@ class InversionDepositada extends EstadoBaseInversion
             'ingreso' => $inversion->monto,
             'egreso' => 0,
             'descripcion' => 'Deposito de inversion con id ' . $inversion->id .
-                ' con monto de ' . $inversion->monto . ' con numero de documento ' . $data['no_documento_desembolso'] .
-                ' y tipo de documento ' . $data['tipo_documento_desembolso']
+                ' con monto de ' . $inversion->monto . ' con numero de documento ' . $data['numero_documento'] .
+                ' y tipo de documento ' . $data['tipo_documento']
         ];
         $this->cuentaInternaService->createCuenta($dataCuentaInterna);
     }

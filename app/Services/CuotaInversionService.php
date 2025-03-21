@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Inversion;
 use App\Models\Pago_Inversion;
-
+use DateTime;
 class CuotaInversionService extends CuotaService
 {
 
@@ -52,16 +52,29 @@ class CuotaInversionService extends CuotaService
         $nuevaFecha = clone $fecha;
         return $nuevaFecha->modify("+{$meses} months");
     }
-    private function obtenerSiguienteDiaHabil(\DateTime $fecha): \DateTime
+    private function obtenerSiguienteDiaHabil($fecha)
     {
-        $diaSemana = (int) $fecha->format('N'); // 1 (lunes) - 7 (domingo)
-        while ($diaSemana >= 6) { // 6 (sábado) y 7 (domingo) no son hábiles
-            $fecha = $fecha->modify('+1 day');
-            $diaSemana = (int) $fecha->format('N');
+        // Si la fecha es nula, usar la fecha actual
+        if ($fecha === null) {
+            $fecha = new DateTime();
         }
-        return $fecha;
-    }
 
+        // Si no es un objeto DateTime, convertirlo
+        if (!$fecha instanceof DateTime) {
+            $fecha = new DateTime($fecha);
+        }
+
+        $fechaCopia = clone $fecha;
+        $diaSemana = (int)$fechaCopia->format('N'); // 1 (lunes) a 7 (domingo)
+
+        // Si es sábado (6) o domingo (7), avanzar al lunes
+        if ($diaSemana >= 6) {
+            $diasAgregar = 8 - $diaSemana; // 2 para sábado, 1 para domingo
+            $fechaCopia->modify("+{$diasAgregar} days");
+        }
+
+        return $fechaCopia;
+    }
     public function obtenerCuotasFecha($fecha)
     {
         return Pago_Inversion::where('fecha_pago', $fecha)->get();

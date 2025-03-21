@@ -6,6 +6,7 @@ use App\Models\Inversion;
 use App\Constants\EstadoInversion;
 use App\Services\CuentaInternaService;
 use App\Services\CuotaInversionService;
+use App\Services\DepositoService;
 use App\Traits\Loggable;
 
 class ControladorEstado
@@ -15,10 +16,16 @@ class ControladorEstado
 
     private CuotaInversionService $cuotaInversionService;
 
-    public function __construct(CuentaInternaService $cuentaInternaService, CuotaInversionService $cuotaInversionService)
-    {
+    private DepositoService $depositoService;
+
+    public function __construct(
+        CuentaInternaService $cuentaInternaService,
+        CuotaInversionService $cuotaInversionService,
+        DepositoService $depositoService
+    ) {
         $this->cuentaInternaService = $cuentaInternaService;
         $this->cuotaInversionService = $cuotaInversionService;
+        $this->depositoService = $depositoService;
     }
     public function cambiarEstado(Inversion $inversion, $data)
     {
@@ -31,7 +38,7 @@ class ControladorEstado
         $this->log("Estado: $estado");
         switch ($estado) {
             case EstadoInversion::$CREADO:
-                return new InversionCreada();
+                return new InversionCreada($this->depositoService);
             case EstadoInversion::$DEPOSITADO:
                 return new InversionDepositada($this->cuentaInternaService);
             case EstadoInversion::$APROBADO:

@@ -72,4 +72,9 @@ class Prestamo_Hipotecario extends Model
     {
         return $this->hasMany(Pago::class, 'id_prestamo')->where('realizado', 0);
     }
+
+    public function retiro()
+    {
+        return $this->hasOne(Retiro::class, 'id_prestamo');
+    }
 }

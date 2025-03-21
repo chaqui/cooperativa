@@ -25,11 +25,10 @@ class PrestamoDesembolsado extends EstadoBasePrestamo
     public function cambiarEstado(Prestamo_Hipotecario $prestamo, $data)
     {
 
-
-        if (!$data['no_documento_desembolso']) {
+        if (!$data['numero_documento']) {
             throw new \Exception('El número de documento es requerido');
         }
-        if (!$data['tipo_documento_desembolso']) {
+        if (!$data['tipo_documento']) {
             throw new \Exception('El tipo de documento es requerido');
         }
         $prestamo->fecha_inicio = now();
@@ -38,8 +37,8 @@ class PrestamoDesembolsado extends EstadoBasePrestamo
             'ingreso' => 0,
             'egreso' => $prestamo->monto,
             'descripcion' => 'Desembolso de prestamo hipotecario con id ' . $prestamo->id .
-                ' con monto de ' . $prestamo->monto . ' con numero de documento ' . $data['no_documento_desembolso'] .
-                ' y tipo de documento ' . $data['tipo_documento_desembolso']
+                ' con monto de ' . $prestamo->monto . ' con numero de documento ' . $data['numero_documento'] .
+                ' y tipo de documento ' . $data['tipo_documento']
         ];
         $this->cuentaInternaService->createCuenta($dataCuentaInterna);
         $this->cuotaHipotecariaService->calcularCuotas($prestamo);

@@ -56,4 +56,9 @@ class Inversion extends Model
     {
         return $this->hasMany(HistorialEstado::class, 'id_inversion');
     }
+
+    public function deposito()
+    {
+        return $this->hasOne(Deposito::class, 'id_inversion');
+    }
 }

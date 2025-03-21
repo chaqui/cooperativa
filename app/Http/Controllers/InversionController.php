@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreInversionRequest;
 use App\Http\Requests\EstadoRequest;
+use App\Traits\Loggable;
 use Illuminate\Http\Request;
 
 use App\Services\InversionService;
@@ -11,9 +12,11 @@ use App\Services\CuotaInversionService;
 use App\Http\Resources\CuotaInversion as CuotaResource;
 use App\Http\Resources\Inversion as InversionResource;
 use App\Http\Resources\HistoricoEstado as HistoricoEstadoResource;
+use App\Http\Resources\Deposito as DepositoResource;
 
 class InversionController extends Controller
 {
+    use Loggable;
     private $inversionService;
 
     private $cuotaInversionService;
@@ -51,6 +54,7 @@ class InversionController extends Controller
      */
     public function show(string $id)
     {
+        $this->log("Inversion ID: $id");
         $inversion = $this->inversionService->getInversion($id);
         return new InversionResource($inversion);
     }
@@ -97,5 +101,12 @@ class InversionController extends Controller
     {
         $historico = $this->inversionService->getHistoricoInversion($id);
         return HistoricoEstadoResource::collection($historico);
+    }
+
+    public function getDepositos()
+    {
+
+        $depositos = $this->inversionService->getDepositosPendientes();
+        return DepositoResource::collection($depositos);
     }
 }

@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StorePagarCuota extends FormRequest
+class RetiroRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,13 +22,10 @@ class StorePagarCuota extends FormRequest
     public function rules(): array
     {
         return [
-            'no_documento' => ['required', 'string'],
-            'tipo_documento' => ['required', 'string'],
-            'fecha_documento' => ['required', 'date'],
-            'monto' => ['required', 'numeric'],
-            'capital' => ['required', 'numeric'],
-            'imagen' => ['required', 'string'],
-
+            'tipo_documento' => 'required|string|max:255',
+            'numero_documento' => 'required|string|max:255',
+            'imagen' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'monto' => 'required|numeric|min:0',
         ];
     }
 }
