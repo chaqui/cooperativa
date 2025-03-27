@@ -24,6 +24,7 @@ class DepositoRequest extends FormRequest
         return [
             'tipo_documento' => 'required|string|max:255',
             'numero_documento' => 'required|string|max:255',
+            'tipo_cuenta_interna_id' => 'required|integer|exists:tipo_cuenta_interna,id',
         ];
     }
 }

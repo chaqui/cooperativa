@@ -32,10 +32,28 @@ class InversionCreada extends EstadoBaseInversion
      */
     public function cambiarEstado(Inversion $inversion, $data)
     {
+        // Verificar que la inversión tenga monto
+        if (!$inversion->monto || $inversion->monto <= 0) {
+            throw new \InvalidArgumentException(
+                "La inversión #{$inversion->id} debe tener un monto válido para crear el depósito"
+            );
+        }
+
         parent::cambiarEstado($inversion, $data);
+        // Generar descripción detallada para el depósito
+        $descripcion = sprintf(
+            'Depósito inicial de la inversión #%d (Código: %s) por monto: Q%s',
+            $inversion->id,
+            $inversion->codigo ?? 'No especificado',
+            number_format($inversion->monto, 2)
+        );
+
+        // Crear el depósito asociado
         $this->depositoService->crearDeposito([
             'id_inversion' => $inversion->id,
             'monto' => $inversion->monto,
+            'motivo' => $descripcion,
+            'fecha' => now()
         ]);
     }
 }

@@ -17,6 +17,7 @@ class Retiro extends Model
         'imagen',
         'beneficiario',
         'realizado',
+        'tipo_cuenta_interna_id',
     ];
 
     public function prestamo()
@@ -32,5 +33,10 @@ class Retiro extends Model
     public function cuentaBancaria()
     {
         return $this->belongsTo(Cuenta_Bancaria::class, 'numero_cuenta', 'numero_cuenta');
+    }
+
+    public function tipoCuentaInterna()
+    {
+        return $this->belongsTo(TipoCuentaInterna::class, 'tipo_cuenta_interna_id');
     }
 }

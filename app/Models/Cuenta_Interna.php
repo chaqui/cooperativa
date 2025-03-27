@@ -1,12 +1,14 @@
 <?php
- namespace App\Models;
+
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Cuenta_Interna extends Model{
+class Cuenta_Interna extends Model
+{
     protected $table = 'cuenta_interna';
     protected $primaryKey = 'id';
-    protected $fillable = ['ingreso', 'egreso', 'descripcion'];
+    protected $fillable = ['ingreso', 'egreso', 'descripcion', 'tipo_cuenta_interna_id', 'ganancia','capital'];
     public $timestamps = true;
 
     public function cliente()
@@ -24,4 +26,13 @@ class Cuenta_Interna extends Model{
         return $cuentaInterna;
     }
 
+    public function tipoCuentaInterna()
+    {
+        return $this->belongsTo(TipoCuentaInterna::class, 'tipo_cuenta_interna_id');
+    }
+
+    public function saldo()
+    {
+        return $this->ingreso - $this->egreso;
+    }
 }

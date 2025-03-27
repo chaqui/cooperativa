@@ -15,17 +15,26 @@ class EstadoBasePrestamo extends Estado
 
     public function cambiarEstado(Prestamo_Hipotecario $prestamo, $data)
     {
-        if (!$this->estadoInicio) {
-            $prestamo->estado_id = $this->estadoFin;
-            $prestamo->save();
-        } else if ($prestamo->estado_id == $this->estadoInicio) {
-            $prestamo->estado_id = $this->estadoFin;
-            $prestamo->save();
+        $estadoOriginal = $prestamo->estado_id;
+
+        // Validar estado inicial si está definido
+        if ($this->estadoInicio !== null && $estadoOriginal != $this->estadoInicio) {
+            throw new \Exception(
+                "Estado inválido para cambio: el préstamo #{$prestamo->id} está en estado " .
+                    "{$estadoOriginal}, pero debe estar en estado {$this->estadoInicio}"
+            );
         }
-        else{
-            throw new \Exception("El estado actual del prestamo no es el correcto");
-        }
-        $historico=  HistorialEstado::generarHistoricoPrestamo($prestamo->id, $this->estadoFin, $data);
+
+        // Actualizar estado del préstamo
+        $prestamo->estado_id = $this->estadoFin;
+        $prestamo->updated_at = now(); // Actualizar timestamp
+
+        $prestamo->save();
+        $historico =  HistorialEstado::generarHistoricoPrestamo(
+            $prestamo->id,
+            $this->estadoFin,
+            $data
+        );
         $historico->save();
     }
 }

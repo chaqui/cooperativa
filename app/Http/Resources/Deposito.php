@@ -21,6 +21,8 @@ class Deposito extends JsonResource
             'imagen' => $this->imagen?? null,
             'monto' => (float)$this->monto,
             'inversion_id' => $this->inversion_id,
+            'realizado' => $this->realizado,
+            'motivo' => $this->motivo?? null,
             'codigo_inversion' => $this->codigo_inversion?? null,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

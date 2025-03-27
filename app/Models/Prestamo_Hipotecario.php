@@ -25,7 +25,10 @@ class Prestamo_Hipotecario extends Model
         'frecuencia_pago',
         'id_usuario',
         'parentesco',
-        'codigo'
+        'codigo',
+        'gastos_formalidad',
+        'gastos_administrativos',
+        'cuota',
     ];
 
     public function cliente()

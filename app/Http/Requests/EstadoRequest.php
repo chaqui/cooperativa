@@ -28,9 +28,8 @@ class EstadoRequest extends FormRequest
     public function rules(): array
     {
         $validaciones = $this->validacionesPrincipales();
-        if ($this->input("estado") === EstadoPrestamo::$DESEMBOLZADO
-            || $this->input("estado") === EstadoInversion::$DEPOSITADO) {
-            $validaciones = array_merge($validaciones, $this->validacionesDesembolsado());
+        if ($this->input("estado") === EstadoPrestamo::$APROBADO) {
+            $validaciones = array_merge($validaciones, $this->validacionsAprobado());
         }
         return $validaciones;
     }
@@ -42,5 +41,11 @@ class EstadoRequest extends FormRequest
         ];
     }
 
-
+    private function validacionsAprobado(): array
+    {
+        return [
+            'estado' => 'in:' . EstadoInversion::$APROBADO,
+            'tipo_cuenta_interna_id' => 'required|integer|exists:tipo_cuenta_interna,id',
+        ];
+    }
 }

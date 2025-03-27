@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class RetiroRequest extends FormRequest
+class DepositoInternoRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,8 +24,9 @@ class RetiroRequest extends FormRequest
         return [
             'tipo_documento' => 'required|string|max:255',
             'numero_documento' => 'required|string|max:255',
-            'imagen' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'id_cuenta' => 'required|integer|exists:tipo_cuenta_interna,id',
             'monto' => 'required|numeric|min:0',
+            'motivo' => 'required|string|max:255',
         ];
     }
 }

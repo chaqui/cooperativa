@@ -110,8 +110,8 @@ class PrestamoService
 
     private function getDataForPDF($prestamo)
     {
-        $prestamo->nombreDestino = $this->catalogoService->getCatalogo($prestamo->destino)['value'];
-        $prestamo->nombreFrecuenciaPago = $this->catalogoService->getCatalogo($prestamo->frecuencia_pago)['value'];
+        $prestamo->nombreDestino = $this->catalogoService->getCatalogo($prestamo->destino)['value']?? 'No especificado';
+        $prestamo->nombreFrecuenciaPago = $this->catalogoService->getCatalogo($prestamo->frecuencia_pago)['value'] ?? 'No especificado';
         return $prestamo;
     }
 
@@ -139,6 +139,7 @@ class PrestamoService
            if ($retiros->isNotEmpty()) {
                 foreach ($retiros as $retiro) {
                     $retiro->codigo_prestamo = $prestamo->codigo;
+                    $retiro->nombreCliente = $prestamo->cliente->nombres . ' ' . $prestamo->cliente->apellidos;
                 }
                 $this->log($retiros);
                 $retirosPendientes = $retirosPendientes->merge($retiros);

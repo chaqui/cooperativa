@@ -14,10 +14,9 @@ class PrestamoDesembolsado extends EstadoBasePrestamo
 
     private $cuotaHipotecariaService;
 
-    private $cuentaInternaService;
-    public function __construct(CuotaHipotecaService $cuotaHipotecariaService, CuentaInternaService $cuentaInternaService)
+
+    public function __construct(CuotaHipotecaService $cuotaHipotecariaService)
     {
-        $this->cuentaInternaService = $cuentaInternaService;
         $this->cuotaHipotecariaService = $cuotaHipotecariaService;
         parent::__construct(EstadoPrestamo::$APROBADO, EstadoPrestamo::$DESEMBOLZADO);
     }
@@ -40,7 +39,6 @@ class PrestamoDesembolsado extends EstadoBasePrestamo
                 ' con monto de ' . $prestamo->monto . ' con numero de documento ' . $data['numero_documento'] .
                 ' y tipo de documento ' . $data['tipo_documento']
         ];
-        $this->cuentaInternaService->createCuenta($dataCuentaInterna);
         $this->cuotaHipotecariaService->calcularCuotas($prestamo);
     }
 }

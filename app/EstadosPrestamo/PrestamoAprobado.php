@@ -21,9 +21,12 @@ class PrestamoAprobado extends EstadoBasePrestamo
     public function cambiarEstado(Prestamo_Hipotecario $prestamo, $data)
     {
         parent::cambiarEstado($prestamo, $data);
+        $descripcionRetiro = "Retiro de {$prestamo->monto} para el prestamo {$prestamo->id} (codigo {$prestamo->codigo})";
         $this->retiroService->crearRetiro([
             'id_prestamo' => $prestamo->id,
             'monto' => $prestamo->monto,
+            'motivo' => $descripcionRetiro,
+            'tipo_cuenta_interna_id' => $data['tipo_cuenta_interna_id'],
         ]);
 
     }

@@ -16,17 +16,26 @@ class EstadoBaseInversion extends Estado
 
     public function cambiarEstado(Inversion $inversion, $data)
     {
-        if (!$this->estadoInicio) {
-            $inversion->id_estado = $this->estadoFin;
-            $inversion->save();
-        } else if ($inversion->id_estado == $this->estadoInicio) {
-            $inversion->id_estado = $this->estadoFin;
-            $inversion->save();
+        $estadoOriginal = $inversion->id_estado;
+
+        // Validar estado inicial
+        if ($this->estadoInicio !== null && $estadoOriginal != $this->estadoInicio) {
+            throw new \Exception(
+                "Estado inválido para cambio: la inversión #{$inversion->id} está en estado " .
+                    "{$estadoOriginal}, pero debe estar en estado {$this->estadoInicio}"
+            );
         }
-        else{
-            throw new \Exception("El estado actual de la inversion no es el correcto");
-        }
-        $historico=  HistorialEstado::generarHistoricoInversion($inversion->id, $this->estadoFin, $data);
+
+        // Actualizar estado de la inversión
+        $inversion->id_estado = $this->estadoFin;
+        $inversion->updated_at = now(); // Actualizar timestamp
+        $inversion->save();
+
+        $historico =  HistorialEstado::generarHistoricoInversion(
+            $inversion->id,
+            $this->estadoFin,
+            $data
+        );
         $historico->save();
     }
 }

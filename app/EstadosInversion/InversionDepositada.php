@@ -10,11 +10,8 @@ use App\Services\CuentaInternaService;
 class InversionDepositada extends EstadoBaseInversion
 {
 
-    private $cuentaInternaService;
-
-    public function __construct(CuentaInternaService $cuentaInternaService)
+    public function __construct()
     {
-        $this->cuentaInternaService = $cuentaInternaService;
         parent::__construct(EstadoInversion::$CREADO, EstadoInversion::$DEPOSITADO);
     }
 
@@ -27,13 +24,5 @@ class InversionDepositada extends EstadoBaseInversion
             throw new \Exception('El tipo de documento es requerido');
         }
         parent::cambiarEstado($inversion, $data);
-        $dataCuentaInterna = [
-            'ingreso' => $inversion->monto,
-            'egreso' => 0,
-            'descripcion' => 'Deposito de inversion con id ' . $inversion->id .
-                ' con monto de ' . $inversion->monto . ' con numero de documento ' . $data['numero_documento'] .
-                ' y tipo de documento ' . $data['tipo_documento']
-        ];
-        $this->cuentaInternaService->createCuenta($dataCuentaInterna);
     }
 }

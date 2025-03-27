@@ -35,18 +35,34 @@ class ClientService
     public function createClient($data)
     {
         DB::beginTransaction();
+        try {
+            // Generar código único para el cliente
+            $data['codigo'] = $this->generateCode();
+            $this->log('Código generado para cliente ' . $data['codigo']);
 
-        //create the client
-        $data['codigo'] = $this->generateCode();
-        $client = Client::generateCliente($data);
-        $client->save();
+            // Crear el cliente
+            $client = Client::generateCliente($data);
+            $client->save();
 
-        //create the references
-        $references = $data['referencias'];
-        $this->addReferences($client, $references);
 
-        DB::commit();
-        $this->log('Client created successfully');
+            // Crear las referencias
+            if (isset($data['referencias']) && is_array($data['referencias'])) {
+                $this->log('Procesando ' . count($data['referencias']) . ' referencias');
+                $this->addReferences($client, $data['referencias']);
+            } else {
+                $this->log('No se proporcionaron referencias');
+            }
+
+            DB::commit();
+            $this->log('Cliente creado exitosamente id ' . $client->id . ' codigo ' . $client->codigo);
+
+            return $client;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError('Error al crear cliente: ' . $e->getMessage());
+
+            throw new \Exception('No se pudo crear el cliente: ' . $e->getMessage(), 0, $e);
+        }
     }
 
     /**
@@ -215,27 +231,60 @@ class ClientService
 
     private function getDataByClient($client): Client
     {
-        $client->nombreMunicipio = $this->catalogoService->getCatalogo($client->ciudad)['value'];
-        $client->nombreDepartamento = $this->catalogoService->getCatalogo($client->departamento)['value'];
-        $client->estadoCivil = $this->catalogoService->getCatalogo($client->estado_civil)['value'];
-        $client->genero = $this->catalogoService->getCatalogo($client->genero)['value'];
-        $client->nombreTipoCliente = $this->catalogoService->getCatalogo($client->tipoCliente)['value'];
-        $client->casa_donde_vive = $this->catalogoService->getCatalogo($client->tipo_vivienda)['value'];
-        // Filtrar referencias por tipo
-        $client->referenciasPersonales = $client->references->filter(function ($reference) {
-            return $reference->tipo === 'personal';
-        });
+        $this->log("Iniciando enriquecimiento de datos para cliente #{$client->id}");
 
-        $client->referenciasLaborales = $client->references->filter(function ($reference) {
-            return $reference->tipo === 'laboral';
-        });
-        $client->referenciascomerciales = $client->references->filter(function ($reference) {
-            return $reference->tipo === 'comercial';
-        });
-        $client->referenciasFamiliares = $client->references->filter(function ($reference) {
-            return $reference->tipo === 'familiar';
-        });
+        try {
+            // Enriquecer con datos de catálogos
+            $catalogosAEnriquecer = [
+                'ciudad' => 'nombreMunicipio',
+                'departamento' => 'nombreDepartamento',
+                'estado_civil' => 'estadoCivil',
+                'genero' => 'genero',
+                'tipoCliente' => 'nombreTipoCliente',
+                'tipo_vivienda' => 'casa_donde_vive'
+            ];
 
-        return $client;
+            foreach ($catalogosAEnriquecer as $codigoCatalogo => $nombrePropiedad) {
+                if (!empty($client->$codigoCatalogo)) {
+                    try {
+                        $catalogo = $this->catalogoService->getCatalogo($client->$codigoCatalogo);
+                        $client->$nombrePropiedad = $catalogo['value'] ?? "No especificado";
+                    } catch (\Exception $e) {
+                        $this->logError("Error al obtener catálogo {$codigoCatalogo}: " . $e->getMessage());
+                        $client->$nombrePropiedad = "No disponible";
+                    }
+                } else {
+                    $client->$nombrePropiedad = "No especificado";
+                }
+            }
+
+            // Clasificar referencias por tipo si existen
+            if ($client->references && $client->references->isNotEmpty()) {
+                $tiposReferencia = ['personal', 'laboral', 'comercial', 'familiar'];
+
+                foreach ($tiposReferencia as $tipo) {
+                    $propiedadReferencias = 'referencias' . ucfirst($tipo) . 's';
+
+                    $client->$propiedadReferencias = $client->references->filter(function ($reference) use ($tipo) {
+                        return $reference->tipo === $tipo;
+                    });
+
+                    $this->log("Referencias de tipo {$tipo}: " . $client->$propiedadReferencias->count());
+                }
+            } else {
+                $this->log("El cliente no tiene referencias");
+                // Inicializar colecciones vacías para evitar errores
+                $client->referenciasPersonales = collect();
+                $client->referenciasLaborales = collect();
+                $client->referenciascomerciales = collect();
+                $client->referenciasFamiliares = collect();
+            }
+
+            $this->log("Datos del cliente enriquecidos correctamente");
+            return $client;
+        } catch (\Exception $e) {
+            $this->logError("Error al enriquecer datos del cliente: " . $e->getMessage());
+            throw new \Exception("Error al procesar datos del cliente: " . $e->getMessage(), 0, $e);
+        }
     }
 }

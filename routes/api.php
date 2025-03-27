@@ -7,7 +7,6 @@ use Tymon\JWTAuth\Http\Middleware\Authenticate;
 use App\Constants\Roles;
 use App\Http\Middleware\CheckRole;
 use App\Http\Controllers\PagoController;
-use App\Http\Controllers\CajaController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CuotaController;
@@ -21,6 +20,7 @@ use App\Http\Controllers\FotografiaController;
 use App\Http\Controllers\CuentaBancariaController;
 use App\Http\Controllers\DepositoController;
 use App\Http\Controllers\RetiroController;
+use App\Http\Controllers\TipoCuentaInternaController;
 
 $rolesEdicion = implode('|', [Roles::$ADMIN, Roles::$ASESOR]);
 $rolesSoloLectura = implode('|', [Roles::$ADMIN, Roles::$ASESOR, Roles::$CAJERO]);
@@ -65,11 +65,10 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
 
 //pagos
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
-    Route::put('pagos/{id}', [PagoController::class, 'pagarCuota']);
+    Route::put('pagos/{id}', [CuotaController::class, 'pagarCuota']);
 });
 
-
-//cuentas
+//cuentas bancarias
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::post('cuentas-bancarias', [CuentaBancariaController::class, 'store']);
     Route::put('cuentas-bancarias/{id}', [CuentaBancariaController::class, 'update']);
@@ -146,10 +145,28 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('estados/{estado}/prestamos', [PrestamoController::class, 'prestamosByEstado']);
 });
 
-//caja
+//cuotas
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
-    Route::get('caja', [CajaController::class, 'index']);
     Route::get('cuotas-hoy', [CuotaController::class, 'obtenerCuotasParaPagarHoy']);
-    Route::put('depositos/{id}', [DepositoController::class, 'depositar']);
+});
+
+//depositos
+Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
+    Route::post('depositos', [DepositoController::class, 'depositar']);
+});
+
+//retiros
+Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
+    Route::post('retiros', [RetiroController::class, 'crearRetiro']);
     Route::put('retiros/{id}', [RetiroController::class, 'retirar']);
+});
+
+//cuentas
+Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
+    Route::post('cuentas', [TipoCuentaInternaController::class, 'store']);
+    Route::get('cuentas', [TipoCuentaInternaController::class, 'index']);
+    Route::get('cuentas/{id}', [TipoCuentaInternaController::class, 'show']);
+    Route::get('cuentas/{id}/detalles', [TipoCuentaInternaController::class, 'getDetalles']);
+    Route::get('cuentas/{id}/depositos', [TipoCuentaInternaController::class, 'getDepositos']);
+    Route::get('cuentas/{id}/retiros', [TipoCuentaInternaController::class, 'getRetiros']);
 });

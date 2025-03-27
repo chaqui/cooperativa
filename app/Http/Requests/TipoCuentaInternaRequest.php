@@ -4,14 +4,18 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StorePagarCuota extends FormRequest
+use App\Constants\Roles;
+use App\Traits\Authorizable;
+
+class TipoCuentaInternaRequest extends FormRequest
 {
+    use Authorizable;
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->authorizeRol([Roles::$ADMIN, Roles::$ASESOR]);
     }
 
     /**
@@ -22,12 +26,10 @@ class StorePagarCuota extends FormRequest
     public function rules(): array
     {
         return [
-            'no_documento' => ['required', 'string'],
-            'tipo_documento' => ['required', 'string'],
-            'fecha_documento' => ['required', 'date'],
-            'monto' => ['required', 'numeric'],
-            'tipo_cuenta_interna_id' => ['required', 'integer', 'exists:tipo_cuenta_interna,id'],
-
+            'nombre_banco' => 'required|string|max:50',
+            'tipo_cuenta' => 'required|string|max:35',
+            'numero_cuenta' => 'required|string|max:25',
+            'saldo' => 'required|numeric|min:0',
         ];
     }
 }

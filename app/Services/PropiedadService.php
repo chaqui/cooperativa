@@ -53,8 +53,9 @@ class PropiedadService
         $propiedad->delete();
     }
 
-    public function getDataPDF($garantia){
-        $garantia->nombreTipo = $this->catalogoService->getCatalogo($garantia->tipo_propiedad)['value'];
+    public function getDataPDF($garantia)
+    {
+        $garantia->nombreTipo = $this->catalogoService->getCatalogo($garantia->tipo_propiedad)['value'] ?? 'No definido';
         return $garantia;
     }
 }

@@ -6,7 +6,6 @@ use App\Constants\EstadoPrestamo;
 use App\Models\Prestamo_Hipotecario;
 
 use App\Services\CuotaHipotecaService;
-use App\Services\CuentaInternaService;
 use App\Services\RetiroService;
 
 class ControladorEstado
@@ -14,14 +13,12 @@ class ControladorEstado
 
     private $cuotaHipotecariaService;
 
-    private $cuentaInternaService;
 
     private RetiroService $retiroService;
 
-    public function __construct(CuotaHipotecaService $cuotaHipotecariaService, CuentaInternaService $cuentaInternaService, RetiroService $retiroService)
+    public function __construct(CuotaHipotecaService $cuotaHipotecariaService, RetiroService $retiroService)
     {
         $this->cuotaHipotecariaService = $cuotaHipotecariaService;
-        $this->cuentaInternaService = $cuentaInternaService;
         $this->retiroService = $retiroService;
     }
 
@@ -41,7 +38,7 @@ class ControladorEstado
             case EstadoPrestamo::$APROBADO:
                 return new PrestamoAprobado($this->retiroService);
             case EstadoPrestamo::$DESEMBOLZADO:
-                return new PrestamoDesembolsado($this->cuotaHipotecariaService, $this->cuentaInternaService);
+                return new PrestamoDesembolsado($this->cuotaHipotecariaService);
             case EstadoPrestamo::$FINALIZADO:
                 return new PrestamoFinalizado();
             default:
