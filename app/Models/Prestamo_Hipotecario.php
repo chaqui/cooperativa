@@ -85,4 +85,9 @@ class Prestamo_Hipotecario extends Model
     public function montoLiquido(){
         return $this->monto - $this->gastos_administrativos - $this->gastos_formalidad;
     }
+
+    public function intereses()
+    {
+        return $this->pagos()->sum('interes');
+    }
 }

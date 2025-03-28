@@ -38,6 +38,8 @@ class Prestamo extends JsonResource
             'gastos_administrativos' => (float) $this->gastos_administrativos,
             'nombre_plazo' => $this->tipoPlazo->nombre,
             'plazo' => $this->plazo,
+            'cuota' => $this->cuota,
+            'intereses'=> $this->intereses(),
 
         ];
     }
