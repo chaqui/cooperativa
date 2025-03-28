@@ -29,6 +29,7 @@ class Prestamo_Hipotecario extends Model
         'gastos_formalidad',
         'gastos_administrativos',
         'cuota',
+        'monto_liquido',
     ];
 
     public function cliente()
@@ -79,5 +80,9 @@ class Prestamo_Hipotecario extends Model
     public function retiro()
     {
         return $this->hasOne(Retiro::class, 'id_prestamo');
+    }
+
+    public function montoLiquido(){
+        return $this->monto - $this->gastos_administrativos - $this->gastos_formalidad;
     }
 }

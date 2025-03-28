@@ -37,7 +37,7 @@ class HistorialEstado extends Model
      * @param int|null $idInversion ID de la inversión (null si es préstamo)
      * @return HistorialEstado
      */
-    public static function generarHistorico($estado, array $data, $idPrestamo = null, $idInversion = null)
+    private static function generarHistorico($estado, array $data, $idPrestamo = null, $idInversion = null)
     {
         $historial = new HistorialEstado();
 
@@ -54,7 +54,19 @@ class HistorialEstado extends Model
         $historial->anotacion = $data['anotacion'] ?? null;
         $historial->no_documento_desembolso = $data['no_documento_desembolso'] ?? null;
         $historial->tipo_documento_desembolso = $data['tipo_documento_desembolso'] ?? null;
-        $historial->fecha = $data['fecha'] ?? now();
+        // Manejo de fecha
+        if (isset($data['fecha'])) {
+            // Validar formato de fecha
+            try {
+                $fecha = is_string($data['fecha']) ? new \DateTime($data['fecha']) : $data['fecha'];
+                $historial->fecha = $fecha;
+            } catch (\Exception $e) {
+                // Si hay error en el formato, usar la fecha actual
+                $historial->fecha = now();
+            }
+        } else {
+            $historial->fecha = now();
+        }
 
         return $historial;
     }
@@ -69,6 +81,15 @@ class HistorialEstado extends Model
      */
     public static function generarHistoricoPrestamo($idPrestamo, $estado, array $data)
     {
+        // Validar parámetros requeridos
+        if ($idPrestamo <= 0) {
+            throw new \InvalidArgumentException("El ID del préstamo debe ser un entero positivo");
+        }
+        // Validar estado
+        if ($estado <= 0) {
+            throw new \InvalidArgumentException("El ID del estado debe ser un entero positivo");
+        }
+        // Generar el histórico
         return self::generarHistorico($estado, $data, $idPrestamo, null);
     }
 
@@ -82,6 +103,14 @@ class HistorialEstado extends Model
      */
     public static function generarHistoricoInversion($idInversion, $estado, array $data)
     {
+        // Validar parámetros requeridos
+        if ($idInversion <= 0) {
+            throw new \InvalidArgumentException("El ID de la inversión debe ser un entero positivo");
+        }
+        if ($estado <= 0) {
+            throw new \InvalidArgumentException("El ID del estado debe ser un entero positivo");
+        }
+        // Generar el histórico
         return self::generarHistorico($estado, $data, null, $idInversion);
     }
 }

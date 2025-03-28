@@ -65,7 +65,7 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
 
 //pagos
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
-    Route::put('pagos/{id}', [CuotaController::class, 'pagarCuota']);
+    Route::put('pagos/{id}', [PagoController::class, 'pagarCuota']);
 });
 
 //cuentas bancarias

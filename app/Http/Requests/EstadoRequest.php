@@ -45,7 +45,8 @@ class EstadoRequest extends FormRequest
     {
         return [
             'estado' => 'in:' . EstadoInversion::$APROBADO,
-            'tipo_cuenta_interna_id' => 'required|integer|exists:tipo_cuenta_interna,id',
+            'id_cuenta' => 'required|integer|exists:tipo_cuenta_interna,id',
+            'gastos_formalidad' => 'required|numeric|min:0',
         ];
     }
 }

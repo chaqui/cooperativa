@@ -117,6 +117,7 @@ class DepositoService
      */
     public function depositar($id, $data)
     {
+        $this->log('Interese depositar' . $data['interes']);
         DB::beginTransaction();
         try {
             // Obtener el depósito

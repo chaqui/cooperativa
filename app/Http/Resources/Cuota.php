@@ -22,9 +22,12 @@ class Cuota extends JsonResource
             'monto_interes' => $this->interes,
             'amortizacion' => $this->capital,
             'saldo' => $this->saldo,
-            'realizado' => $this->realizado? 'Si': 'No',
+            'realizado' => $this->realizado ,
             'id_prestamo' => $this->id_prestamo,
             'codigo_prestamo' => $this->prestamo->codigo,
+            'monto_pagado' => $this->monto_pagado,
+            'nuevo_saldo' => $this->nuevo_saldo,
+            'saldo_faltante' => $this->saldoFaltante() < 0 ? 0 : $this->saldoFaltante(),
         ];
     }
 }

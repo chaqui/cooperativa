@@ -3,8 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\DepositoInternoRequest;
-use App\Http\Requests\DepositoRequest;
-use Illuminate\Http\Request;
+use App\Http\Requests\RetiroRequest;
 
 use App\Services\RetiroService;
 
@@ -16,7 +15,7 @@ class RetiroController extends Controller
         $this->retiroService = $retiroService;
     }
 
-    public function retirar(DepositoRequest $request, $id)
+    public function retirar(RetiroRequest $request, $id)
     {
 
         $this->retiroService->realizarRetiro($id, $request->all());

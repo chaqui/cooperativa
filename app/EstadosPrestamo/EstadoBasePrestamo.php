@@ -30,6 +30,8 @@ class EstadoBasePrestamo extends Estado
         $prestamo->updated_at = now(); // Actualizar timestamp
 
         $prestamo->save();
+
+        // Generar registro en historial
         $historico =  HistorialEstado::generarHistoricoPrestamo(
             $prestamo->id,
             $this->estadoFin,

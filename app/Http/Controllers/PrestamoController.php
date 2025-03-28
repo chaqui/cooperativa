@@ -50,7 +50,8 @@ class PrestamoController extends Controller
      */
     public function show(string $id)
     {
-        return $this->prestamoService->get($id);
+        $prestamo = $this->prestamoService->get($id);
+        return new PrestamoResource($prestamo);
     }
 
     /**

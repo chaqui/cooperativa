@@ -112,7 +112,7 @@ class RetiroService
 
             $this->log("Retiro #$id marcado como realizado");
 
-            $descripcion = "Retiro realizado: " . ($retiro->motivo ?? 'No especificado').
+            $descripcion = "Retiro realizado: " . ($retiro->motivo ?? 'No especificado') .
                 " | Documento: " . ($data['tipo_documento'] ?? 'No especificado') .
                 " | Número: " . ($data['numero_documento'] ?? 'No especificado');
 
@@ -120,7 +120,7 @@ class RetiroService
             $this->cuentaInternaService->createCuenta([
                 'ingreso' => 0,
                 'egreso' => $retiro->monto,
-                'interes'=> 0,
+                'interes' => 0,
                 'capital' => $retiro->monto,
                 'descripcion' => $descripcion,
                 'tipo_cuenta_interna_id' => $retiro->tipo_cuenta_interna_id,
@@ -161,7 +161,8 @@ class RetiroService
         $cuenta = $this->tipoCuentaInternaService->getById($data['id_cuenta']);
         $saldo = $cuenta->saldo();
 
-        if ($saldo < $data['monto']) {
+        $saldoSalida = $data['monto_total'] ?? $data['monto'];
+        if ($saldo < $saldoSalida) {
             $this->logError("Saldo insuficiente para retiro: " . json_encode([
                 'monto_solicitado' => $data['monto'],
                 'saldo_disponible' => $saldo,
@@ -178,9 +179,9 @@ class RetiroService
             'monto' => $data['monto'],
             'tipo_documento' => null,
             'numero_documento' =>  null,
-            'motivo' => $data['motivo'] ,
+            'motivo' => $data['motivo'],
             'id_prestamo' => $data['id_prestamo'] ?? null,
-            'tipo_cuenta_interna_id'=> $data['id_cuenta'],
+            'tipo_cuenta_interna_id' => $data['id_cuenta'],
             'realizado' => false, // Por defecto, el retiro se crea como no realizado
         ];
 
@@ -213,7 +214,7 @@ class RetiroService
         }
 
         // Validar tipo de cuenta interna
-        if (!isset($data['tipo_cuenta_interna_id'])) {
+        if (!isset($data['id_cuenta'])) {
             throw new \InvalidArgumentException("El tipo de cuenta interna es requerido");
         }
 
@@ -222,7 +223,7 @@ class RetiroService
         }
 
         try {
-            $cuenta = $this->tipoCuentaInternaService->getById($data['tipo_cuenta_interna_id']);
+            $cuenta = $this->tipoCuentaInternaService->getById($data['id_cuenta']);
 
             if (!$cuenta) {
                 throw new \InvalidArgumentException("El tipo de cuenta interna especificado no existe");

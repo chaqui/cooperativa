@@ -21,11 +21,11 @@ class Prestamo extends JsonResource
             'fecha_inicio' => $this->fecha_inicio,
             'fecha_fin' => $this->fecha_fin,
             'estado' => $this->estado->nombre,
-            'cliente' => $this->cliente->nombres.' '.$this->cliente->apellidos,
+            'cliente' => $this->cliente->getFullNameAttribute(),
             'propiedad' => $this->propiedad->Descripcion,
             'dpi_cliente' => $this->dpi_cliente,
             'tipo_plazo' => $this->tipo_plazo,
-            'fiador' => $this->fiador->nombre,
+            'fiador' => $this->fiador->getFullNameAttribute(),
             'destino' => $this->destino,
             'uso_prestamo' => $this->uso_prestamo,
             'fiador_dpi' => $this->fiador_dpi,
@@ -33,6 +33,11 @@ class Prestamo extends JsonResource
             'frecuencia_pago' => $this->frecuencia_pago,
             'parentesco' => $this->parentesco,
             'codigo' => $this->codigo,
+            'monto_liquido' => $this->montoLiquido(),
+            'gastos_formalidad' => (float) $this->gastos_formalidad,
+            'gastos_administrativos' => (float) $this->gastos_administrativos,
+            'nombre_plazo' => $this->tipoPlazo->nombre,
+            'plazo' => $this->plazo,
 
         ];
     }

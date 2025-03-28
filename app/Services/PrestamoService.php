@@ -110,7 +110,7 @@ class PrestamoService
 
     private function getDataForPDF($prestamo)
     {
-        $prestamo->nombreDestino = $this->catalogoService->getCatalogo($prestamo->destino)['value']?? 'No especificado';
+        $prestamo->nombreDestino = $this->catalogoService->getCatalogo($prestamo->destino)['value'] ?? 'No especificado';
         $prestamo->nombreFrecuenciaPago = $this->catalogoService->getCatalogo($prestamo->frecuencia_pago)['value'] ?? 'No especificado';
         return $prestamo;
     }
@@ -121,31 +121,36 @@ class PrestamoService
         return $prestamoHipotecario->pagos;
     }
 
-    private function createCode(){
+    private function createCode()
+    {
         $result = DB::select('SELECT nextval(\'correlativo_prestamo\') AS correlativo');
         $correlativo = $result[0]->correlativo;
         return 'PCP-' . $correlativo;
     }
 
-    public function getRetirosPendientes(){
+    public function getRetirosPendientes()
+    {
+        $this->log('Iniciando búsqueda de retiros pendientes');
         $prestamos = Prestamo_Hipotecario::where('estado_id', EstadoPrestamo::$APROBADO)->get();
-        $retirosPendientes= collect();
-        $this->log( $prestamos->count());
+        $retirosPendientes = collect();
         foreach ($prestamos as $prestamo) {
             if (!$prestamo->retiro) {
                 continue;
             }
-           $retiros = $prestamo->retiro->where('realizado', false)->get();
-           if ($retiros->isNotEmpty()) {
+            $retiros = $prestamo->retiro()->where('realizado', 0)->get();
+
+            if ($retiros->isNotEmpty()) {
                 foreach ($retiros as $retiro) {
                     $retiro->codigo_prestamo = $prestamo->codigo;
                     $retiro->nombreCliente = $prestamo->cliente->nombres . ' ' . $prestamo->cliente->apellidos;
+                    $retiro->gastosAdministrativos = $prestamo->gastos_administrativos;
+                    $retiro->gastosFormalidad = $prestamo->gastos_formalidad;
                 }
-                $this->log($retiros);
+
                 $retirosPendientes = $retirosPendientes->merge($retiros);
             }
         }
-        $this->log($retirosPendientes);
+        $this->log('Retiros pendientes obtenidos: ' . $retirosPendientes->count());
         return $retirosPendientes;
     }
 }

@@ -171,4 +171,5 @@ class Client extends Model
         }
         return $cuotas;
     }
+
 }

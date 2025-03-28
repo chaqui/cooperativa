@@ -85,6 +85,7 @@ class CuotaHipotecaService extends CuotaService
         try {
             $pago = $this->getPago($id);
 
+
             $this->validarEstadoPago($pago);
             $montoOriginal = $data['monto'];
             $montoRestante = $montoOriginal;
@@ -104,7 +105,8 @@ class CuotaHipotecaService extends CuotaService
             // Verificar si el pago está completo
             if ($pago->saldoFaltante() <= 0) {
                 $pago->realizado = true;
-                $this->actualizarSiguentesPago($pago);
+                $pago->nuevo_saldo = $pago->saldo - ($pago->capital_pagado - $pago->capital);
+                $this->actualizarSiguentesPago($pago,  $pago->nuevo_saldo);
             }
             $pago->save();
 
@@ -263,10 +265,19 @@ class CuotaHipotecaService extends CuotaService
      */
     private function validarEstadoPago($pago)
     {
+
+        // Validar que los pagos anteriores estén realizados
+        $pagoAnterior = $pago->pagoAnterior();
+        if ($pagoAnterior && !$pagoAnterior->realizado) {
+            throw new \Exception('No se puede realizar este pago porque el pago anterior no ha sido completado.');
+        }
+
+        // Validar que el pago no haya sido realizado
         if ($pago->realizado) {
             throw new \Exception('El pago ya ha sido realizado');
         }
 
+        // Validar que el saldo sea mayor que cero
         if ($pago->saldo <= 0) {
             $pago->realizado = true;
             $pago->save();
@@ -342,22 +353,89 @@ class CuotaHipotecaService extends CuotaService
     }
 
 
-    private function actualizarSiguentesPago(Pago $pago): void
+    private function actualizarSiguentesPago(Pago $pago, $nuevoSaldo): void
     {
         $prestamoHipotecario = $pago->prestamo;
         $pagoSiguiente = $pago->pagoSiguiente();
-        $pagoSiguiente->interes = $this->calcularInteres($pago->saldo,  $this->calcularTaza($prestamoHipotecario->interes));
-        $pagoSiguiente->capital = $prestamoHipotecario->cuota - $pagoSiguiente->interes;
-        $pagoSiguiente->saldo = $pago->saldo - $pagoSiguiente->capital;
+        $pagoSiguiente->interes = $this->calcularInteres($nuevoSaldo,  $this->calcularTaza($prestamoHipotecario->interes));
+        $capital = $prestamoHipotecario->cuota - $pagoSiguiente->interes;
+        if ($nuevoSaldo < $capital) {
+            $capital = $nuevoSaldo;
+        }
+        $pagoSiguiente->capital = $capital;
+        $pagoSiguiente->saldo = $nuevoSaldo - $pagoSiguiente->capital;
         $pagoSiguiente->save();
         if ($pagoSiguiente->saldo > 0) {
 
             if ($pagoSiguiente->pagoSiguiente()) {
-                $this->actualizarSiguentesPago($pagoSiguiente);
+                $this->actualizarSiguentesPago($pagoSiguiente, $pagoSiguiente->saldo);
             }
         } else {
-            $pagoSiguiente->delete();
+            $pagoProximo = $pagoSiguiente->pagoSiguiente();
+            $this->eliminarPago($pagoProximo);
         }
+    }
+
+    /**
+     * Elimina un pago y todos sus pagos siguientes de forma recursiva
+     *
+     * @param Pago|null $pago Pago a eliminar
+     * @param int $maxNivel Nivel máximo de recursión para prevenir desbordamiento de pila (por defecto 50)
+     * @param int $nivelActual Nivel actual de recursión (uso interno)
+     * @return int Número de pagos eliminados
+     * @throws \Exception Si el pago ya ha sido realizado o la recursión excede el límite
+     */
+    private function eliminarPago(?Pago $pago, int $maxNivel = 50, int $nivelActual = 0): int
+    {
+        // Validar que exista el pago
+        if (!$pago) {
+            $this->log("No hay pago para eliminar");
+            return 0;
+        }
+
+        // Protección contra recursión excesiva
+        if ($nivelActual >= $maxNivel) {
+            $this->logError("Se alcanzó el límite de recursión ({$maxNivel}) al eliminar pagos");
+            throw new \Exception("Profundidad de recursión excesiva al eliminar pagos");
+        }
+
+        // Verificar que el pago no esté realizado
+        if ($pago->realizado) {
+            $this->logError("Intento de eliminar pago realizado #{$pago->id}");
+            throw new \Exception("No se puede eliminar un pago ya realizado (#{$pago->id})");
+        }
+
+
+
+        $pagosEliminados = 1; // Contamos este pago
+        $this->log("Eliminando pago #{$pago->id} (nivel {$nivelActual})");
+
+        // Procesar pagos siguientes primero (para mantener integridad referencial)
+        $pagoSiguiente = $pago->pagoSiguiente();
+        if ($pagoSiguiente) {
+            $pagosEliminados += $this->eliminarPago(
+                $pagoSiguiente,
+                $maxNivel,
+                $nivelActual + 1
+            );
+        }
+
+        // Guardar información para logs
+        $prestamoId = $pago->id_prestamo;
+        $pagoId = $pago->id;
+        $fechaPago = $pago->fecha;
+
+        // Eliminar el pago actual
+        $pago->delete();
+
+        $this->log("Pago #{$pagoId} del préstamo #{$prestamoId} (fecha: {$fechaPago}) eliminado correctamente");
+
+        // Confirmar transacción si iniciamos una
+
+        $this->log("Transacción completada: {$pagosEliminados} pagos eliminados en total");
+
+
+        return $pagosEliminados;
     }
 
 
@@ -366,10 +444,10 @@ class CuotaHipotecaService extends CuotaService
      */
     private function registrarDepositoYTransaccion($data, $pago, $detallesPago)
     {
-        $descripcion = $detallesPago['descripcion'] . 'del pago #' . $pago->id .
+        $descripcion = $detallesPago['descripcion'] . ' del pago #' . $pago->id .
             ' del préstamo #' . $pago->id_prestamo .
             ' codigo del préstamo #' . $pago->prestamo->codigo .
-            'fecha' . $data['fecha'] ?? now();
+            ' fecha' . now();
         // Crear depósito
         $this->depositoService->crearDeposito([
             'tipo_documento' => $data['tipo_documento'],
@@ -379,8 +457,8 @@ class CuotaHipotecaService extends CuotaService
             'imagen' => $data['imagen'] ?? null,
             'capital' => $detallesPago['capitalGanado'],
             'interes' => $detallesPago['interesGanado'],
-            'descripcion' => $descripcion,
-            'tipo_cuenta_interna_id' => $data['tipo_cuenta_interna_id'],
+            'motivo' => $descripcion,
+            'id_cuenta' => $data['id_cuenta'],
         ]);
     }
 

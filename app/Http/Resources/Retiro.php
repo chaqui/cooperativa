@@ -30,6 +30,9 @@ class Retiro extends JsonResource
             'updated_at' => $this->updated_at,
             'realizado' => $this->realizado,
             'motivo' => $this->motivo ?? null,
+            'gastos_administrativos' => $this->gastosAdministrativos ?? null,
+            'gastos_formalidad' => $this->gastosFormalidad ?? null,
+            'id_cuenta' => $this->tipoCuentaInterna->id ?? null,
         ];
     }
 }
