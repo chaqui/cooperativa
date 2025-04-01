@@ -74,7 +74,7 @@ class Prestamo_Hipotecario extends Model
 
     public function cuotasPendientes()
     {
-        return $this->hasMany(Pago::class, 'id_prestamo')->where('realizado', 0);
+        return $this->hasMany(Pago::class, 'id_prestamo');
     }
 
     public function retiro()

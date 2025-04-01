@@ -15,10 +15,16 @@ class RetiroService
 
     private TipoCuentaInternaService $tipoCuentaInternaService;
 
-    public function __construct(CuentaInternaService $cuentaInternaService, TipoCuentaInternaService $tipoCuentaInternaService)
-    {
+    private PdfService $pdfService;
+
+    public function __construct(
+        CuentaInternaService $cuentaInternaService,
+        TipoCuentaInternaService $tipoCuentaInternaService,
+        PdfService $pdfService
+    ) {
         $this->cuentaInternaService = $cuentaInternaService;
         $this->tipoCuentaInternaService = $tipoCuentaInternaService;
+        $this->pdfService = $pdfService;
     }
     // Crear un nuevo retiro
     public function crearRetiro(array $data)
@@ -153,6 +159,37 @@ class RetiroService
             $this->logError("Error al realizar retiro #$id: " . $e->getMessage());
             throw $e;
         }
+    }
+
+    public function getRetiro($id)
+    {
+        // Validar que el ID sea válido
+        if (empty($id) || !is_numeric($id) || $id <= 0) {
+            $this->logError("ID de retiro inválido: {$id}");
+            throw new \InvalidArgumentException("El ID del retiro debe ser un valor numérico positivo");
+        }
+        try {
+            $this->log("Buscando retiro con ID: {$id}");
+            $retiro = Retiro::findOrFail($id);
+
+            $this->log("Retiro encontrado: #{$retiro->id} por monto Q{$retiro->monto}");
+            return $retiro;
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            $this->logError("Retiro no encontrado con ID: {$id}");
+            throw $e; // Re-lanzar la excepción para mantener el comportamiento esperado
+        } catch (\Exception $e) {
+            $this->logError("Error al obtener retiro #{$id}: " . $e->getMessage());
+            throw new \Exception("Error al obtener el retiro: " . $e->getMessage(), 0, $e);
+        }
+    }
+
+    public function getPDF($id)
+    {
+        $retiro = $this->getRetiro($id);
+        $this->log("Generando PDF para el retiro #{$retiro->id}");
+        $this->log("Datos del retiro: " . json_encode($retiro));
+        $html = view('pdf.recibo', ['retiro' => $retiro])->render();
+        return $this->pdfService->generatePdf($html);
     }
 
     private function procesarCreacionRetiro($data, $procesar = false)

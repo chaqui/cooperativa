@@ -69,7 +69,8 @@
     <table>
         <tr>
             <td colspan="2"><strong>NOMBRE COMPLETO:</strong></td>
-            <td colspan="4">{{ $prestamo->cliente->nombres ?? 'No ingresada' }} {{ $prestamo->cliente->apellidos ?? 'No ingresada' }}</td>
+            <td colspan="4">{{ $prestamo->cliente->nombres ?? 'No ingresada' }}
+                {{ $prestamo->cliente->apellidos ?? 'No ingresada' }}</td>
         </tr>
         <tr>
             <td><strong>CUI:</strong></td>
@@ -95,9 +96,12 @@
         </tr>
         <tr>
             <td><strong>EDAD:</strong></td>
-            <td>{{ $prestamo->cliente->fecha_nacimiento ? Carbon::parse($prestamo->cliente->fecha_nacimiento)->age . ' años' : 'No ingresada' }}</td>
+            <td>{{ $prestamo->cliente->fecha_nacimiento ? Carbon::parse($prestamo->cliente->fecha_nacimiento)->age . ' años' : 'No ingresada' }}
+            </td>
             <td colspan="2" style="text-align: right;"><strong>FECHA DE NACIMIENTO:</strong></td>
-            <td colspan="2">{{ $prestamo->cliente->fecha_nacimiento ? Carbon::parse($prestamo->cliente->fecha_nacimiento)->translatedFormat('d \d\e F \d\e Y') : 'No ingresada' }}</td>
+            <td colspan="2">
+                {{ $prestamo->cliente->fecha_nacimiento ? Carbon::parse($prestamo->cliente->fecha_nacimiento)->translatedFormat('d \d\e F \d\e Y') : 'No ingresada' }}
+            </td>
         </tr>
         <tr>
             <td><strong>NIT:</strong></td>
@@ -117,15 +121,19 @@
         </tr>
         <tr>
             <td colspan="2"><strong>NOMBRE DEL CONYUGE:</strong></td>
-            <td colspan="4">{{ $prestamo->cliente->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->cliente->conyuge ?? 'No ingresada') }}</td>
+            <td colspan="4">
+                {{ $prestamo->cliente->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->cliente->conyuge ?? 'No ingresada') }}
+            </td>
         </tr>
         <tr>
             <td colspan="2"><strong>CARGAS FAMILIARES:</strong></td>
-            <td>{{ $prestamo->cliente->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->cliente->cargas_familiares ?? 'No ingresada') }}</td>
+            <td>{{ $prestamo->cliente->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->cliente->cargas_familiares ?? 'No ingresada') }}
+            </td>
         </tr>
         <tr>
             <td colspan="4"><strong>No. INTEGRANTES DE SU NUCLEO FAMILIAR:</strong></td>
-            <td>{{ $prestamo->cliente->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->cliente->integrantes_nucleo_familiar ?? 'No ingresada') }}</td>
+            <td>{{ $prestamo->cliente->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->cliente->integrantes_nucleo_familiar ?? 'No ingresada') }}
+            </td>
         </tr>
         <tr>
             <td colspan="4"><strong>LA CASA DONDE VIVE ES:</strong></td>
@@ -133,7 +141,8 @@
         </tr>
         <tr>
             <td colspan="4"><strong>TIEMPO DE ESTABILIDAD DOMICILIAR:</strong></td>
-            <td>{{ $prestamo->cliente->estabilidad_domiciliaria ? $prestamo->cliente->estabilidad_domiciliaria . ' año(s)' : 'No ingresada' }}</td>
+            <td>{{ $prestamo->cliente->estabilidad_domiciliaria ? $prestamo->cliente->estabilidad_domiciliaria . ' año(s)' : 'No ingresada' }}
+            </td>
         </tr>
     </table>
     <h2>II. DATOS LABORALES</h2>
@@ -162,13 +171,14 @@
         </tr>
         <tr>
             <td><strong>FECHA DE INICIO:</strong></td>
-            <td>{{ $prestamo->cliente->fechaInicio ? Carbon::parse($prestamo->cliente->fechaInicio)->translatedFormat('d \d\e F \d\e Y') : 'No ingresada' }}</td>
+            <td>{{ $prestamo->cliente->fechaInicio ? Carbon::parse($prestamo->cliente->fechaInicio)->translatedFormat('d \d\e F \d\e Y') : 'No ingresada' }}
+            </td>
         </tr>
     </table>
-    <br/>
-    <br/>
-    <br/>
-    <br/>
+    <br />
+    <br />
+    <br />
+    <br />
     <h2>III. REFERENCIAS</h2>
     @if ($prestamo->cliente->tipoCliente != '390')
         <h3>Referencias Laborales</h3>
@@ -191,10 +201,11 @@
                 <th>Nombre</th>
                 <th>Telefono</th>
             </tr>
-            @foreach ($prestamo->cliente->referenciascomerciales as $reference)
+            @foreach ($prestamo->cliente->referenciasComerciales as $reference)
                 <tr>
-                    <td>{{ $reference->nombre ?? 'No ingresada' }}</td>
-                    <td>{{ $reference->telefono ?? 'No ingresada' }}</td>
+                    <td>{{ $reference['nombre'] ?? 'No ingresada' }}</td>
+                    <td>{{ $reference['telefono'] ?? 'No ingresada' }}</td>
+
                 </tr>
             @endforeach
         </table>
@@ -207,11 +218,26 @@
         </tr>
         @foreach ($prestamo->cliente->referenciasPersonales as $reference)
             <tr>
-                <td>{{ $reference->nombre ?? 'No ingresada' }}</td>
-                <td>{{ $reference->telefono ?? 'No ingresada' }}</td>
+                <td>{{ $reference['nombre'] ?? 'No ingresada' }}</td>
+                <td>{{ $reference['telefono'] ?? 'No ingresada' }}</td>
             </tr>
         @endforeach
     </table>
+
+    <h3>Referencias Familiares</h3>
+    <table class="content">
+        <tr>
+            <th>Nombre</th>
+            <th>Telefono</th>
+        </tr>
+        @foreach ($prestamo->cliente->referenciasFamiliares as $reference)
+            <tr>
+                <td>{{ $reference['nombre'] ?? 'No ingresada' }}</td>
+                <td>{{ $reference['telefono'] ?? 'No ingresada' }}</td>
+            </tr>
+        @endforeach
+    </table>
+
     <h2>IV. DEL CREDITO</h2>
     <table>
         <tr>
@@ -256,7 +282,8 @@
     <table>
         <tr>
             <td><strong>NOMBRE:</strong></td>
-            <td colspan="3">{{ $prestamo->fiador->nombres ?? 'No ingresada' }} {{ $prestamo->fiador->apellidos ?? 'No ingresada' }}</td>
+            <td colspan="3">{{ $prestamo->fiador->nombres ?? 'No ingresada' }}
+                {{ $prestamo->fiador->apellidos ?? 'No ingresada' }}</td>
         </tr>
         <tr>
             <td><strong>CUI:</strong></td>
@@ -272,7 +299,8 @@
             <td><strong>PARENTESCO:</strong></td>
             <td colspan="2">{{ $prestamo->parentesco ?? 'No ingresada' }}</td>
             <td><strong>EDAD:</strong></td>
-            <td>{{ $prestamo->fiador->fecha_nacimiento ? Carbon::parse($prestamo->fiador->fecha_nacimiento)->age . ' años' : 'No ingresada' }}</td>
+            <td>{{ $prestamo->fiador->fecha_nacimiento ? Carbon::parse($prestamo->fiador->fecha_nacimiento)->age . ' años' : 'No ingresada' }}
+            </td>
         </tr>
         <tr>
             <td colspan="2"><strong>ESTADO CIVIL:</strong></td>
@@ -294,11 +322,13 @@
         </tr>
         <tr>
             <td colspan="2"><strong>CARGAS FAMILIARES:</strong></td>
-            <td>{{ $prestamo->fiador->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->fiador->cargas_familiares ?? 'No ingresada') }}</td>
+            <td>{{ $prestamo->fiador->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->fiador->cargas_familiares ?? 'No ingresada') }}
+            </td>
         </tr>
         <tr>
             <td colspan="4"><strong>No. INTEGRANTES DE SU NUCLEO FAMILIAR:</strong></td>
-            <td>{{ $prestamo->fiador->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->fiador->integrantes_nucleo_familiar ?? 'No ingresada') }}</td>
+            <td>{{ $prestamo->fiador->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->fiador->integrantes_nucleo_familiar ?? 'No ingresada') }}
+            </td>
         </tr>
         <tr>
             <td colspan="4"><strong>INGRESOS MENSUALES APROXIMADOS:</strong></td>

@@ -29,4 +29,9 @@ class RetiroController extends Controller
 
         return response()->json(['message' => 'Retiro interno creado con éxito'], 200);
     }
+
+    public function getPdf($id)
+    {
+        return $this->retiroService->getPdf($id);
+    }
 }

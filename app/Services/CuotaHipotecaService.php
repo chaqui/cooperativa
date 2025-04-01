@@ -120,6 +120,12 @@ class CuotaHipotecaService extends CuotaService
         }
     }
 
+    public function obtenerDepositos($id)
+    {
+        $pago = $this->getPago($id);
+        return  $pago->depositos;
+    }
+
     private function generarCuotas(Prestamo_Hipotecario $prestamoHipotecario,  $plazo)
     {
         $this->eliminarPagosExistentes($prestamoHipotecario);
@@ -446,8 +452,8 @@ class CuotaHipotecaService extends CuotaService
     {
         $descripcion = $detallesPago['descripcion'] . ' del pago #' . $pago->id .
             ' del préstamo #' . $pago->id_prestamo .
-            ' codigo del préstamo #' . $pago->prestamo->codigo .
-            ' fecha' . now();
+            ' codigo del préstamo ' . $pago->prestamo->codigo .
+            ' fecha ' . now();
         // Crear depósito
         $this->depositoService->crearDeposito([
             'tipo_documento' => $data['tipo_documento'],

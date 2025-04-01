@@ -61,4 +61,6 @@ class Inversion extends Model
     {
         return $this->hasOne(Deposito::class, 'id_inversion');
     }
+
+
 }

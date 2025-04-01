@@ -109,4 +109,17 @@ class InversionController extends Controller
         $depositos = $this->inversionService->getDepositosPendientes();
         return DepositoResource::collection($depositos);
     }
+
+    public function getDepositosInversion($id)
+    {
+        $this->log('Obteniendo depositos para la inversion: ' . $id);
+        $depositos = $this->inversionService->getDepositos($id);
+        $this->log($depositos);
+        return DepositoResource::collection($depositos);
+    }
+
+    public function generatePdf($id)
+    {
+        return $this->inversionService->getPdf($id);
+    }
 }

@@ -263,21 +263,30 @@ class ClientService
                 $tiposReferencia = ['personal', 'laboral', 'comercial', 'familiar'];
 
                 foreach ($tiposReferencia as $tipo) {
-                    $propiedadReferencias = 'referencias' . ucfirst($tipo) . 's';
+                    // Corregir el formato de nombres de propiedad para ser consistente
+                    if ($tipo === 'comercial') {
+                        $propiedadReferencias = 'referenciasComerciales'; // Corregido: C mayúscula y 'es' al final
+                    } else {
+                        $propiedadReferencias = 'referencias' . ucfirst($tipo) . 'es';
+                    }
 
-                    $client->$propiedadReferencias = $client->references->filter(function ($reference) use ($tipo) {
+                    // Filtrar las referencias por tipo y convertirlas en array para serialización JSON
+                    $referenciasFiltradas = $client->references->filter(function ($reference) use ($tipo) {
                         return $reference->tipo === $tipo;
-                    });
+                    })->values(); // Reindexar el array resultante
 
-                    $this->log("Referencias de tipo {$tipo}: " . $client->$propiedadReferencias->count());
+                    // Asignar como array y no como colección
+                    $client->$propiedadReferencias = $referenciasFiltradas->toArray();
+
+                    $this->log("Referencias de tipo {$tipo}: " . count($client->$propiedadReferencias));
                 }
             } else {
                 $this->log("El cliente no tiene referencias");
-                // Inicializar colecciones vacías para evitar errores
-                $client->referenciasPersonales = collect();
-                $client->referenciasLaborales = collect();
-                $client->referenciascomerciales = collect();
-                $client->referenciasFamiliares = collect();
+                // Inicializar arrays vacíos para evitar errores
+                $client->referenciasPersonales = [];
+                $client->referenciasLaborales = [];
+                $client->referenciasComerciales = []; // Corregido: C mayúscula y 'es' al final
+                $client->referenciasFamiliares = [];
             }
 
             $this->log("Datos del cliente enriquecidos correctamente");

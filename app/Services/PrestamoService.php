@@ -98,6 +98,7 @@ class PrestamoService
 
     public function generatePdf($id)
     {
+        $this->log('Generando PDF del prestamo con id: ' . $id);
         $prestamo = $this->get($id);
         $prestamo = $this->getDataForPDF($prestamo);
         $prestamo->cliente = $this->clientService->getDataForPDF($prestamo->dpi_cliente);
@@ -131,24 +132,21 @@ class PrestamoService
     public function getRetirosPendientes()
     {
         $this->log('Iniciando búsqueda de retiros pendientes');
-        $prestamos = Prestamo_Hipotecario::where('estado_id', EstadoPrestamo::$APROBADO)->get();
+        $prestamos = $this->all();
         $retirosPendientes = collect();
         foreach ($prestamos as $prestamo) {
             if (!$prestamo->retiro) {
                 continue;
             }
-            $retiros = $prestamo->retiro()->where('realizado', 0)->get();
+            $retiro = $prestamo->retiro;
 
-            if ($retiros->isNotEmpty()) {
-                foreach ($retiros as $retiro) {
-                    $retiro->codigo_prestamo = $prestamo->codigo;
-                    $retiro->nombreCliente = $prestamo->cliente->nombres . ' ' . $prestamo->cliente->apellidos;
-                    $retiro->gastosAdministrativos = $prestamo->gastos_administrativos;
-                    $retiro->gastosFormalidad = $prestamo->gastos_formalidad;
-                }
+            $retiro->codigo_prestamo = $prestamo->codigo;
+            $retiro->nombreCliente = $prestamo->cliente->getFullNameAttribute();
+            $retiro->gastosAdministrativos = $prestamo->gastos_administrativos;
+            $retiro->gastosFormalidad = $prestamo->gastos_formalidad;
 
-                $retirosPendientes = $retirosPendientes->merge($retiros);
-            }
+
+            $retirosPendientes->push($retiro);
         }
         $this->log('Retiros pendientes obtenidos: ' . $retirosPendientes->count());
         return $retirosPendientes;

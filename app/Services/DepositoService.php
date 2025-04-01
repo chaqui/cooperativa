@@ -12,6 +12,13 @@ class DepositoService
 
     use Loggable;
 
+    private $pdfService;
+
+    public function __construct(PdfService $pdfService)
+    {
+        $this->pdfService = $pdfService;
+    }
+
     /**
      * Crea un nuevo registro de depósito en el sistema - No es llamado desde el controlador
      *
@@ -185,6 +192,25 @@ class DepositoService
             // Lanzar excepción para que el controlador maneje el error
             throw $e;
         }
+    }
+
+    /**
+     * Genera un PDF del depósito
+     *
+     * @param int $id ID del depósito a generar el PDF
+     * @return string Ruta del archivo PDF generado
+     */
+    public function generarPdf($id)
+    {
+        if ($id <= 0) {
+            throw new \InvalidArgumentException("El ID del depósito debe ser un número entero positivo");
+        }
+
+        $this->log("Iniciando generación de PDF para depósito #{$id}");
+
+        $deposito = $this->getDeposito($id);
+        $html = view('pdf.deposito', ['deposito' => $deposito])->render();
+        return $this->pdfService->generatePdf($html);
     }
 
     /**

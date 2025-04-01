@@ -60,12 +60,15 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
     Route::get('inversiones/{id}', [InversionController::class, 'show']);
     Route::get('inversiones/{id}/cuotas', [InversionController::class, 'cuotas']);
     Route::get('inversiones/{id}/estados', [InversionController::class, 'historico']);
+    Route::get('inversiones/{id}/depositos', [InversionController::class, 'getDepositosInversion']);
+    Route::get('inversiones/{id}/pdf', [InversionController::class, 'generatePdf']);
 });
 
 
 //pagos
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
     Route::put('pagos/{id}', [PagoController::class, 'pagarCuota']);
+    Route::get('pagos/{id}/depositos', [PagoController::class, 'obtenerDepositos']);
 });
 
 //cuentas bancarias
@@ -153,12 +156,14 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
 //depositos
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::post('depositos', [DepositoController::class, 'depositar']);
+    Route::get('depositos/{id}/pdf', [DepositoController::class, 'getPDF']);
 });
 
 //retiros
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::post('retiros', [RetiroController::class, 'crearRetiro']);
     Route::put('retiros/{id}', [RetiroController::class, 'retirar']);
+    Route::get('retiros/{id}/pdf', [RetiroController::class, 'getPdf']);
 });
 
 //cuentas

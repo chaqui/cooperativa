@@ -25,4 +25,14 @@ class DepositoController extends Controller
             return response()->json(['message' => 'Error al crear el deposito', 'error' => $e->getMessage()], 500);
         }
     }
+
+    public function getPDF($id)
+    {
+        try {
+            $pdf = $this->depositoService->generarPdf($id);
+            return response($pdf, 200)->header('Content-Type', 'application/pdf');
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error al obtener el deposito', 'error' => $e->getMessage()], 500);
+        }
+    }
 }

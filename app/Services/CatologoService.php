@@ -33,7 +33,6 @@ class CatologoService
                 ]
             ]);
             $data = json_decode($response->getBody(), true);
-            $this->log($data);
             return $data;
         } catch (RequestException $e) {
             $this->logError($e->getMessage());

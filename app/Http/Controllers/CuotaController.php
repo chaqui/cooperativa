@@ -8,6 +8,11 @@ use App\Http\Resources\CuotaInversion as CuotaResource;
 use App\Http\Requests\DepositoRequest;
 use App\Services\DepositoService;
 
+
+/**
+ *
+ * Cuotas de Inversion
+ */
 class CuotaController extends Controller
 {
 
