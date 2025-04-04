@@ -134,20 +134,14 @@ class RetiroService
 
             $this->log("Transacción registrada en cuenta interna para retiro #$id");
 
-            // Si el retiro está relacionado con un préstamo hipotecario, actualizar su estado
+            // Si el retiro está relacionado con un préstamo hipotecario, procesar el retiro del prestamo
             if ($retiro->id_prestamo) {
-                $this->log("Actualizando estado de préstamo #{$retiro->id_prestamo} a DESEMBOLSADO");
+                $this->retirarPrestamo($retiro, $data);
+            }
 
-                $prestamoService = app(PrestamoService::class);
-                $estadoData = array_merge($data, ['estado' => EstadoPrestamo::$DESEMBOLZADO]);
-
-                try {
-                    $prestamoService->cambiarEstado($retiro->id_prestamo, $estadoData);
-                    $this->log("Estado de préstamo actualizado correctamente");
-                } catch (\Exception $e) {
-                    $this->logError("Error al actualizar estado del préstamo: " . $e->getMessage());
-                    throw new \Exception("El retiro se procesó, pero hubo un error al actualizar el préstamo: " . $e->getMessage());
-                }
+            // Si el retiro está relacionado con una cuota de inversión, procesar el retiro del pago de inversión
+            if ($retiro->id_pago_inversions) {
+                $this->retirarCuotaInversion($retiro);
             }
 
             DB::commit();
@@ -158,6 +152,66 @@ class RetiroService
             DB::rollBack();
             $this->logError("Error al realizar retiro #$id: " . $e->getMessage());
             throw $e;
+        }
+    }
+
+    private function retirarPrestamo($retiro, $data)
+    {
+        $this->log("Actualizando estado de préstamo #{$retiro->id_prestamo} a DESEMBOLSADO");
+
+        $prestamoService = app(PrestamoService::class);
+        $estadoData = array_merge($data, ['estado' => EstadoPrestamo::$DESEMBOLZADO]);
+
+        try {
+            $prestamoService->cambiarEstado($retiro->id_prestamo, $estadoData);
+            $this->log("Estado de préstamo actualizado correctamente");
+        } catch (\Exception $e) {
+            $this->logError("Error al actualizar estado del préstamo: " . $e->getMessage());
+            throw new \Exception("El retiro se procesó, pero hubo un error al actualizar el préstamo: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Procesa el retiro de una cuota de inversión
+     *
+     * @param Retiro $retiro Retiro asociado a la cuota de inversión
+     * @return bool True si la operación se realizó correctamente
+     * @throws \Exception Si ocurre un error durante el proceso
+     */
+    private function retirarCuotaInversion(Retiro $retiro): bool
+    {
+
+
+        $idPago = $retiro->id_pago_inversions;
+        $idCuenta = $retiro->tipo_cuenta_interna_id;
+        $monto = $retiro->monto;
+
+        // No iniciar una nueva transacción, ya que este método es llamado dentro de una transacción existente
+        try {
+            $this->log("Procesando retiro de cuota de inversión #{$idPago} por monto Q{$monto}");
+
+            // Obtener el servicio de pagos de inversión
+            $pagoService = app(PagoInversionService::class);
+
+            // Marcar el pago como realizado
+            $pagoService->pagar($idPago);
+
+            // Desbloquear el monto en la cuenta interna
+            $this->tipoCuentaInternaService->desbloquearMonto($idCuenta, $monto);
+
+            $retiro->save();
+
+            $this->log("Retiro de cuota de inversión #{$idPago} completado exitosamente");
+
+            return true;
+        } catch (\Exception $e) {
+            $this->logError("Error al procesar retiro de cuota de inversión #{$idPago}: " . $e->getMessage());
+
+            throw new \Exception(
+                "No se pudo procesar el retiro de la cuota de inversión: " . $e->getMessage(),
+                0,
+                $e
+            );
         }
     }
 

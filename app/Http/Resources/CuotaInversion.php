@@ -17,8 +17,8 @@ class CuotaInversion extends JsonResource
         return [
             'id' => $this->id,
             'monto' => (float) $this->monto,
-            'monto_interes' => (float) $this->montoInteres,
-            'isr_retenido' => (float) $this->montoISR,
+            'monto_interes' => (float) $this->monto_interes,
+            'isr_retenido' => (float) $this->monto,
             'fecha' => $this->fecha,
             'fecha_pago' => $this->fecha_pago,
             'no_boleta' => $this->no_boleta,

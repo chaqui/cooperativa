@@ -117,17 +117,29 @@ class TipoCuentaInternaService
         return $tipoCuentaInterna->cuentaInternas;
     }
 
-    public function getDepositos($id){
+    public function getDepositos($id)
+    {
         $this->log("Obteniendo depósitos para tipo de cuenta interna #$id");
         $tipoCuentaInterna = $this->getById($id);
         $this->log("Depósitos obtenidos: " . $tipoCuentaInterna->depositos->count());
         return $tipoCuentaInterna->depositos;
     }
 
-    public function getRetiros($id){
+    public function getRetiros($id)
+    {
         $this->log("Obteniendo retiros para tipo de cuenta interna #$id");
         $tipoCuentaInterna = $this->getById($id);
         $this->log("Retiros obtenidos: " . $tipoCuentaInterna->retiros->count());
         return $tipoCuentaInterna->retiros;
+    }
+
+    public function desbloquearMonto($id, $monto)
+    {
+        $this->log("Desbloqueando monto de $monto para tipo de cuenta interna #$id");
+        $tipoCuentaInterna = $this->getById($id);
+        $tipoCuentaInterna->monto_bloqueado = $tipoCuentaInterna->monto_bloqueado - $monto;
+        $tipoCuentaInterna->save();
+        $this->log("Monto Q{$monto} desbloqueado en cuenta interna #{$id}");
+        return $tipoCuentaInterna;
     }
 }

@@ -4,10 +4,13 @@ namespace App\Services;
 
 use App\Models\Inversion;
 use App\Models\Pago_Inversion;
+use App\Traits\Loggable;
 use DateTime;
+
 class CuotaInversionService extends CuotaService
 {
 
+    use Loggable;
     public function createCuotas(Inversion $inversion)
     {
         $cuotas = $this->calcularPlazo($inversion->plazo, $inversion->tipo_plazo);
@@ -15,9 +18,9 @@ class CuotaInversionService extends CuotaService
         for ($i = 1; $i <= $cuotas; $i++) {
             $pago = new Pago_Inversion();
             $pago->inversion_id = $inversion->id;
-            $pago->montoInteres = $this->calcularCuotaInversion($gananciaDiaria, $i, $inversion->fecha_inicio);
-            $pago->montoISR = $pago->montoInteres * 0.1;
-            $pago->monto = $pago->montoInteres - $pago->montoISR;
+            $pago->monto_interes = $this->calcularCuotaInversion($gananciaDiaria, $i, $inversion->fecha_inicio);
+            $pago->monto_isr = $pago->monto_interes * 0.1;
+            $pago->monto = $pago->monto_interes - $pago->monto_isr;
             $pago->fecha = $this->sumarMesesDesdeFecha($inversion->fecha_inicio, $i);
             $pago->realizado = false;
             $pago->fecha_pago = $this->obtenerSiguienteDiaHabil($pago->fecha);
@@ -82,9 +85,15 @@ class CuotaInversionService extends CuotaService
 
     public function obtenerCuotasHoy()
     {
-        $hoy = (new \DateTime())->format('Y-m-d');
-        return Pago_Inversion::where('fecha_pago', $hoy)->get();
+        $pagos = Pago_Inversion::all();
+        $cuotasHoy    = collect();
+        foreach ($pagos as $pago) {
+            $cuotas = $pago->retiros()->where('realizado', false)->get();
+            if ($cuotas->isEmpty()) {
+                continue;
+            }
+            $cuotasHoy = $cuotasHoy->merge($cuotas);
+        }
+        return $cuotasHoy;
     }
-
-
 }

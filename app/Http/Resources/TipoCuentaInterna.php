@@ -22,6 +22,7 @@ class TipoCuentaInterna extends JsonResource
             'saldo' => $this->saldo(),
             'ingresos' => $this->ingresos(),
             'egresos' => $this->egresos(),
+            'monto_bloqueado' => $this->monto_bloqueado,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

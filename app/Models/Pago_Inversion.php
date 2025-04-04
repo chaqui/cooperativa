@@ -22,4 +22,8 @@ class Pago_Inversion extends Model
     {
         return $this->belongsTo(Inversion::class, 'inversion_id');
     }
+
+    public function retiros(){
+        return $this->hasMany(Retiro::class, 'id_pago_inversions');
+    }
 }

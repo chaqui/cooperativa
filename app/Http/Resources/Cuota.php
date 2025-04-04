@@ -29,6 +29,7 @@ class Cuota extends JsonResource
             'nuevo_saldo' => $this->nuevo_saldo,
             'saldo_faltante' => $this->saldoFaltante() < 0 ? 0 : $this->saldoFaltante(),
             'id_deposito' => $this->id_deposito,
+            'penalizacion' => $this->penalizacion,
         ];
     }
 }

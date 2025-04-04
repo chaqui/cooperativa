@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePagarCuota;
 use App\Services\CuotaInversionService;
 use App\Http\Resources\CuotaInversion as CuotaResource;
+use App\Http\Resources\Retiro as RetiroResource;
 use App\Http\Requests\DepositoRequest;
 use App\Services\DepositoService;
 
@@ -28,7 +29,7 @@ class CuotaController extends Controller
     public function obtenerCuotasParaPagarHoy()
     {
         $cuotas = $this->cuotaService->obtenerCuotasHoy();
-        return CuotaResource::collection($cuotas);
+        return RetiroResource::collection($cuotas);
     }
 
 

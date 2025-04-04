@@ -16,6 +16,7 @@ class TipoCuentaInterna extends Model
         'tipo_cuenta',
         'numero_cuenta',
         'saldo_inicial',
+        'monto_bloqueado'
     ];
 
     public function cuentaInternas()
@@ -31,15 +32,18 @@ class TipoCuentaInterna extends Model
         return $this->hasMany(Deposito::class, 'tipo_cuenta_interna_id');
     }
 
-    public function ingresos(){
+    public function ingresos()
+    {
         return $this->cuentaInternas()->sum('ingreso');
     }
 
-    public function egresos(){
+    public function egresos()
+    {
         return $this->cuentaInternas()->sum('egreso');
     }
 
-    public function saldo(){
-        return $this->ingresos() - $this->egresos();
+    public function saldo()
+    {
+        return $this->ingresos() - $this->egresos() - $this->monto_bloqueado;
     }
 }
