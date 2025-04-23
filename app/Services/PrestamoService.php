@@ -8,6 +8,15 @@ use App\Models\Prestamo_Hipotecario;
 use App\Traits\Loggable;
 use Illuminate\Support\Facades\DB;
 
+use App\Services\CuotaHipotecaService;
+use App\Services\ClientService;
+use App\Services\PropiedadService;
+use App\Services\CatologoService;
+use App\Services\PdfService;
+use App\Services\UserService;
+use Exception;
+
+
 class PrestamoService
 {
 
@@ -25,14 +34,24 @@ class PrestamoService
 
     private $userService;
 
-    public function __construct(ControladorEstado $controladorEstado, ClientService $clientService, PropiedadService $propiedadService, CatologoService $catalogoService, PdfService $pdfService, UserService $userService)
-    {
+
+    private  $cuotaHipotecaService;
+    public function __construct(
+        ControladorEstado $controladorEstado,
+        ClientService $clientService,
+        PropiedadService $propiedadService,
+        CatologoService $catalogoService,
+        PdfService $pdfService,
+        UserService $userService,
+        CuotaHipotecaService $cuotaHipotecaService
+    ) {
         $this->controladorEstado = $controladorEstado;
         $this->clientService = $clientService;
         $this->propiedadService = $propiedadService;
         $this->catalogoService = $catalogoService;
         $this->pdfService = $pdfService;
         $this->userService = $userService;
+        $this->cuotaHipotecaService = $cuotaHipotecaService;
     }
 
     public function create($data)
@@ -69,7 +88,14 @@ class PrestamoService
 
     public function get($id)
     {
-        return Prestamo_Hipotecario::find($id);
+        $this->log('Buscando prestamo con id: ' . $id);
+        $prestamo = Prestamo_Hipotecario::find($id);
+        if (!$prestamo) {
+            $this->log('Prestamo no encontrado con id: ' . $id);
+            throw new Exception('Prestamo no encontrado con id: ' . $id);
+        }
+        $this->log('Prestamo encontrado con id: ' . $id);
+        return $prestamo;
     }
 
     public function all()
@@ -150,5 +176,44 @@ class PrestamoService
         }
         $this->log('Retiros pendientes obtenidos: ' . $retirosPendientes->count());
         return $retirosPendientes;
+    }
+
+    public function pagarCuota($id, $data)
+    {
+        DB::beginTransaction();
+        try {
+            $prestamo = $this->get($id);
+            $cuotaApagar = $prestamo->cuotaActiva();
+
+            if (!$cuotaApagar) {
+                $this->logError("No hay cuotas activas para el préstamo: {$prestamo->codigo}");
+                throw new Exception("No hay cuotas activas para el préstamo {$prestamo->codigo}");
+            }
+            $this->log('Realizando pago de cuota' . $cuotaApagar->numero_pago_prestamo . ' del prestamo : ' . $prestamo->codigo);
+            $cuotaHipotecaService = app(CuotaHipotecaService::class);
+            $cuotaHipotecaService->realizarPago($data, $cuotaApagar->id);
+
+            DB::commit();
+            $this->log('Pago realizado con éxito para la cuota: ' . $cuotaApagar->id);
+        } catch (Exception $e) {
+            DB::rollBack();
+            $this->log('Error al realizar el pago: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function generarEstadoCuentaPdf($id)
+    {
+        $prestamo = $this->get($id);
+        $prestamo->totalPagado = $prestamo->totalPagado();
+        $prestamo->saldoPendiente = $prestamo->saldoPendiente();
+        $pagos = $prestamo->pagos;
+
+        $html = view('pdf.estadoCuenta', [
+            'prestamo' => $prestamo,
+            'pagos' => $pagos,
+        ])->render();
+        $pdf = $this->pdfService->generatePdf($html, 'landscape');
+        return $pdf;
     }
 }

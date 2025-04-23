@@ -7,7 +7,7 @@ use Dompdf\Options;
 
 class PdfService
 {
-    public function generatePdf($html)
+    public function generatePdf($html, $orientation = 'portrait')
     {
         // Configurar opciones de Dompdf
         $options = new Options();
@@ -21,7 +21,7 @@ class PdfService
         $dompdf->loadHtml($html);
 
         // (Opcional) Configurar el tamaño y la orientación del papel
-        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->setPaper('A4', $orientation);
 
         // Renderizar el HTML como PDF
         $dompdf->render();

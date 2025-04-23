@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Constants\EstadoInversion;
 use App\Models\Deposito;
+use App\Models\Pago;
 use App\Traits\Loggable;
+use App\Constants\TipoImpuesto;
 use Illuminate\Support\Facades\DB;
 
 class DepositoService
@@ -14,11 +16,13 @@ class DepositoService
 
     private $pdfService;
 
-    public function __construct(PdfService $pdfService)
+    private ImpuestoTransaccionService $impuestoTransaccionService;
+
+    public function __construct(PdfService $pdfService, ImpuestoTransaccionService $impuestoTransaccionService)
     {
         $this->pdfService = $pdfService;
+        $this->impuestoTransaccionService = $impuestoTransaccionService;
     }
-
     /**
      * Crea un nuevo registro de depósito en el sistema - No es llamado desde el controlador
      *
@@ -43,6 +47,7 @@ class DepositoService
 
     private function procesarCreacionDeposito($datos, $procesarInmediatamente = false)
     {
+        $this->log("Creando depósito con datos: " . json_encode($datos));
         $deposito = new Deposito();
         $deposito->tipo_documento = null;
         $deposito->numero_documento = null;
@@ -124,9 +129,9 @@ class DepositoService
      */
     public function depositar($id, $data)
     {
-        $this->log('Interese depositar' . $data['interes']);
         DB::beginTransaction();
         try {
+            $this->log("Procesando depósito con ID: {$id} y datos: " . json_encode($data));
             // Obtener el depósito
             $deposito = $this->getDeposito($id);
 
@@ -150,6 +155,11 @@ class DepositoService
             $descripcion = "Depósito realizado: " . ($deposito->motivo ?? 'No especificado') .
                 " | Documento: " . ($data['tipo_documento'] ?? 'No especificado') .
                 " | Número: " . ($data['numero_documento'] ?? 'No especificado');
+
+            if (isset($data['interes']) && $data['interes'] > 0.001) {
+                $this->generarImpuestos($deposito->pago, $data['interes'], $deposito->tipo_cuenta_interna_id);
+            }
+
             $cuentaInternaService->createCuenta([
                 'ingreso' => $deposito->monto,
                 'egreso' => 0,
@@ -161,20 +171,7 @@ class DepositoService
 
             // Si está asociado a una inversión, actualizar su estado
             if ($deposito->id_inversion) {
-                try {
-                    $inversionService = app(InversionService::class);
-                    $estadoData = ['estado' => EstadoInversion::$DEPOSITADO];
-
-                    // Conservar datos relevantes del depósito para el historial
-                    if (isset($data['descripcion'])) {
-                        $estadoData['descripcion'] = $data['descripcion'];
-                    }
-
-                    $inversionService->cambiarEstado($deposito->id_inversion, $estadoData);
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    throw new \Exception('Error al actualizar el estado de la inversión: ' . $e->getMessage());
-                }
+                $this->actualizarEstadoInversion($deposito, $data['descripcion'] ?? null);
             }
 
             DB::commit();
@@ -191,6 +188,86 @@ class DepositoService
             );
             // Lanzar excepción para que el controlador maneje el error
             throw $e;
+        }
+    }
+
+    /**
+     * Metodo privado para actualizar el estado de una inversión asociada a un depósito
+     * @param mixed $deposito Información del depósito
+     * @param mixed $descripcion Descripción adicional para el estado
+     * @throws \Exception Si ocurre un error al actualizar el estado de la inversión
+     * @return void
+     */
+    private function actualizarEstadoInversion($deposito, $descripcion = null)
+    {
+        try {
+            $inversionService = app(InversionService::class);
+            $estadoData = ['estado' => EstadoInversion::$DEPOSITADO];
+
+            // Conservar datos relevantes del depósito para el historial
+            if (isset($descripcion)) {
+                $estadoData['descripcion'] = $descripcion;
+            }
+
+            $inversionService->cambiarEstado($deposito->id_inversion, $estadoData);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw new \Exception('Error al actualizar el estado de la inversión: ' . $e->getMessage());
+        }
+    }
+
+
+    /**
+     * Genera y registra los impuestos asociados a un pago de intereses de una cuota hipotecaria
+     *
+     * @param Pago $pago Pago asociado al impuesto
+     * @param float $montoInteres Monto de los intereses sobre los cuales se calculará el impuesto
+     * @param int $idCuenta ID de la cuenta interna donde se registrará el impuesto
+     * @return void
+     * @throws \Exception Si ocurre un error durante el proceso
+     */
+    private function generarImpuestos(Pago $pago, float $montoInteres, int $idCuenta): void
+    {
+        try {
+            $this->log("Generando impuestos para el pago de intereses del préstamo #{$pago->id_prestamo}");
+            // Validar que el monto de intereses sea mayor a cero
+            if ($montoInteres <= 0) {
+                $this->log("No se generaron impuestos porque el monto de intereses es cero o negativo.");
+                return;
+            }
+
+            // Calcular la fecha actual
+            $fechaPago = now();
+
+            // Generar la descripción del impuesto
+            $descripcion = sprintf(
+                'Impuesto por pago de intereses de la cuota hipotecaria del préstamo #%d (código: %s) con fecha %s',
+                $pago->id_prestamo,
+                $pago->prestamo->codigo,
+                $fechaPago->format('Y-m-d')
+            );
+
+            // Crear la transacción de impuesto
+            $impuesto = $this->impuestoTransaccionService->crearTransaccion([
+                'tipo_impuesto' => TipoImpuesto::$IVA,
+                'monto_transaccion' => $montoInteres,
+                'fecha_transaccion' => $fechaPago->format('Y-m-d'),
+                'descripcion' => $descripcion,
+                'id_cuenta'=> $idCuenta,
+            ]);
+
+
+
+            // Registrar en los logs
+            $this->log(sprintf(
+                'Impuesto generado con éxito: ID %d, Monto: Q%.2f, y bloqueado el monto en Cuenta Interna: %d',
+                $impuesto->id,
+                $impuesto->monto_impuesto,
+                $idCuenta
+            ));
+        } catch (\Exception $e) {
+            $this->logError('Error al generar impuestos: ' . $e->getMessage());
+            throw new \Exception('Error al generar impuestos: ' . $e->getMessage(), 0, $e);
         }
     }
 

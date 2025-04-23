@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\EstadoRequest;
 use App\Http\Requests\PrestamoRequest;
-use Illuminate\Http\Request;
 use App\Services\PrestamoService;
 use App\Http\Resources\Prestamo as PrestamoResource;
 use App\Http\Resources\HistoricoEstado as HistoricoEstadoResource;
 use App\Http\Resources\Cuota as PagoResource;
 use App\Http\Resources\Retiro as RetiroResource;
+use App\Http\Requests\StorePagarCuota;
 
 class PrestamoController extends Controller
 {
@@ -108,5 +108,27 @@ class PrestamoController extends Controller
     public function getRetirosPendientes()
     {
         return RetiroResource::collection($this->prestamoService->getRetirosPendientes());
+    }
+
+    public function generarEstadoCuenta(string $id)
+    {
+        $prestamo = $this->prestamoService->get($id);
+        $pdf = $this->prestamoService->generarEstadoCuentaPdf($prestamo->id);
+        return response($pdf, 200)->header('Content-Type', 'application/pdf');
+    }
+
+    public function getEstadoCuenta(string $id)
+    {
+        $prestamo = $this->prestamoService->get($id);
+        if(!$prestamo->estado_cuenta_path) {
+            return response()->json(['message' => 'No se ha generado el estado de cuenta'], 404);
+        }
+        return response()->download($prestamo->estado_cuenta_path);
+    }
+
+    public function pagarCuota(StorePagarCuota $request, string $id)
+    {
+        $this->prestamoService->pagarCuota($id, $request->all());
+        return response()->json(['message' => 'Pago realizado correctamente'], 200);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Constants\FrecuenciaPago;
 use Illuminate\Database\Eloquent\Model;
 
 class Prestamo_Hipotecario extends Model
@@ -72,22 +73,56 @@ class Prestamo_Hipotecario extends Model
         return $this->belongsTo(User::class, 'id_usuario');
     }
 
-    public function cuotasPendientes()
-    {
-        return $this->hasMany(Pago::class, 'id_prestamo');
-    }
 
     public function retiro()
     {
         return $this->hasOne(Retiro::class, 'id_prestamo');
     }
 
-    public function montoLiquido(){
+    public function montoLiquido()
+    {
         return $this->monto - $this->gastos_administrativos - $this->gastos_formalidad;
     }
 
     public function intereses()
     {
         return $this->pagos()->sum('interes');
+    }
+
+    public function getCuotasPendientes()
+    {
+        return $this->pagos()->where('realizado', 0)->get();
+    }
+
+    public function cuotasPagadas()
+    {
+        return $this->pagos()->where('realizado', 1)->getAppends();
+    }
+
+    public function cuotaActiva()
+    {
+        return $this->pagos()->where('realizado', 0)->orderBy('fecha', 'asc')->first();
+    }
+
+    public function frecuenciaPago()
+    {
+        $frecuenciaPago = new FrecuenciaPago();
+        return $frecuenciaPago->getFrecuenciaPago($this->frecuencia_pago);
+    }
+
+    public function totalPagado()
+    {
+        return $this->pagos()->sum('monto_pagado');
+    }
+
+
+    public function saldoPendiente()
+    {
+        $pagos = $this->getCuotasPendientes();
+        $monto = 0;
+        foreach ($pagos as $pago) {
+            $monto += $pago->saldoFaltante();
+        }
+        return $monto;
     }
 }

@@ -4,7 +4,7 @@ namespace App\EstadosPrestamo;
 
 use App\Constants\EstadoPrestamo;
 use App\Models\Prestamo_Hipotecario;
-
+use App\Services\ArchivoService;
 use App\Services\CuotaHipotecaService;
 use App\Services\RetiroService;
 use App\Traits\Loggable;
@@ -16,15 +16,20 @@ class ControladorEstado
     private $cuotaHipotecariaService;
 
 
+    private ArchivoService $archivoService;
+
+
     private RetiroService $retiroService;
 
-    public function __construct(CuotaHipotecaService $cuotaHipotecariaService, RetiroService $retiroService)
-    {
+    public function __construct(
+        CuotaHipotecaService $cuotaHipotecariaService,
+        ArchivoService $archivoService,
+        RetiroService $retiroService
+    ) {
         $this->cuotaHipotecariaService = $cuotaHipotecariaService;
+        $this->archivoService = $archivoService;
         $this->retiroService = $retiroService;
     }
-
-
 
     public  function cambiarEstado(Prestamo_Hipotecario $prestamo, $data)
     {
@@ -73,7 +78,7 @@ class ControladorEstado
             ],
             EstadoPrestamo::$DESEMBOLZADO => [
                 'clase' => PrestamoDesembolsado::class,
-                'dependencias' => [$this->cuotaHipotecariaService]
+                'dependencias' => [$this->cuotaHipotecariaService, $this->archivoService]
             ],
             EstadoPrestamo::$FINALIZADO => [
                 'clase' => PrestamoFinalizado::class,

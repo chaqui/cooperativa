@@ -159,7 +159,7 @@ class Client extends Model
         $prestamos = $this->prestamosHipotecarios;
         $cuotas = collect();
         foreach ($prestamos as $prestamo) {
-            $cuotasPendientes = $prestamo->cuotasPendientes;
+            $cuotasPendientes = $prestamo->getCuotasPendientes();
             if ($cuotasPendientes->isNotEmpty()) {
                 $cuotas = $cuotas->merge($cuotasPendientes);
             }

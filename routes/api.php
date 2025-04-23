@@ -21,6 +21,8 @@ use App\Http\Controllers\CuentaBancariaController;
 use App\Http\Controllers\DepositoController;
 use App\Http\Controllers\RetiroController;
 use App\Http\Controllers\TipoCuentaInternaController;
+use App\Http\Controllers\DeclaracionController;
+use App\Http\Controllers\ImpuestoController;
 
 $rolesEdicion = implode('|', [Roles::$ADMIN, Roles::$ASESOR]);
 $rolesSoloLectura = implode('|', [Roles::$ADMIN, Roles::$ASESOR, Roles::$CAJERO]);
@@ -140,7 +142,10 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('prestamos/{id}/estados', [PrestamoController::class, 'historial']);
     Route::put('prestamos/{id}/estados', [PrestamoController::class, 'cambiarEstado']);
     Route::get('prestamos/{id}/pdf', [PrestamoController::class, 'generatePdf']);
+    Route::get('prestamos/{id}/estado-cuenta', [PrestamoController::class, 'getEstadoCuenta']);
+    Route::get('prestamos/{id}/estado-cuenta/pdf', [PrestamoController::class, 'generarEstadoCuenta']);
     Route::get('prestamos/{id}/pagos', [PrestamoController::class, 'pagos']);
+    Route::post('prestamos/{id}/pagos', [PrestamoController::class, 'pagarCuota']);
 });
 
 //estados
@@ -174,4 +179,18 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('cuentas/{id}/detalles', [TipoCuentaInternaController::class, 'getDetalles']);
     Route::get('cuentas/{id}/depositos', [TipoCuentaInternaController::class, 'getDepositos']);
     Route::get('cuentas/{id}/retiros', [TipoCuentaInternaController::class, 'getRetiros']);
+});
+
+//impuestos
+Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
+    Route::get('impuestos', [ImpuestoController::class, 'index']);
+    Route::get('impuestos/{id}/declaraciones', [ImpuestoController::class, 'getDeclaraciones']);
+});
+
+//declaraciones
+Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
+    Route::get('declaraciones/{id}', [DeclaracionController::class, 'show']);
+    Route::get('declaraciones/{id}/transacciones', [DeclaracionController::class, 'getTransacciones']);
+    Route::put('declaraciones/{id}', [DeclaracionController::class, 'declarar']);
+
 });

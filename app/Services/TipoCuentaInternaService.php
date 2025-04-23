@@ -142,4 +142,13 @@ class TipoCuentaInternaService
         $this->log("Monto Q{$monto} desbloqueado en cuenta interna #{$id}");
         return $tipoCuentaInterna;
     }
+    public function bloquearMonto($id, $monto)
+    {
+        $this->log("Bloqueando monto de $monto para tipo de cuenta interna #$id");
+        $tipoCuentaInterna = $this->getById($id);
+        $tipoCuentaInterna->monto_bloqueado = $tipoCuentaInterna->monto_bloqueado + $monto;
+        $tipoCuentaInterna->save();
+        $this->log("Monto Q{$monto} bloqueado en cuenta interna #{$id}");
+        return $tipoCuentaInterna;
+    }
 }

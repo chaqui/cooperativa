@@ -3,15 +3,18 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Traits\Authorizable;
+use App\Constants\Roles;
 
-class CuotaRequest extends FormRequest
+class DeclaracionRequest extends FormRequest
 {
+    use Authorizable;
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return false;
+        return $this->authorizeRol([Roles::$ADMIN]);
     }
 
     /**
@@ -22,7 +25,8 @@ class CuotaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'numero_formulario' => 'required|string|max:50',
+            'fecha_presentacion' => 'required|date',
         ];
     }
 }

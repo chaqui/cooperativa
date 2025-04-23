@@ -6,17 +6,24 @@ namespace App\EstadosPrestamo;
 use App\Constants\EstadoPrestamo;
 
 use App\Models\Prestamo_Hipotecario;
+use App\Services\ArchivoService;
 use App\Services\CuotaHipotecaService;
-use App\Services\CuentaInternaService;
+use App\Services\PrestamoService;
+use App\Traits\Loggable;
 
 class PrestamoDesembolsado extends EstadoBasePrestamo
 {
 
     private $cuotaHipotecariaService;
 
+    private ArchivoService $archivoService;
 
-    public function __construct(CuotaHipotecaService $cuotaHipotecariaService)
+    use Loggable;
+
+
+    public function __construct(CuotaHipotecaService $cuotaHipotecariaService, ArchivoService $archivoService)
     {
+        $this->archivoService = $archivoService;
         $this->cuotaHipotecariaService = $cuotaHipotecariaService;
         parent::__construct(EstadoPrestamo::$APROBADO, EstadoPrestamo::$DESEMBOLZADO);
     }
@@ -32,13 +39,21 @@ class PrestamoDesembolsado extends EstadoBasePrestamo
         }
         $prestamo->fecha_inicio = now();
         parent::cambiarEstado($prestamo, $data);
-        $dataCuentaInterna = [
-            'ingreso' => 0,
-            'egreso' => $prestamo->monto,
-            'descripcion' => 'Desembolso de prestamo hipotecario con id ' . $prestamo->id .
-                ' con monto de ' . $prestamo->monto . ' con numero de documento ' . $data['numero_documento'] .
-                ' y tipo de documento ' . $data['tipo_documento']
-        ];
         $this->cuotaHipotecariaService->calcularCuotas($prestamo);
+        $this->generarYGuardarEstadoDeCuenta($prestamo);
+    }
+
+    private function generarYGuardarEstadoDeCuenta($prestamo)
+    {
+        $this->log("Generando estado de cuenta para el préstamo #{$prestamo->id}");
+        $prestamoService = app()->make(PrestamoService::class);
+        $pdf = $prestamoService->generarEstadoCuentaPdf($prestamo->id);
+
+        $path = storage_path('app/estados_cuenta/');
+
+        $fileName = 'estado_cuenta_prestamo_' . $prestamo->id . '.pdf';
+        $pathArchivo = $this->archivoService->guardarArchivo($pdf, $path, $fileName);
+        $prestamo->estado_cuenta_path = $pathArchivo;
+        $prestamo->save();
     }
 }

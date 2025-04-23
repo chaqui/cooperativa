@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Constants\FrecuenciaPago;
 use App\Models\Prestamo_Hipotecario;
 use App\Models\Pago;
 use App\Traits\Loggable;
 use Illuminate\Support\Facades\DB;
+use PDO;
 
 class CuotaHipotecaService extends CuotaService
 {
@@ -81,6 +83,7 @@ class CuotaHipotecaService extends CuotaService
      */
     public function realizarPago($data, $id)
     {
+        $this->validarPago($data);
         DB::beginTransaction();
         try {
             $pago = $this->getPago($id);
@@ -96,18 +99,24 @@ class CuotaHipotecaService extends CuotaService
             ];
             //validacion de penalizacion
             $montoRestante = $this->procesarPenalizacion($pago, $montoRestante, $detallesPago);
-            $montoRestante = $this->procesarIntereses($pago, $montoRestante, $detallesPago);
+            $montoRestante = $this->procesarIntereses($pago, $montoRestante, $detallesPago, $data['fecha_documento']);
             $montoRestante = $this->procesarCapital($pago, $montoRestante, $detallesPago);
 
 
             $pago->monto_pagado += $montoOriginal;
 
+            if ($montoRestante > 0) {
+                $detallesPago['descripcion'] .= "Se abonó la cantidad de Q.{$montoRestante} a capital; ";
+                $this->actualizarSiguentesPago($pago, $pago->saldo, $montoRestante);
+            }
+
             // Verificar si el pago está completo
             if ($pago->saldoFaltante() <= 0) {
-                $pago->realizado = true;
+                //$pago->realizado = true;
                 $pago->nuevo_saldo = $pago->saldo - ($pago->capital_pagado - $pago->capital);
                 $this->actualizarSiguentesPago($pago,  $pago->nuevo_saldo);
             }
+            $pago->fecha_pago = $data['fecha_documento'];
             $pago->save();
 
             $this->registrarDepositoYTransaccion($data, $pago, $detallesPago);
@@ -117,6 +126,26 @@ class CuotaHipotecaService extends CuotaService
             $this->logError('Error al realizar el pago: ' . $e->getMessage());
             DB::rollBack();
             throw $e;
+        }
+    }
+
+    private function validarPago($data){
+        $this->log('Validando pago');
+        if (!isset($data['monto']) || $data['monto'] <= 0) {
+            throw new \InvalidArgumentException('El monto es requerido y debe ser mayor que cero');
+        }
+        if (!isset($data['tipo_documento']) || empty($data['tipo_documento'])) {
+            throw new \InvalidArgumentException('El tipo de documento es requerido');
+        }
+        if (!isset($data['no_documento']) || empty($data['no_documento'])) {
+            throw new \InvalidArgumentException('El número de documento es requerido');
+        }
+        if (!isset($data['fecha_documento']) || empty($data['fecha_documento'])) {
+            throw new \InvalidArgumentException('La fecha del documento es requerida');
+        }
+
+        if (new \DateTime($data['fecha_documento']) > new \DateTime()) {
+            throw new \InvalidArgumentException('La fecha del documento no puede ser mayor a la fecha actual');
         }
     }
 
@@ -189,22 +218,13 @@ class CuotaHipotecaService extends CuotaService
         // Calcular componentes del pago
         $tasaInteresMensual = $this->calcularTaza($prestamo->interes);
         $interesMensual = $this->calcularInteres($saldoBase, $tasaInteresMensual);
-        $capitalMensual = $cuota - $interesMensual;
-        $nuevoSaldo = $saldoBase - $capitalMensual;
-
-        // Si el saldo resultante es muy pequeño (por errores de redondeo), ajustarlo a cero
-        if ($nuevoSaldo < 0.01) {
-            $nuevoSaldo = 0;
-            $capitalMensual = $saldoBase;
-        }
 
         // Crear y configurar el objeto pago
         $pago = new Pago();
         $pago->id_prestamo = $prestamo->id;
         $pago->interes = $interesMensual;
-        $pago->capital = $capitalMensual;
         $pago->fecha = $this->obtenerFechaSiguienteMes($fechaBase);
-        $pago->saldo = $nuevoSaldo;
+        $pago->numero_pago_prestamo = $pagoAnterior ? $pagoAnterior->numero_pago_prestamo + 1 : 1;
         $pago->realizado = false;
         $pago->id_pago_anterior = $pagoAnterior ? $pagoAnterior->id : null;
 
@@ -214,13 +234,46 @@ class CuotaHipotecaService extends CuotaService
         $pago->monto_pagado = 0;
         $pago->penalizacion = 0;
         $pago->recargo = 0;
+        $pago->fecha_pago = null;
 
+        // Calcular el capital mensual
+        $capitalMensual = $this->calcularCapital($pago, $prestamo, $saldoBase);
+        $this->log("Capital mensual calculado: Q{$capitalMensual}");
+        $nuevoSaldo = $saldoBase - $capitalMensual;
+
+        // Si el saldo resultante es muy pequeño (por errores de redondeo), ajustarlo a cero
+        if ($nuevoSaldo < 0.01) {
+            $nuevoSaldo = 0;
+            $capitalMensual = $saldoBase;
+        }
+        $pago->capital = $capitalMensual;
+        $pago->saldo = $nuevoSaldo;
         // Registrar la creación del pago
         $pago->save();
 
         $this->log("Pago generado con éxito: ID {$pago->id}, Capital: {$pago->capital}, Interés: {$pago->interes}, Saldo: {$pago->saldo}");
 
         return $pago;
+    }
+
+    private function calcularCapital($pago, $prestamo, $saldoBase)
+    {
+        $this->log("Calculando capital para el pago #{$pago->numero_pago_prestamo}");
+
+        if ($prestamo->frecuencia_pago == FrecuenciaPago::$MENSUAL) {
+            return $prestamo->cuota - $pago->interes;
+        }
+        $this->log("La frecuencia de Pago a Capital es " . $prestamo->frecuenciaPago());
+        // Si el número de pago es múltiplo de la frecuencia de pago, calcular el capital
+        if (($pago->numero_pago_prestamo % $prestamo->frecuenciaPago()) == 0) {
+            $this->log("El número de pago es múltiplo de la frecuencia de pago");
+
+            $plazo = $this->calcularPlazo($prestamo->plazo, $prestamo->tipo_plazo) / $prestamo->frecuenciaPago();
+            $actual = $pago->numero_pago_prestamo / $prestamo->frecuenciaPago();
+            $cuotas =  (($plazo - $actual) + 1);
+            return $saldoBase / $cuotas;
+        }
+        return 0;
     }
 
 
@@ -248,6 +301,7 @@ class CuotaHipotecaService extends CuotaService
         $pago->capital = 0; // No se amortiza capital en este pago parcial
         $pago->interes = $interesAcumulado;
         $pago->fecha = $this->obtenerFechaSiguienteMes($fecha);
+        $pago->numero_pago_prestamo = 0; // Número de pago inicial
         $pago->saldo = $prestamo->monto; // El saldo se mantiene igual
         $pago->realizado = false;
 
@@ -320,19 +374,47 @@ class CuotaHipotecaService extends CuotaService
     /**
      * Procesa el pago de intereses
      */
-    private function procesarIntereses($pago, $montoDisponible, &$detallesPago)
+    private function procesarIntereses($pago, $montoDisponible, &$detallesPago, $fechaPago)
     {
+        // Validar que el monto disponible sea mayor que cero
         if ($montoDisponible <= 0) {
             return 0;
         }
 
-        $interesPendiente = $pago->interes - $pago->interes_pagado;
+        // Validar que el interés sea mayor que cero
+        if ($pago->interes <= 0) {
+            return $montoDisponible;
+        }
 
+        // Obtener los días del mes
+        $diasDelMes = $this->obtenerDiasDelMes($pago->fecha, 0);
+        $this->log("Días del mes: {$diasDelMes}");
+
+        // Calcular los días acumulados desde la fecha del pago
+        $diasAcumulados = $this->obtenerDiasAcumulados($fechaPago);
+        $this->log("Días acumulados desde la ultima fecha de pago: {$diasAcumulados}");
+
+        // Si no hay días acumulados, no se puede procesar el interés
+        if ($diasAcumulados <= 0) {
+            return $montoDisponible;
+        }
+
+        // Calcular el interés diario
+        $interesAPagar = $pago->interes / $diasDelMes;
+        $interesAPagar = $interesAPagar * $diasAcumulados;
+        $this->log("Interés a pagar: Q{$interesAPagar}");
+
+        $interesPendiente =  $interesAPagar  - $pago->interes_pagado;
+        $this->log("Interés pendiente: Q{$interesPendiente}");
+        // Si el interés pendiente es menor o igual a cero, no se puede procesar
         if ($interesPendiente <= 0) {
             return $montoDisponible;
         }
 
+        // Calcular el monto a pagar por intereses
         $montoInteres = min($montoDisponible, $interesPendiente);
+        $this->log("Monto a pagar por intereses: Q{$montoInteres}");
+        // Actualizar el pago
         $pago->interes_pagado += $montoInteres;
 
         $detallesPago['interesGanado'] += $montoInteres;
@@ -349,6 +431,9 @@ class CuotaHipotecaService extends CuotaService
         if ($montoDisponible <= 0) {
             return 0;
         }
+        if ($pago->capital <= 0) {
+            return $montoDisponible;
+        }
 
         $pago->capital_pagado += $montoDisponible;
 
@@ -358,28 +443,81 @@ class CuotaHipotecaService extends CuotaService
         return 0;
     }
 
-
-    private function actualizarSiguentesPago(Pago $pago, $nuevoSaldo): void
+    private function pagarCapital(Pago $pago, $monto): string
     {
+        $this->log("Pagando capital para el pago #{$pago->id}");
+        if ($monto <= 0) {
+            return '';
+        }
+
+        $detallesPago = [
+            'capitalGanado' => 0,
+            'interesGanado' => 0,
+            'descripcion' =>  "",
+        ];
+
+        $montoRestante = $this->procesarCapital($pago, $monto, $detallesPago);
+
+        if ($montoRestante <= 0) {
+            $this->log("El monto restante es cero, actualizando el saldo");
+            $pago->nuevo_saldo = $pago->saldo - ($pago->capital_pagado - $pago->capital);
+            $detallesPago['descripcion']  = $detallesPago['descripcion'] . $this->actualizarSiguentesPago($pago,  $pago->nuevo_saldo);
+        }
+        $pago->save();
+        return $detallesPago['descripcion'];
+    }
+
+
+    private function actualizarSiguentesPago(Pago $pago, $nuevoSaldo, $montoExtra = 0): string
+    {
+        $descripcion = '';
         $prestamoHipotecario = $pago->prestamo;
         $pagoSiguiente = $pago->pagoSiguiente();
-        $pagoSiguiente->interes = $this->calcularInteres($nuevoSaldo,  $this->calcularTaza($prestamoHipotecario->interes));
-        $capital = $prestamoHipotecario->cuota - $pagoSiguiente->interes;
+
+        // Si no hay un siguiente pago, detener el proceso
+        if (!$pagoSiguiente) {
+            return $descripcion;
+        }
+        $this->log("Actualizando siguiente pago: ID {$pagoSiguiente->id}");
+
+        // Si hay un monto extra, procesarlo en el siguiente pago
+        if ($montoExtra > 0) {
+            $this->log("Monto extra a procesar: Q{$montoExtra}");
+            if ($pagoSiguiente->numero_pago_prestamo % $prestamoHipotecario->frecuenciaPago() == 0
+            ) {
+                $this->log("El pago es múltiplo de la frecuencia de pago");
+                $descripcion = $this->pagarCapital($pagoSiguiente, $montoExtra);
+            } else {
+                $descripcion = $descripcion . $this->actualizarSiguentesPago($pagoSiguiente, 0, $montoExtra);
+            }
+            return $descripcion;
+        }
+        // Calcular el interés y el capital del siguiente pago
+        $pagoSiguiente->interes = $this->calcularInteres($nuevoSaldo, $this->calcularTaza($prestamoHipotecario->interes));
+        $capital = $this->calcularCapital($pagoSiguiente, $prestamoHipotecario, $nuevoSaldo);
+
+        // Ajustar el capital si el saldo restante es menor
         if ($nuevoSaldo < $capital) {
             $capital = $nuevoSaldo;
         }
+
         $pagoSiguiente->capital = $capital;
         $pagoSiguiente->saldo = $nuevoSaldo - $pagoSiguiente->capital;
-        $pagoSiguiente->save();
-        if ($pagoSiguiente->saldo > 0) {
 
-            if ($pagoSiguiente->pagoSiguiente()) {
-                $this->actualizarSiguentesPago($pagoSiguiente, $pagoSiguiente->saldo);
-            }
+        // Guardar los cambios en el siguiente pago
+        $pagoSiguiente->save();
+
+        $this->log("Pago siguiente actualizado: ID {$pagoSiguiente->id}, Capital: {$pagoSiguiente->capital}, Interés: {$pagoSiguiente->interes}, Saldo: {$pagoSiguiente->saldo}");
+
+        // Si el saldo del siguiente pago es mayor a cero, continuar con los pagos siguientes
+        if ($pagoSiguiente->saldo > 0) {
+            $descripcion = $descripcion . $this->actualizarSiguentesPago($pagoSiguiente, $pagoSiguiente->saldo);
         } else {
+            // Si el saldo es cero, eliminar los pagos restantes
             $pagoProximo = $pagoSiguiente->pagoSiguiente();
             $this->eliminarPago($pagoProximo);
         }
+        return $descripcion;
     }
 
     /**
@@ -517,5 +655,23 @@ class CuotaHipotecaService extends CuotaService
     {
         $fecha = date('Y-m-d', strtotime($fecha . ' + 1 month'));
         return date('Y-m-05', strtotime($fecha));
+    }
+
+    private function obtenerFechaAnterior($fecha)
+    {
+        $dia = date('j', strtotime($fecha));
+        if ($dia <= 5) {
+            return date('Y-m-05', strtotime($fecha . ' - 1 month'));
+        }
+        return date('Y-m-05', strtotime($fecha));
+    }
+
+    private function obtenerDiasAcumulados($fecha)
+    {
+        $this->log('La fecha es ' . $fecha);
+        $fechaAnterior = $this->obtenerFechaAnterior($fecha);
+        $this->log('La fecha anterior es ' . $fechaAnterior);
+        $diferencia = (new \DateTime($fechaAnterior))->diff(new \DateTime($fecha));
+        return $diferencia->format("%a");
     }
 }
