@@ -92,8 +92,15 @@ class CuotaInversionService extends CuotaService
             if ($cuotas->isEmpty()) {
                 continue;
             }
+            $inversion = $pago->inversion;
+            foreach ($cuotas as $cuota) {
+                $cuota->codigoInversion = $inversion->codigo;
+                $cuota->nombreCliente = $inversion->cliente->getFullNameAttribute();
+                $cuota->cuenta_recaudadora = $inversion->cuenta_recaudadora . '-' . $inversion->cuentaRecaudadora->nombre_banco;
+            }
             $cuotasHoy = $cuotasHoy->merge($cuotas);
         }
+
         return $cuotasHoy;
     }
 }
