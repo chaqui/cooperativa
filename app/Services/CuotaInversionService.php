@@ -97,6 +97,7 @@ class CuotaInversionService extends CuotaService
                 $cuota->codigoInversion = $inversion->codigo;
                 $cuota->nombreCliente = $inversion->cliente->getFullNameAttribute();
                 $cuota->cuenta_recaudadora = $inversion->cuenta_recaudadora . '-' . $inversion->cuentaRecaudadora->nombre_banco;
+                $cuota->monto_isr = $pago->monto_isr;
             }
             $cuotasHoy = $cuotasHoy->merge($cuotas);
         }

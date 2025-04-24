@@ -129,7 +129,8 @@ class CuotaHipotecaService extends CuotaService
         }
     }
 
-    private function validarPago($data){
+    private function validarPago($data)
+    {
         $this->log('Validando pago');
         if (!isset($data['monto']) || $data['monto'] <= 0) {
             throw new \InvalidArgumentException('El monto es requerido y debe ser mayor que cero');
@@ -390,8 +391,9 @@ class CuotaHipotecaService extends CuotaService
         $diasDelMes = $this->obtenerDiasDelMes($pago->fecha, 0);
         $this->log("Días del mes: {$diasDelMes}");
 
-        // Calcular los días acumulados desde la fecha del pago
-        $diasAcumulados = $this->obtenerDiasAcumulados($fechaPago);
+        // Obtener los días acumulados desde la última fecha de pago
+        $diasAcumulados = $fechaPago >= $pago->fecha ? $diasDelMes :  $this->obtenerDiasAcumulados($fechaPago);
+
         $this->log("Días acumulados desde la ultima fecha de pago: {$diasAcumulados}");
 
         // Si no hay días acumulados, no se puede procesar el interés
@@ -483,7 +485,8 @@ class CuotaHipotecaService extends CuotaService
         // Si hay un monto extra, procesarlo en el siguiente pago
         if ($montoExtra > 0) {
             $this->log("Monto extra a procesar: Q{$montoExtra}");
-            if ($pagoSiguiente->numero_pago_prestamo % $prestamoHipotecario->frecuenciaPago() == 0
+            if (
+                $pagoSiguiente->numero_pago_prestamo % $prestamoHipotecario->frecuenciaPago() == 0
             ) {
                 $this->log("El pago es múltiplo de la frecuencia de pago");
                 $descripcion = $this->pagarCapital($pagoSiguiente, $montoExtra);

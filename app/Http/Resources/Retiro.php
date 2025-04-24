@@ -35,6 +35,7 @@ class Retiro extends JsonResource
             'id_cuenta' => $this->tipoCuentaInterna->id ?? null,
             'codigo_inversion' => $this->codigoInversion ?? null,
             'cuenta_recaudadora' => $this->cuenta_recaudadora ?? null,
+            'montoISR' => $this->monto_isr ?? null,
         ];
     }
 }
