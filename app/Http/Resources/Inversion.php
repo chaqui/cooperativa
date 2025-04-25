@@ -16,15 +16,17 @@ class Inversion extends JsonResource
     {
         return [
             'id' => $this->id,
-            'monto' => $this->monto,
+            'monto' => (float) $this->monto,
             'tasa' => $this->tasa,
-            'plazo' => $this->plazo,
+            'plazo' => (int) $this->plazo,
             'fecha_inicio' => $this->fecha,
             'dpi_cliente' => $this->dpi_cliente,
             'cliente' => $this->cliente->nombres . ' ' . $this->cliente->apellidos,
             'cuenta_recaudadora' => $this->cuentaRecaudadora->numero_cuenta,
             'estado' => $this->estado->nombre,
             'codigo' => $this->codigo,
+            'interes' =>(int) $this->interes,
+            'tipo_plazo' => $this->tipo_plazo,
         ];
     }
 }

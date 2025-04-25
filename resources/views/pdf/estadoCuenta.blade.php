@@ -122,7 +122,7 @@
                         <td>Q{{ number_format($payment->interes, 2) }}</td>
                         <td>Q{{ number_format($payment->capital, 2) }}</td>
                         <td>Q{{ number_format($payment->penalizacion, 2) }}</td>
-                        <td>{{ \Carbon\Carbon::parse($payment->fecha_pago)->format('d/m/Y') }}</td>
+                        <td>{{ $payment->fecha_pago ? \Carbon\Carbon::parse($payment->fecha_pago)->format('d/m/Y') : 'Pago no Realizado' }}</td>
                         <td>Q{{ number_format($payment->monto_pagado, 2) }}</td>
                         <td>Q{{ number_format($payment->interes_pagado, 2) }}</td>
                         <td>Q{{ number_format($payment->capital_pagado, 2) }}</td>
