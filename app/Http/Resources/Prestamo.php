@@ -39,7 +39,10 @@ class Prestamo extends JsonResource
             'nombre_plazo' => $this->tipoPlazo->nombre,
             'plazo' => $this->plazo,
             'cuota' => $this->cuota,
-            'intereses'=> $this->intereses(),
+            'intereses' => $this->intereses(),
+            'saldo' => $this->saldoPendiente(),
+            'morosidad' => $this->morosidad(),
+
 
         ];
     }

@@ -4,9 +4,11 @@ namespace App\Models;
 
 use App\Constants\FrecuenciaPago;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Loggable;
 
 class Prestamo_Hipotecario extends Model
 {
+    use Loggable;
     protected $id = 'id';
     protected $table = 'prestamo_hipotecarios';
     protected $fillable = [
@@ -134,5 +136,28 @@ class Prestamo_Hipotecario extends Model
     public function interesesPagados()
     {
         return $this->pagos()->sum('interes_pagado');
+    }
+
+    public function morosidad()
+    {
+        $cuotasPendientes = $this->cuotasPendientesAlaFecha()->count();
+        if ($cuotasPendientes > 3) {
+            return "Alta morosidad";
+        } elseif ($cuotasPendientes === 3) {
+            return "Morosidad moderada";
+        } elseif ($cuotasPendientes === 2) {
+            return "Morosidad baja";
+        } elseif ($cuotasPendientes === 1 && now()->day > 5) {
+            return "Morosidad mínima";
+        } else {
+            return "Sin morosidad";
+        }
+    }
+
+
+    public function cuotasPendientesAlaFecha()
+    {
+        $fecha = now()->startOfMonth()->addDays(5);
+        return $this->pagos()->where('realizado', 0)->where('fecha', '<=', $fecha)->get();
     }
 }
