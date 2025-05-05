@@ -15,6 +15,8 @@ class ImpuestoTransaccion extends Model
         'descripcion'
     ];
 
+
+
     public function declaracionImpuesto()
     {
         return $this->belongsTo(declaracion_impuesto::class, 'id_declaracion_impuesto');

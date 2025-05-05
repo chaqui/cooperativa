@@ -48,16 +48,7 @@ class DepositoService
     private function procesarCreacionDeposito($datos, $procesarInmediatamente = false)
     {
         $this->log("Creando depósito con datos: " . json_encode($datos));
-        $deposito = new Deposito();
-        $deposito->tipo_documento = null;
-        $deposito->numero_documento = null;
-        $deposito->monto = $datos['monto'];
-        $deposito->id_inversion = $datos['id_inversion'] ?? null;
-        $deposito->id_pago = $datos['id_pago'] ?? null;
-        $deposito->realizado = false;
-        $deposito->imagen = $datos['imagen'] ?? null;
-        $deposito->tipo_cuenta_interna_id = null;
-        $deposito->motivo = $datos['motivo'];
+        $deposito = Deposito::crear($datos);
 
         // Guardar el depósito
         $deposito->save();
@@ -141,33 +132,19 @@ class DepositoService
             }
 
             // Actualizar datos del depósito
-            $deposito->realizado = true;
-            $deposito->tipo_documento = $data['tipo_documento'];
-            $deposito->numero_documento = $data['numero_documento'];
-            $deposito->tipo_cuenta_interna_id = $data['id_cuenta'];
-            $deposito->imagen = $data['imagen'] ?? $deposito->imagen;
+            $deposito->depositar($data);
 
             // Guardar cambios
             $deposito->save();
 
             // Registrar la transacción en la cuenta interna
             $cuentaInternaService = app(CuentaInternaService::class);
-            $descripcion = "Depósito realizado: " . ($deposito->motivo ?? 'No especificado') .
-                " | Documento: " . ($data['tipo_documento'] ?? 'No especificado') .
-                " | Número: " . ($data['numero_documento'] ?? 'No especificado');
 
             if (isset($data['interes']) && $data['interes'] > 0.001) {
                 $this->generarImpuestos($deposito->pago, $data['interes'], $deposito->tipo_cuenta_interna_id);
             }
 
-            $cuentaInternaService->createCuenta([
-                'ingreso' => $deposito->monto,
-                'egreso' => 0,
-                'capital' => $deposito->monto - ($data['interes'] ?? 0),
-                'interes' => $data['interes'] ?? 0,
-                'descripcion' => $descripcion,
-                'tipo_cuenta_interna_id' => $deposito->tipo_cuenta_interna_id,
-            ]);
+            $cuentaInternaService->createCuenta($deposito->dataCuenta($data['interes'] ?? 0));
 
             // Si está asociado a una inversión, actualizar su estado
             if ($deposito->id_inversion) {
@@ -208,7 +185,8 @@ class DepositoService
             if (isset($descripcion)) {
                 $estadoData['descripcion'] = $descripcion;
             }
-
+            $estadoData['numero_documento'] = $deposito->numero_documento;
+            $estadoData['tipo_documento'] = $deposito->tipo_documento;
             $inversionService->cambiarEstado($deposito->id_inversion, $estadoData);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -253,10 +231,8 @@ class DepositoService
                 'monto_transaccion' => $montoInteres,
                 'fecha_transaccion' => $fechaPago->format('Y-m-d'),
                 'descripcion' => $descripcion,
-                'id_cuenta'=> $idCuenta,
+                'id_cuenta' => $idCuenta,
             ]);
-
-
 
             // Registrar en los logs
             $this->log(sprintf(

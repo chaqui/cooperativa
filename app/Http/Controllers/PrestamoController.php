@@ -10,16 +10,21 @@ use App\Http\Resources\HistoricoEstado as HistoricoEstadoResource;
 use App\Http\Resources\Cuota as PagoResource;
 use App\Http\Resources\Retiro as RetiroResource;
 use App\Http\Requests\StorePagarCuota;
+use App\Services\PrestamoPdfService;
 
 class PrestamoController extends Controller
 {
 
     private $prestamoService;
 
-    public function __construct(PrestamoService $prestamoService)
+    private $prestamoPdfService;
+
+    public function __construct(PrestamoService $prestamoService, PrestamoPdfService $prestamoPdfService)
     {
+        $this->prestamoPdfService = $prestamoPdfService;
         $this->prestamoService = $prestamoService;
     }
+
     /**
      * Display a listing of the resource.
      */
@@ -41,8 +46,8 @@ class PrestamoController extends Controller
      */
     public function store(PrestamoRequest $request)
     {
-        $this->prestamoService->create($request->all());
-        return response()->json(['message' => 'Prestamo creado correctamente'], 201);
+        $prestamo = $this->prestamoService->create($request->all());
+        return new PrestamoResource($prestamo);
     }
 
     /**
@@ -96,7 +101,7 @@ class PrestamoController extends Controller
 
     public function generatePdf(string $id)
     {
-        $pdf = $this->prestamoService->generatePdf($id);
+        $pdf = $this->prestamoPdfService->generatePdf($id);
         return response($pdf, 200)->header('Content-Type', 'application/pdf');
     }
 
@@ -112,15 +117,14 @@ class PrestamoController extends Controller
 
     public function generarEstadoCuenta(string $id)
     {
-        $prestamo = $this->prestamoService->get($id);
-        $pdf = $this->prestamoService->generarEstadoCuentaPdf($prestamo->id);
+        $pdf = $this->prestamoPdfService->generarEstadoCuentaPdf($id);
         return response($pdf, 200)->header('Content-Type', 'application/pdf');
     }
 
     public function getEstadoCuenta(string $id)
     {
         $prestamo = $this->prestamoService->get($id);
-        if(!$prestamo->estado_cuenta_path) {
+        if (!$prestamo->estado_cuenta_path) {
             return response()->json(['message' => 'No se ha generado el estado de cuenta'], 404);
         }
         return response()->download($prestamo->estado_cuenta_path);

@@ -3,15 +3,16 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Constants\Roles;
 
-class DepositoRequest extends FormRequest
+class EstadoInversionRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->authorizeRol([Roles::$ADMIN, Roles::$ASESOR]);
     }
 
     /**
@@ -22,9 +23,7 @@ class DepositoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tipo_documento' => 'required|string|max:255',
-            'numero_documento' => 'required|string|max:255',
-            'id_cuenta' => 'required|integer|exists:tipo_cuenta_interna,id',
+            'estado' => 'required|string',
         ];
     }
 }

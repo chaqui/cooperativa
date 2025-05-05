@@ -6,9 +6,11 @@ use App\Constants\EstadoInversion;
 use App\Estado\Estado;
 use App\Models\HistorialEstado;
 use App\Models\Inversion;
+use App\Traits\Loggable;
 
 class EstadoBaseInversion extends Estado
 {
+    use Loggable;
     public function __construct($estadoInicio, $estadoFin)
     {
         parent::__construct($estadoInicio, $estadoFin);
@@ -16,6 +18,7 @@ class EstadoBaseInversion extends Estado
 
     public function cambiarEstado(Inversion $inversion, $data)
     {
+        $this->log("Iniciando cambio de estado para inversión #{$inversion->id}, código {$inversion->codigo}");
         $estadoOriginal = $inversion->id_estado;
 
         // Validar estado inicial

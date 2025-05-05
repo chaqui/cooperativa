@@ -3,45 +3,42 @@
 namespace App\Services;
 
 use App\Constants\EstadoPrestamo;
+use App\Constants\FrecuenciaPago;
+use App\Constants\InicialesCodigo;
 use App\EstadosPrestamo\ControladorEstado;
 use App\Models\Prestamo_Hipotecario;
-use App\Traits\Loggable;
+use App\Traits\Calculos;
 use Illuminate\Support\Facades\DB;
 
 use App\Services\CuotaHipotecaService;
 use App\Services\ClientService;
 use App\Services\PropiedadService;
 use App\Services\CatologoService;
-use App\Services\PdfService;
 use App\Services\UserService;
 use Exception;
 
 
-class PrestamoService
+class PrestamoService extends CodigoService
 {
 
-    use Loggable;
-    private $controladorEstado;
+    use Calculos;
+    protected $controladorEstado;
 
-    private $clientService;
+    protected $clientService;
 
-    private $propiedadService;
+    protected $propiedadService;
 
-    private $catalogoService;
-
-
-    private $pdfService;
-
-    private $userService;
+    protected $catalogoService;
 
 
-    private  $cuotaHipotecaService;
+    protected $userService;
+
+    protected  $cuotaHipotecaService;
     public function __construct(
         ControladorEstado $controladorEstado,
         ClientService $clientService,
         PropiedadService $propiedadService,
         CatologoService $catalogoService,
-        PdfService $pdfService,
         UserService $userService,
         CuotaHipotecaService $cuotaHipotecaService
     ) {
@@ -49,30 +46,82 @@ class PrestamoService
         $this->clientService = $clientService;
         $this->propiedadService = $propiedadService;
         $this->catalogoService = $catalogoService;
-        $this->pdfService = $pdfService;
         $this->userService = $userService;
         $this->cuotaHipotecaService = $cuotaHipotecaService;
+
+        parent::__construct(InicialesCodigo::$Prestamo_Hipotecario);
     }
 
-    public function create($data)
+    /**
+     * Crea un nuevo préstamo hipotecario
+     *
+     * @param array $data Datos necesarios para crear el préstamo
+     * @return Prestamo_Hipotecario Instancia del préstamo creado
+     * @throws \Exception Si ocurre un error durante el proceso
+     */
+    public function create(array $data): Prestamo_Hipotecario
     {
-        DB::beginTransaction();
-        $this->clientService->getClient($data['dpi_cliente']);
-        $this->clientService->getClient($data['fiador_dpi']);
-        $this->propiedadService->getPropiedad($data['propiedad_id']);
-        $data['codigo'] = $this->createCode();
 
-        $usuario = $this->userService->getUserOfToken();
-        $data['id_usuario'] = $usuario->id;
-        $prestamo = Prestamo_Hipotecario::create($data);
-        $dataEstado = [
-            'razon' => 'Prestamo creado',
-            'estado' => EstadoPrestamo::$CREADO
-        ];
-        $this->controladorEstado->cambiarEstado($prestamo,  $dataEstado);
-        DB::commit();
+        $this->validarFrecuenciaPago($data);
+        DB::beginTransaction();
+
+        try {
+            // Validar datos del cliente
+            $this->clientService->getClient($data['dpi_cliente']);
+            $this->clientService->getClient($data['fiador_dpi']);
+
+            // Validar propiedad
+            $this->propiedadService->getPropiedad($data['propiedad_id']);
+
+            // Generar código único para el préstamo
+            $data['codigo'] = $this->createCode();
+
+            // Obtener el usuario actual
+            $usuario = $this->userService->getUserOfToken();
+            $data['id_usuario'] = $usuario->id;
+
+            // Crear el préstamo
+            $prestamo = Prestamo_Hipotecario::create($data);
+
+            // Cambiar el estado del préstamo a "CREADO"
+            $dataEstado = [
+                'razon' => 'Préstamo creado',
+                'estado' => EstadoPrestamo::$CREADO,
+            ];
+            $this->controladorEstado->cambiarEstado($prestamo, $dataEstado);
+
+            DB::commit();
+
+            $this->log("Préstamo creado con éxito: {$prestamo->codigo}");
+            return $prestamo;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError("Error al crear el préstamo: " . $e->getMessage());
+            throw new \Exception("Error al crear el préstamo: " . $e->getMessage(), 0, $e);
+        }
     }
 
+    private function validarFrecuenciaPago($data)
+    {
+        $frecuenciaPago = $data['frecuencia_pago'];
+        $plazo = $this->calcularPlazo($data['plazo'], $data['tipo_plazo']);
+        $frecuenciasValidas = [
+            FrecuenciaPago::$ANUAL => 12,
+            FrecuenciaPago::$MENSUAL => 1,
+            FrecuenciaPago::$SEMESTRAL => 6,
+            FrecuenciaPago::$TRIMESTRAL => 3,
+        ];
+
+        if (!isset($frecuenciasValidas[$frecuenciaPago])) {
+            throw new \InvalidArgumentException("La frecuencia de pago '{$frecuenciaPago}' no es válida");
+        }
+
+        if ($plazo % $frecuenciasValidas[$frecuenciaPago] !== 0) {
+            throw new \InvalidArgumentException(
+                "El plazo debe ser múltiplo de {$frecuenciasValidas[$frecuenciaPago]} meses"
+            );
+        }
+    }
     public function update($id, $data)
     {
         $prestamo = Prestamo_Hipotecario::find($id);
@@ -94,7 +143,7 @@ class PrestamoService
             $this->log('Prestamo no encontrado con id: ' . $id);
             throw new Exception('Prestamo no encontrado con id: ' . $id);
         }
-        $this->log('Prestamo encontrado con id: ' . $id);
+        $this->log('Prestamo encontrado con id: ' . $prestamo->id);
         return $prestamo;
     }
 
@@ -107,6 +156,7 @@ class PrestamoService
     {
         DB::beginTransaction();
         $prestamo = $this->get($id);
+        $this->log('Cambiando estado del prestamo: ' . $prestamo->codigo);
         $this->controladorEstado->cambiarEstado($prestamo, $data);
         DB::commit();
     }
@@ -122,38 +172,12 @@ class PrestamoService
         return $prestamo->historial;
     }
 
-    public function generatePdf($id)
-    {
-        $this->log('Generando PDF del prestamo con id: ' . $id);
-        $prestamo = $this->get($id);
-        $prestamo = $this->getDataForPDF($prestamo);
-        $prestamo->cliente = $this->clientService->getDataForPDF($prestamo->dpi_cliente);
-        $prestamo->propiedad = $this->propiedadService->getDataPDF($prestamo->propiedad);
-        $prestamo->fiador = $this->clientService->getDataForPDF($prestamo->fiador_dpi);
-        $html = view('pdf.prestamo', data: compact('prestamo'))->render();
-        $pdf = $this->pdfService->generatePdf($html);
-        return $pdf;
-    }
-
-    private function getDataForPDF($prestamo)
-    {
-        $prestamo->nombreDestino = $this->catalogoService->getCatalogo($prestamo->destino)['value'] ?? 'No especificado';
-        $prestamo->nombreFrecuenciaPago = $this->catalogoService->getCatalogo($prestamo->frecuencia_pago)['value'] ?? 'No especificado';
-        return $prestamo;
-    }
-
     public function getPagos($id)
     {
         $prestamoHipotecario = $this->get($id);
         return $prestamoHipotecario->pagos;
     }
 
-    private function createCode()
-    {
-        $result = DB::select('SELECT nextval(\'correlativo_prestamo\') AS correlativo');
-        $correlativo = $result[0]->correlativo;
-        return 'PCP-' . $correlativo;
-    }
 
     public function getRetirosPendientes()
     {
@@ -200,20 +224,5 @@ class PrestamoService
             $this->log('Error al realizar el pago: ' . $e->getMessage());
             throw $e;
         }
-    }
-
-    public function generarEstadoCuentaPdf($id)
-    {
-        $prestamo = $this->get($id);
-        $prestamo->totalPagado = $prestamo->totalPagado();
-        $prestamo->saldoPendiente = $prestamo->saldoPendiente();
-        $pagos = $prestamo->pagos;
-
-        $html = view('pdf.estadoCuenta', [
-            'prestamo' => $prestamo,
-            'pagos' => $pagos,
-        ])->render();
-        $pdf = $this->pdfService->generatePdf($html, 'landscape');
-        return $pdf;
     }
 }

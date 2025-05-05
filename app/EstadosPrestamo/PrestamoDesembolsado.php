@@ -8,7 +8,7 @@ use App\Constants\EstadoPrestamo;
 use App\Models\Prestamo_Hipotecario;
 use App\Services\ArchivoService;
 use App\Services\CuotaHipotecaService;
-use App\Services\PrestamoService;
+use App\Services\PrestamoPdfService;
 use App\Traits\Loggable;
 
 class PrestamoDesembolsado extends EstadoBasePrestamo
@@ -46,8 +46,8 @@ class PrestamoDesembolsado extends EstadoBasePrestamo
     private function generarYGuardarEstadoDeCuenta($prestamo)
     {
         $this->log("Generando estado de cuenta para el préstamo #{$prestamo->id}");
-        $prestamoService = app()->make(PrestamoService::class);
-        $pdf = $prestamoService->generarEstadoCuentaPdf($prestamo->id);
+        $prestamoPdfService = app()->make(PrestamoPdfService::class);
+        $pdf = $prestamoPdfService->generarEstadoCuentaPdf($prestamo->id, true);
 
         $path = storage_path('app/estados_cuenta/');
 

@@ -18,7 +18,7 @@ class EditPrestamoHipotecario extends EditRecord
             Actions\DeleteAction::make(),
             Actions\Action::make('Calcular Cuota')
                 ->action(function (array $data, Prestamo_Hipotecario $record): void {
-                    $cuotaService = new CuotaHipotecaService();
+                    $cuotaService = app(CuotaHipotecaService::class);
                     $cuotaService->calcularCuotas($record);
                     $this->fillForm();
                 }),

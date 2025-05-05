@@ -160,7 +160,8 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
 
 //depositos
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
-    Route::post('depositos', [DepositoController::class, 'depositar']);
+    Route::post('depositos', [DepositoController::class, 'crearDepositoyDepositar']);
+    Route::put('depositos/{id}', [DepositoController::class, 'depositar']);
     Route::get('depositos/{id}/pdf', [DepositoController::class, 'getPDF']);
 });
 

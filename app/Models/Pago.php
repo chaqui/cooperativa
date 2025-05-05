@@ -29,10 +29,15 @@ class Pago extends Model
 
     public function saldoFaltante()
     {
-        return $this->monto() - $this->saldoPagado();
+        $interesFaltante = max(0, $this->interes - $this->interes_pagado);
+        $capitalFaltante = max(0, $this->capitalFaltante());
+        $recargoFaltante = max(0, $this->penalizacion - $this->recargo);
+
+        return $interesFaltante + $capitalFaltante + $recargoFaltante;
     }
 
-    public function saldoPagado(){
+    public function saldoPagado()
+    {
         return $this->interes_pagado + $this->capital_pagado + $this->recargo;
     }
 

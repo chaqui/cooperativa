@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreInversionRequest;
-use App\Http\Requests\EstadoRequest;
+use App\Http\Requests\EstadoInversionRequest;
 use App\Traits\Loggable;
 use Illuminate\Http\Request;
 
@@ -91,7 +91,7 @@ class InversionController extends Controller
         return CuotaResource::collection($cuotas);
     }
 
-    public function cambiarEstado(EstadoRequest $request, string $id)
+    public function cambiarEstado(EstadoInversionRequest $request, string $id)
     {
         $this->inversionService->cambiarEstado($id, $request->all());
         return response()->json(['message' => 'Estado changed successfully'], 200);

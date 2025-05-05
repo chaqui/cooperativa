@@ -81,10 +81,7 @@
                 <tr>
                     <th># Cuota</th>
                     <th>Fecha a Pagar </th>
-                    <th>Monto a Pagar</th>
-                    <th>Interes a Pagar</th>
-                    <th>Capital a Pagar</th>
-                    <th>Penalizacion a Pagar</th>
+                    <th>Monto a Pagar </th>
                     <th>Fecha de Pago </th>
                     <th>Monto Pagado</th>
                     <th>Interes Pagado</th>
@@ -98,18 +95,14 @@
                     <tr>
                         <td>{{ $payment->numero_pago_prestamo }}</td>
                         <td>{{ \Carbon\Carbon::parse($payment->fecha)->format('d/m/Y') }}</td>
-                        <td>Q. {{ number_format($payment->monto(), 2) }}</td>
-                        <td>Q. {{ number_format($payment->interes, 2) }}</td>
-                        <td>Q. {{ number_format($payment->capital, 2) }}</td>
-                        <td>Q. {{ number_format($payment->penalizacion, 2) }}</td>
+                        <td>Q{{ number_format($payment->monto(), 2) }}</td>
                         <td>{{ $payment->fecha_pago ? \Carbon\Carbon::parse($payment->fecha_pago)->format('d/m/Y') : 'Pago no Realizado' }}
                         </td>
-                        <td>Q. {{ number_format($payment->monto_pagado, 2) }}</td>
-                        <td>Q. {{ number_format($payment->interes_pagado, 2) }}</td>
-                        <td>Q. {{ number_format($payment->capital_pagado, 2) }}</td>
-                        <td>Q. {{ number_format($payment->recargo, 2) }}</td>
-                        <td>Q.
-                            {{ number_format(($payment->nuevo_saldo && $payment->nuevo_saldo > 0) ? $payment->nuevo_saldo : $payment->saldo, 2) }}
+                        <td>Q{{ number_format($payment->monto_pagado, 2) }}</td>
+                        <td>Q{{ number_format($payment->interes_pagado, 2) }}</td>
+                        <td>Q{{ number_format($payment->capital_pagado, 2) }}</td>
+                        <td>Q{{ number_format($payment->recargo, 2) }}</td>
+                        <td>Q{{ number_format(($payment->nuevo_saldo && $payment->nuevo_saldo > 0) ? $payment->nuevo_saldo : $payment->saldo, 2) }}
                         </td>
                     </tr>
                 @endforeach

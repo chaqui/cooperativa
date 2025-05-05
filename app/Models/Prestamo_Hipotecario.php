@@ -125,4 +125,14 @@ class Prestamo_Hipotecario extends Model
         }
         return $monto;
     }
+
+    public function capitalPagado()
+    {
+        return $this->pagos()->sum('capital_pagado');
+    }
+
+    public function interesesPagados()
+    {
+        return $this->pagos()->sum('interes_pagado');
+    }
 }

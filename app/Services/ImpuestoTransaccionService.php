@@ -187,7 +187,7 @@ class ImpuestoTransaccionService
         return $fechaConvertida;
     }
 
-    private function generarFecha( $fechaBase, $mesesAdicionales, $dia): DateTime
+    private function generarFecha($fechaBase, $mesesAdicionales, $dia): DateTime
     {
         try {
             // Obtener la fecha del mes correspondiente
@@ -280,7 +280,7 @@ class ImpuestoTransaccionService
 
     private function generarFechaFin($tipoImpuesto, $fechaInicio): DateTime
     {
-        return $this->generarFecha( $fechaInicio, $tipoImpuesto->mesesPlazo(), $tipoImpuesto->dia_fin);
+        return $this->generarFecha($fechaInicio, $tipoImpuesto->mesesPlazo(), $tipoImpuesto->dia_fin);
     }
     private function ajustarDiaAlRangoDelMes($anio, $mes, $dia)
     {

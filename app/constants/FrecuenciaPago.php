@@ -8,6 +8,9 @@ class FrecuenciaPago
     public static $TRIMESTRAL =  423;
     public static $SEMESTRAL =  424;
 
+    public static $ANUAL =  431;
+    public static $UNICA =  432; //Vencimiento
+
     public function getFrecuenciaPago($frecuencia)
     {
         switch ($frecuencia) {
@@ -17,6 +20,10 @@ class FrecuenciaPago
                 return 3;
             case self::$SEMESTRAL:
                 return 6;
+            case self::$ANUAL:
+                return 12;
+            case self::$UNICA:
+                return 0;
             default:
                 return 1;
         }

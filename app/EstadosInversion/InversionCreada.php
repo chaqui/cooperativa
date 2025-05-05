@@ -32,6 +32,7 @@ class InversionCreada extends EstadoBaseInversion
      */
     public function cambiarEstado(Inversion $inversion, $data)
     {
+        $this->log("Iniciando cambio de estado: {$inversion->id_estado} -> {$this->estadoFin}");
         // Verificar que la inversión tenga monto
         if (!$inversion->monto || $inversion->monto <= 0) {
             throw new \InvalidArgumentException(

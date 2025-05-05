@@ -8,10 +8,11 @@ use App\EstadosInversion\ControladorEstado;
 use App\Traits\Loggable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use App\Constants\InicialesCodigo;
 
 use App\Models\Inversion;
 
-class InversionService
+class InversionService extends CodigoService
 {
 
     use Loggable;
@@ -29,6 +30,7 @@ class InversionService
         $this->cuotaInversionService = $cuotaInversionService;
         $this->controladorEstado = $controladorEstado;
         $this->pdfService = $pdfService;
+        parent::__construct(InicialesCodigo::$Inversion);
     }
 
     public function getInversion(string $id): Inversion
@@ -104,13 +106,6 @@ class InversionService
         return Inversion::findOrFail($id)->historial;
     }
 
-    private function createCode()
-    {
-        $result = DB::select('SELECT nextval(\'correlativo_inversion\') AS correlativo');
-        $correlativo = $result[0]->correlativo;
-        return 'ICP-' . $correlativo;
-    }
-
     public function getDepositosPendientes()
     {
         $inversiones = Inversion::where('id_estado', EstadoInversion::$CREADO)->get();
@@ -142,13 +137,10 @@ class InversionService
 
     public function getPdf($id)
     {
-
         if ($id <= 0) {
             throw new \InvalidArgumentException("El ID de la inversion debe ser un número entero positivo");
         }
-
         $this->log("Iniciando generación de PDF para la inversion #{$id}");
-
         $inversion = $this->getInversion($id);
         $html = view('pdf.inversion', ['inversion' => $inversion])->render();
         return $this->pdfService->generatePdf($html);

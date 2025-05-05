@@ -34,6 +34,7 @@ class Cuota extends JsonResource
             'id_deposito' => $this->id_deposito,
             'penalizacion' => $this->penalizacion,
             'numero_deposito' => $this->depositos->count(),
+            'numero_pago_prestamo' => $this->numero_pago_prestamo? $this->numero_pago_prestamo : 0,
         ];
     }
 }

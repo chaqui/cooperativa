@@ -6,8 +6,9 @@ use App\Models\Client;
 
 use App\Traits\Loggable;
 use Illuminate\Support\Facades\DB;
+use App\Constants\InicialesCodigo;
 
-class ClientService
+class ClientService extends CodigoService
 {
     use Loggable;
     private $referenceService;
@@ -24,6 +25,7 @@ class ClientService
         $this->referenceService = $referenceService;
         $this->pdfService = $pdfService;
         $this->catalogoService = $catalogoService;
+        parent::__construct(InicialesCodigo::$Cliente);
     }
 
     /**
@@ -37,7 +39,7 @@ class ClientService
         DB::beginTransaction();
         try {
             // Generar código único para el cliente
-            $data['codigo'] = $this->generateCode();
+            $data['codigo'] = $this->createCode();
             $this->log('Código generado para cliente ' . $data['codigo']);
 
             // Crear el cliente
@@ -78,17 +80,6 @@ class ClientService
             $reference = $this->referenceService->createReference($reference);
             $client->references()->save($reference);
         }
-    }
-
-    /**
-     * Generate the code of the client, example: CCP-1
-     * @return mixed The code of the client
-     */
-    private function generateCode()
-    {
-        $result = DB::select('SELECT nextval(\'correlativo_cliente\') AS correlativo');
-        $correlativo = $result[0]->correlativo;
-        return 'CCP-' . $correlativo;
     }
 
     /**

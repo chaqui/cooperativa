@@ -8,6 +8,7 @@ class PlazoImpuesto
     public static $MENSUAL = 'Mensual';
     public static $TRIMESTRAL = 'Trimestral';
     public static $ANUAL = 'Anual';
+    
 
     public static function mesesPlazo($plazo)
     {

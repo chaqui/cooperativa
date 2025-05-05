@@ -18,6 +18,7 @@ class InversionAutorizada extends EstadoBaseInversion
 
     public function cambiarEstado(Inversion $inversion, $data)
     {
+        $this->log("Iniciando cambio de estado: {$inversion->id_estado} -> {$this->estadoFin}");
         $inversion->fecha_inicio = now();
         parent::cambiarEstado($inversion, $data);
 
