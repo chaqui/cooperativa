@@ -52,8 +52,9 @@ class HistorialEstado extends Model
         $historial->id_estado = $estado;
         $historial->razon = $data['razon'] ?? null;
         $historial->anotacion = $data['anotacion'] ?? null;
-        $historial->no_documento_desembolso = $data['no_documento_desembolso'] ?? null;
-        $historial->tipo_documento_desembolso = $data['tipo_documento_desembolso'] ?? null;
+        $historial->created_at = $data['fecha'] ?? now();
+        $historial->no_documento_desembolso = $data['numero_documento'] ?? $data['no_documento_desembolso'] ?? null;
+        $historial->tipo_documento_desembolso = $data['tipo_documento'] ?? $data['tipo_documento_desembolso'] ?? null;
         // Manejo de fecha
         if (isset($data['fecha'])) {
             // Validar formato de fecha

@@ -58,4 +58,26 @@ class Pago extends Model
     {
         return $this->hasMany(Deposito::class, 'id_pago');
     }
+
+    public static function generarPago($prestamo, $interesMensual, $capitalMensual, $nuevoSaldo, $cuotaPagada, $fecha, $pagoAnterior)
+    {
+        $pago = new Pago();
+        $pago->id_prestamo = $prestamo->id;
+        $pago->interes = $interesMensual;
+        $pago->capital = $capitalMensual;
+        $pago->saldo = $nuevoSaldo;
+        $pago->fecha = $fecha;
+        $pago->numero_pago_prestamo = $pagoAnterior ? $pagoAnterior->numero_pago_prestamo + 1 : 1;
+        $pago->realizado = $prestamo->existente && $pago->numero_pago_prestamo <= $cuotaPagada;
+        $pago->id_pago_anterior = $pagoAnterior ? $pagoAnterior->id : null;
+
+        // Inicializar campos adicionales
+        $pago->interes_pagado = 0;
+        $pago->capital_pagado = 0;
+        $pago->monto_pagado = 0;
+        $pago->penalizacion = 0;
+        $pago->recargo = 0;
+        $pago->fecha_pago = null;
+        return $pago;
+    }
 }

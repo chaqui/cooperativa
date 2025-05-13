@@ -24,6 +24,29 @@ class PrestamoRequest extends FormRequest
      */
     public function rules(): array
     {
+
+        $validacionesBasicas = $this->validacionesBasicas();
+        if ($this->input("existente")) {
+            $validacionesBasicas = array_merge($validacionesBasicas, $this->validacionesSiExiste());
+        }
+        return $validacionesBasicas;
+    }
+
+    private function validacionesSiExiste(): array
+    {
+        return [
+            'fecha_creacion' => 'required|string',
+            'saldo' => 'required|numeric',
+            'fecha_autorizacion' => 'required|string',
+            'numero_cuota_pagada' => 'required|numeric',
+            'fecha_desembolso' => 'required|string',
+            'gastos_formalidad' => 'required|numeric',
+            'gastos_administrativos' => 'required|numeric',
+        ];
+    }
+
+    private function validacionesBasicas(): array
+    {
         return [
             'monto' => 'required|numeric',
             'interes' => 'required|numeric',
@@ -33,10 +56,8 @@ class PrestamoRequest extends FormRequest
             'uso_prestamo' => 'required|string',
             'dpi_cliente' => 'required|string',
             'propiedad_id' => 'required|numeric',
-            'fiador_dpi' => 'required|string',
-            'tipo_garante' => 'required|string',
             'frecuencia_pago' => 'required|string',
-            'parentesco' => 'required|string',
+            'existente' => 'required|boolean',
         ];
     }
 }

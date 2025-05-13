@@ -29,7 +29,7 @@ class CuotaHipotecaService extends CuotaService
      * @return Prestamo_Hipotecario Préstamo con la cuota calculada y pagos generados
      * @throws \Exception Si ocurre un error durante el cálculo o generación de cuotas
      */
-    public function calcularCuotas(Prestamo_Hipotecario $prestamoHipotecario)
+    public function calcularCuotas(Prestamo_Hipotecario $prestamoHipotecario, $cuotaPagada = 0)
     {
         // Calcular el plazo efectivo según el tipo (meses, años, etc.)
         $plazoEfectivo = $this->calcularPlazo(
@@ -51,7 +51,7 @@ class CuotaHipotecaService extends CuotaService
         $prestamoHipotecario->save();
 
         // Generar los pagos mensuales
-        $this->generarCuotas($prestamoHipotecario, $plazoEfectivo);
+        $this->generarCuotas($prestamoHipotecario, $plazoEfectivo, $cuotaPagada);
         $this->log("Pagos generados correctamente para {$plazoEfectivo} meses");
         return $prestamoHipotecario;
     }
@@ -151,7 +151,7 @@ class CuotaHipotecaService extends CuotaService
         return  $pago->depositos;
     }
 
-    private function generarCuotas(Prestamo_Hipotecario $prestamoHipotecario,  $plazo)
+    private function generarCuotas(Prestamo_Hipotecario $prestamoHipotecario,  $plazo, $cuotaPagada = 0)
     {
         $this->eliminarPagosExistentes($prestamoHipotecario);
         $pagoAnterior = null;
@@ -165,10 +165,10 @@ class CuotaHipotecaService extends CuotaService
             $numeroCuota = $i + 1;
             $this->log("Generando cuota #{$numeroCuota} de {$plazo}");
             $pagoAnterior = $this->generarPago(
-                $prestamoHipotecario->cuota,
                 $pagoAnterior,
                 $prestamoHipotecario,
-                $plazo
+                $plazo,
+                $cuotaPagada
             );
         }
     }
@@ -198,64 +198,148 @@ class CuotaHipotecaService extends CuotaService
         return $pagosExistentes;
     }
 
-    private function generarPago($cuota,  $pagoAnterior, $prestamo, $plazo)
+    /**
+     * Genera un pago para un préstamo hipotecario
+     *
+     * @param Pago|null $pagoAnterior Información del pago anterior
+     * @param Prestamo_Hipotecario $prestamo Información del préstamo
+     * @param int $plazo Plazo del préstamo en meses
+     * @param int $cuotaPagada Número de cuotas ya pagadas
+     * @return Pago Pago generado
+     * @throws \InvalidArgumentException Si los datos proporcionados no son válidos
+     */
+    private function generarPago(?Pago $pagoAnterior, Prestamo_Hipotecario $prestamo, int $plazo, int $cuotaPagada): Pago
     {
+        $this->log("Iniciando generación de pago para el préstamo #{$prestamo->id}");
+
+        // Validar datos de entrada
+        $this->validarDatosPago($prestamo, $plazo);
+
         // Determinar el saldo base y la fecha base
-        $saldoBase = $pagoAnterior ? $pagoAnterior->saldo : $prestamo->monto;
+        $saldoBase = $this->obtenerSaldoBase($prestamo, $pagoAnterior, $cuotaPagada);
         $fechaBase = $pagoAnterior ? $pagoAnterior->fecha : $prestamo->fecha_inicio;
-        // Validar datos
-        if ($cuota <= 0) {
+
+        // Calcular componentes del pago
+        $tasaInteresMensual = $this->calcularTaza($prestamo->interes);
+        $interesMensual = $this->calcularInteres($saldoBase, $tasaInteresMensual);
+        $capitalMensual = $this->calcularCapital($pagoAnterior, $prestamo, $saldoBase, $plazo);
+
+        // Ajustar el saldo y el capital si es necesario
+        $nuevoSaldo = max(0, $saldoBase - $capitalMensual);
+        if ($nuevoSaldo < 0.01) {
+            $nuevoSaldo = 0;
+            $capitalMensual = $saldoBase;
+        }
+
+        // Crear y configurar el objeto Pago
+        $pago = $this->crearPago(
+            $prestamo,
+            $pagoAnterior,
+            $interesMensual,
+            $capitalMensual,
+            $nuevoSaldo,
+            $fechaBase,
+            $cuotaPagada
+        );
+
+        // Registrar la fecha final del préstamo si es el último pago
+        if ($pago->numero_pago_prestamo == $plazo) {
+            $this->registrarFechaFinalPrestamo($prestamo, $pago);
+        }
+
+        $this->log("Pago generado con éxito: ID {$pago->id}, Capital: {$pago->capital}, Interés: {$pago->interes}, Saldo: {$pago->saldo}");
+        return $pago;
+    }
+
+    /**
+     * Valida los datos necesarios para generar un pago
+     *
+     * @param Prestamo_Hipotecario $prestamo
+     * @param int $plazo
+     * @throws \InvalidArgumentException
+     */
+    private function validarDatosPago(Prestamo_Hipotecario $prestamo, int $plazo): void
+    {
+        if ($prestamo->cuota <= 0) {
             throw new \InvalidArgumentException("La cuota debe ser mayor que cero");
+        }
+
+        if ($plazo <= 0) {
+            throw new \InvalidArgumentException("El plazo debe ser mayor que cero");
+        }
+    }
+
+    /**
+     * Crea un objeto Pago y lo guarda en la base de datos
+     *
+     * @param Prestamo_Hipotecario $prestamo
+     * @param Pago|null $pagoAnterior
+     * @param float $interesMensual
+     * @param float $capitalMensual
+     * @param float $nuevoSaldo
+     * @param string $fechaBase
+     * @param int $cuotaPagada
+     * @return Pago
+     */
+    private function crearPago(
+        Prestamo_Hipotecario $prestamo,
+        ?Pago $pagoAnterior,
+        float $interesMensual,
+        float $capitalMensual,
+        float $nuevoSaldo,
+        string $fechaBase,
+        int $cuotaPagada
+    ): Pago {
+        $pago =  Pago::generarPago(
+            $prestamo,
+            $interesMensual,
+            $capitalMensual,
+            $nuevoSaldo,
+            $cuotaPagada,
+            $this->obtenerFechaSiguienteMes($fechaBase, true),
+            $pagoAnterior
+        );
+
+        $pago->save();
+        return $pago;
+    }
+
+    /**
+     * 
+     * Función para registrar la fecha final del préstamo
+     * @param mixed $prestamo prestamo
+     * @param mixed $pago ultimo pago
+     * @return void
+     */
+    private function registrarFechaFinalPrestamo($prestamo, $pago)
+    {
+        $this->log("El pago " . $pago->numero_pago_prestamo . " es el último pago del préstamo");
+        $this->log("Actualizando fecha de finalización del préstamo a {$pago->fecha}");
+        $prestamo->fecha_fin = $pago->fecha;
+        $prestamo->save();
+        $this->log("Fecha de finalización del préstamo actualizada a {$prestamo->fecha_fin}");
+    }
+
+    /**
+     * 
+     * Función para obtener el saldo base del préstamo
+     * @param mixed $prestamo prestamo
+     * @param mixed $pagoAnterior pago anterior
+     * @param mixed $cuotaPagada cuota pagada
+     * @throws \InvalidArgumentException
+     */
+    private function obtenerSaldoBase($prestamo, $pagoAnterior, $cuotaPagada)
+    {
+        if ($prestamo->existente && $pagoAnterior->numero_pago_prestamo  == $cuotaPagada - 1) {
+            $saldoBase = $prestamo->saldo_existente;
+        } else {
+            $saldoBase =  $pagoAnterior ? $pagoAnterior->saldo : $prestamo->monto;
         }
 
         if ($saldoBase <= 0) {
             throw new \InvalidArgumentException("El saldo base debe ser mayor que cero");
         }
-
-        // Calcular componentes del pago
-        $tasaInteresMensual = $this->calcularTaza($prestamo->interes);
-        $interesMensual = $this->calcularInteres($saldoBase, $tasaInteresMensual);
-
-        // Crear y configurar el objeto pago
-        $pago = new Pago();
-        $pago->id_prestamo = $prestamo->id;
-        $pago->interes = $interesMensual;
-        $pago->fecha = $this->obtenerFechaSiguienteMes($fechaBase, true);
-        $pago->numero_pago_prestamo = $pagoAnterior ? $pagoAnterior->numero_pago_prestamo + 1 : 1;
-        $pago->realizado = false;
-        $pago->id_pago_anterior = $pagoAnterior ? $pagoAnterior->id : null;
-
-        // Información adicional útil
-        $pago->interes_pagado = 0;
-        $pago->capital_pagado = 0;
-        $pago->monto_pagado = 0;
-        $pago->penalizacion = 0;
-        $pago->recargo = 0;
-        $pago->fecha_pago = null;
-
-        // Calcular el capital mensual
-        $capitalMensual = $this->calcularCapital($pago, $prestamo, $saldoBase, $plazo);
-        $this->log("Capital mensual calculado: Q{$capitalMensual}");
-        $nuevoSaldo = $saldoBase - $capitalMensual;
-
-        // Si el saldo resultante es muy pequeño (por errores de redondeo), ajustarlo a cero
-        if ($nuevoSaldo < 0.01) {
-            $nuevoSaldo = 0;
-            $capitalMensual = $saldoBase;
-        }
-        $pago->capital = $capitalMensual;
-        $pago->saldo = $nuevoSaldo;
-        // Registrar la creación del pago
-        $pago->save();
-
-        $this->log("Pago generado con éxito: ID {$pago->id}, Capital: {$pago->capital}, Interés: {$pago->interes}, Saldo: {$pago->saldo}");
-
-        // Registrar la fecha final del pago
-        if ($pago->numero_pago_prestamo == ($plazo - 1)) {
-            $prestamo->fecha_fin = $pago->fecha;
-        }
-
-        return $pago;
+        return $saldoBase;
     }
 
     /**

@@ -19,9 +19,10 @@ class PrestamoPdfService extends PrestamoService
         PropiedadService $propiedadService,
         CatologoService $catalogoService,
         UserService $userService,
-        CuotaHipotecaService $cuotaHipotecaService
+        CuotaHipotecaService $cuotaHipotecaService,
+        PrestamoExistenService $prestamoExistenteService
     ) {
-        parent::__construct($controladorEstado, $clientService, $propiedadService, $catalogoService, $userService, $cuotaHipotecaService);
+        parent::__construct($controladorEstado, $clientService, $propiedadService, $catalogoService, $userService, $cuotaHipotecaService, $prestamoExistenteService);
         $this->pdfService = $pdfService;
     }
 
@@ -88,7 +89,9 @@ class PrestamoPdfService extends PrestamoService
         $prestamo = $this->getDataForPDF($prestamo);
         $prestamo->cliente = $this->clientService->getDataForPDF($prestamo->dpi_cliente);
         $prestamo->propiedad = $this->propiedadService->getDataPDF($prestamo->propiedad);
-        $prestamo->fiador = $this->clientService->getDataForPDF($prestamo->fiador_dpi);
+        if ($prestamo->fiador_dpi != null) {
+            $prestamo->fiador = $this->clientService->getDataForPDF($prestamo->fiador_dpi);
+        }
         $html = view('pdf.prestamo', data: compact('prestamo'))->render();
         $pdf = $this->pdfService->generatePdf($html);
         return $pdf;

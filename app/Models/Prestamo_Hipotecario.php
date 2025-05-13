@@ -33,6 +33,8 @@ class Prestamo_Hipotecario extends Model
         'gastos_administrativos',
         'cuota',
         'monto_liquido',
+        'existente',
+        'saldo_existente',
     ];
 
     public function cliente()

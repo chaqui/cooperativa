@@ -30,17 +30,19 @@ class PrestamoService extends CodigoService
 
     protected $catalogoService;
 
-
     protected $userService;
 
     protected  $cuotaHipotecaService;
+
+    protected $prestamoExistenteService;
     public function __construct(
         ControladorEstado $controladorEstado,
         ClientService $clientService,
         PropiedadService $propiedadService,
         CatologoService $catalogoService,
         UserService $userService,
-        CuotaHipotecaService $cuotaHipotecaService
+        CuotaHipotecaService $cuotaHipotecaService,
+        PrestamoExistenService $prestamoExistenteService
     ) {
         $this->controladorEstado = $controladorEstado;
         $this->clientService = $clientService;
@@ -48,6 +50,7 @@ class PrestamoService extends CodigoService
         $this->catalogoService = $catalogoService;
         $this->userService = $userService;
         $this->cuotaHipotecaService = $cuotaHipotecaService;
+        $this->prestamoExistenteService = $prestamoExistenteService;
 
         parent::__construct(InicialesCodigo::$Prestamo_Hipotecario);
     }
@@ -68,7 +71,9 @@ class PrestamoService extends CodigoService
         try {
             // Validar datos del cliente
             $this->clientService->getClient($data['dpi_cliente']);
-            $this->clientService->getClient($data['fiador_dpi']);
+            if ($data['fiador_dpi'] != null) {
+                $this->clientService->getClient($data['fiador_dpi']);
+            }
 
             // Validar propiedad
             $this->propiedadService->getPropiedad($data['propiedad_id']);
@@ -83,14 +88,22 @@ class PrestamoService extends CodigoService
             // Crear el préstamo
             $prestamo = Prestamo_Hipotecario::create($data);
 
-            // Cambiar el estado del préstamo a "CREADO"
-            $dataEstado = [
-                'razon' => 'Préstamo creado',
-                'estado' => EstadoPrestamo::$CREADO,
-            ];
-            $this->controladorEstado->cambiarEstado($prestamo, $dataEstado);
+            // Cambiar el estado del préstamo a "CREADO" o si es existente hacer pasar todos los estados necesarios
+            if ($prestamo->existente) {
+                $this->log("Procesando préstamo existente: {$prestamo->codigo}");
+                $this->prestamoExistenteService->procesarPrestamoExistente($prestamo, $data);
+            } else {
+                $this->log("Estableciendo estado inicial para el préstamo: {$prestamo->codigo}");
+                $dataEstado = [
+                    'razon' => 'Préstamo creado',
+                    'estado' => EstadoPrestamo::$CREADO,
+                ];
 
+                $this->controladorEstado->cambiarEstado($prestamo, $dataEstado);
+            }
+            $prestamo->save();
             DB::commit();
+
 
             $this->log("Préstamo creado con éxito: {$prestamo->codigo}");
             return $prestamo;
@@ -150,26 +163,6 @@ class PrestamoService extends CodigoService
     public function all()
     {
         return Prestamo_Hipotecario::all();
-    }
-
-    public function cambiarEstado($id, $data)
-    {
-        DB::beginTransaction();
-        $prestamo = $this->get($id);
-        $this->log('Cambiando estado del prestamo: ' . $prestamo->codigo);
-        $this->controladorEstado->cambiarEstado($prestamo, $data);
-        DB::commit();
-    }
-
-    public function getPrestamosByEstado($estado)
-    {
-        return Prestamo_Hipotecario::where('estado_id', $estado)->get();
-    }
-
-    public function getHistorial($id)
-    {
-        $prestamo = $this->get($id);
-        return $prestamo->historial;
     }
 
     public function getPagos($id)

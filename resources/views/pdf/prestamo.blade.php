@@ -70,7 +70,8 @@
         <tr>
             <td colspan="2"><strong>NOMBRE COMPLETO:</strong></td>
             <td colspan="4">{{ $prestamo->cliente->nombres ?? 'No ingresada' }}
-                {{ $prestamo->cliente->apellidos ?? 'No ingresada' }}</td>
+                {{ $prestamo->cliente->apellidos ?? 'No ingresada' }}
+            </td>
         </tr>
         <tr>
             <td><strong>CUI:</strong></td>
@@ -278,67 +279,70 @@
             <td>{{ $prestamo->propiedad->Direccion ?? 'No ingresada' }}</td>
         </tr>
     </table>
-    <h2>VI. DATOS DEL CODEUDOR/FIADOR</h2>
-    <table>
-        <tr>
-            <td><strong>NOMBRE:</strong></td>
-            <td colspan="3">{{ $prestamo->fiador->nombres ?? 'No ingresada' }}
-                {{ $prestamo->fiador->apellidos ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td><strong>CUI:</strong></td>
-            <td colspan="2">{{ $prestamo->fiador->dpi ?? 'No ingresada' }}</td>
-            <td><strong>No. DE CUENTA:</strong></td>
-            <td colspan="3">{{ $prestamo->fiador->codigo ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td><strong>DIRECCION:</strong></td>
-            <td colspan="3">{{ $prestamo->fiador->direccion ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td><strong>PARENTESCO:</strong></td>
-            <td colspan="2">{{ $prestamo->parentesco ?? 'No ingresada' }}</td>
-            <td><strong>EDAD:</strong></td>
-            <td>{{ $prestamo->fiador->fecha_nacimiento ? Carbon::parse($prestamo->fiador->fecha_nacimiento)->age . ' años' : 'No ingresada' }}
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2"><strong>ESTADO CIVIL:</strong></td>
-            <td>{{ $prestamo->fiador->estadoCivil ?? 'No ingresada' }}</td>
-            <td><strong>TELEFONO:</strong></td>
-            <td>{{ $prestamo->fiador->telefono ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td colspan="2"><strong>GRADO DE ESCOLARIDAD:</strong></td>
-            <td>{{ $prestamo->fiador->nivel_academico ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td colspan="2"><strong>PROFESION U OFICIO:</strong></td>
-            <td>{{ $prestamo->fiador->profesion ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td colspan="2"><strong>OCUPACION:</strong></td>
-            <td>{{ $prestamo->fiador->nombreTipoCliente ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td colspan="2"><strong>CARGAS FAMILIARES:</strong></td>
-            <td>{{ $prestamo->fiador->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->fiador->cargas_familiares ?? 'No ingresada') }}
-            </td>
-        </tr>
-        <tr>
-            <td colspan="4"><strong>No. INTEGRANTES DE SU NUCLEO FAMILIAR:</strong></td>
-            <td>{{ $prestamo->fiador->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->fiador->integrantes_nucleo_familiar ?? 'No ingresada') }}
-            </td>
-        </tr>
-        <tr>
-            <td colspan="4"><strong>INGRESOS MENSUALES APROXIMADOS:</strong></td>
-            <td>Q. {{ number_format($prestamo->fiador->ingresos_mensuales ?? 0, 2) }}</td>
-        </tr>
-        <tr>
-            <td colspan="4"><strong>EGRESOS MENSUALES APROX:</strong></td>
-            <td>Q. {{ number_format($prestamo->fiador->egresos_mensuales ?? 0, 2) }}</td>
-        </tr>
-    </table>
+    @if($prestamo->fiador_dpi)
+        <h2>VI. DATOS DEL CODEUDOR/FIADOR</h2>
+        <table>
+            <tr>
+                <td><strong>NOMBRE:</strong></td>
+                <td colspan="3">{{ $prestamo->fiador->nombres ?? 'No ingresada' }}
+                    {{ $prestamo->fiador->apellidos ?? 'No ingresada' }}
+                </td>
+            </tr>
+            <tr>
+                <td><strong>CUI:</strong></td>
+                <td colspan="2">{{ $prestamo->fiador->dpi ?? 'No ingresada' }}</td>
+                <td><strong>No. DE CUENTA:</strong></td>
+                <td colspan="3">{{ $prestamo->fiador->codigo ?? 'No ingresada' }}</td>
+            </tr>
+            <tr>
+                <td><strong>DIRECCION:</strong></td>
+                <td colspan="3">{{ $prestamo->fiador->direccion ?? 'No ingresada' }}</td>
+            </tr>
+            <tr>
+                <td><strong>PARENTESCO:</strong></td>
+                <td colspan="2">{{ $prestamo->parentesco ?? 'No ingresada' }}</td>
+                <td><strong>EDAD:</strong></td>
+                <td>{{ $prestamo->fiador->fecha_nacimiento ? Carbon::parse($prestamo->fiador->fecha_nacimiento)->age . ' años' : 'No ingresada' }}
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2"><strong>ESTADO CIVIL:</strong></td>
+                <td>{{ $prestamo->fiador->estadoCivil ?? 'No ingresada' }}</td>
+                <td><strong>TELEFONO:</strong></td>
+                <td>{{ $prestamo->fiador->telefono ?? 'No ingresada' }}</td>
+            </tr>
+            <tr>
+                <td colspan="2"><strong>GRADO DE ESCOLARIDAD:</strong></td>
+                <td>{{ $prestamo->fiador->nivel_academico ?? 'No ingresada' }}</td>
+            </tr>
+            <tr>
+                <td colspan="2"><strong>PROFESION U OFICIO:</strong></td>
+                <td>{{ $prestamo->fiador->profesion ?? 'No ingresada' }}</td>
+            </tr>
+            <tr>
+                <td colspan="2"><strong>OCUPACION:</strong></td>
+                <td>{{ $prestamo->fiador->nombreTipoCliente ?? 'No ingresada' }}</td>
+            </tr>
+            <tr>
+                <td colspan="2"><strong>CARGAS FAMILIARES:</strong></td>
+                <td>{{ $prestamo->fiador->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->fiador->cargas_familiares ?? 'No ingresada') }}
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4"><strong>No. INTEGRANTES DE SU NUCLEO FAMILIAR:</strong></td>
+                <td>{{ $prestamo->fiador->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->fiador->integrantes_nucleo_familiar ?? 'No ingresada') }}
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4"><strong>INGRESOS MENSUALES APROXIMADOS:</strong></td>
+                <td>Q. {{ number_format($prestamo->fiador->ingresos_mensuales ?? 0, 2) }}</td>
+            </tr>
+            <tr>
+                <td colspan="4"><strong>EGRESOS MENSUALES APROX:</strong></td>
+                <td>Q. {{ number_format($prestamo->fiador->egresos_mensuales ?? 0, 2) }}</td>
+            </tr>
+        </table>
+    @endif
     <br />
     <br />
     <table>
@@ -351,16 +355,23 @@
         <tr>
             <td style="text-align: center;"><strong>FIRMA DEL DEUDOR</strong></td>
             <td><strong></strong></td>
-            <td style="text-align: center;"><strong>FIRMA DEL CODEUDOR/FIADOR</strong></td>
+            <td style="text-align: center;"><strong>
+                    @if($prestamo->fiador_dpi)
+                        FIRMA DEL CODEUDOR/FIADOR
+                    @else
+                        Firma del Asesor
+                    @endif </strong></td>
             <td><strong></strong></td>
         </tr>
-        <tr></tr>
-        <tr>
-            <td colspan="4" style="text-align: center;">_____________________</td>
-        </tr>
-        <tr>
-            <td colspan="4" style="text-align: center;"><strong>Firma del Asesor</strong></td>
-        </tr>
+        @if($prestamo->fiador_dpi)
+            <tr></tr>
+            <tr>
+                <td colspan="4" style="text-align: center;">_____________________</td>
+            </tr>
+            <tr>
+                <td colspan="4" style="text-align: center;"><strong>Firma del Asesor</strong></td>
+            </tr>
+        @endif
     </table>
 </body>
 

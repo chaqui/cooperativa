@@ -10,6 +10,7 @@ use App\Services\ArchivoService;
 use App\Services\CuotaHipotecaService;
 use App\Services\PrestamoPdfService;
 use App\Traits\Loggable;
+use Illuminate\Support\Facades\DB;
 
 class PrestamoDesembolsado extends EstadoBasePrestamo
 {
@@ -39,13 +40,17 @@ class PrestamoDesembolsado extends EstadoBasePrestamo
         }
         $prestamo->fecha_inicio = now();
         parent::cambiarEstado($prestamo, $data);
-        $this->cuotaHipotecariaService->calcularCuotas($prestamo);
+
+        $cuotaPagada =  $data['cuota_pagada'] ?? 0;
+        $this->cuotaHipotecariaService->calcularCuotas($prestamo, $cuotaPagada);
+
         $this->generarYGuardarEstadoDeCuenta($prestamo);
     }
 
     private function generarYGuardarEstadoDeCuenta($prestamo)
     {
         $this->log("Generando estado de cuenta para el préstamo #{$prestamo->id}");
+        DB::commit();
         $prestamoPdfService = app()->make(PrestamoPdfService::class);
         $pdf = $prestamoPdfService->generarEstadoCuentaPdf($prestamo->id, true);
 

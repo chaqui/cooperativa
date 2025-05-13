@@ -31,12 +31,18 @@ class PrestamoAprobado extends EstadoBasePrestamo
     public function cambiarEstado(Prestamo_Hipotecario $prestamo, $data)
     {
         // Calcular gastos administrativos (1% del monto)
-        $prestamo->gastos_administrativos = $prestamo->monto * 0.01;
+        $prestamo->gastos_administrativos = $prestamo->existente ? $data['gastos_administrativos'] : $prestamo->monto * 0.01;
         $prestamo->gastos_formalidad = $data['gastos_formalidad'];
 
         // Cambiar el estado utilizando la lógica del padre
         parent::cambiarEstado($prestamo, $data);
+        if (!$prestamo->existente) {
+            $this->generarRetiro($prestamo, $data);
+        }
+    }
 
+    private function generarRetiro($prestamo, $data)
+    {
         // Calcular monto neto del préstamo (monto - gastos)
         $montoDeposito = $prestamo->monto - $prestamo->gastos_administrativos - $prestamo->gastos_formalidad;
         if ($montoDeposito <= 0) {

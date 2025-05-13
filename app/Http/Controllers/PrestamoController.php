@@ -4,13 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\EstadoRequest;
 use App\Http\Requests\PrestamoRequest;
-use App\Services\PrestamoService;
 use App\Http\Resources\Prestamo as PrestamoResource;
 use App\Http\Resources\HistoricoEstado as HistoricoEstadoResource;
 use App\Http\Resources\Cuota as PagoResource;
 use App\Http\Resources\Retiro as RetiroResource;
 use App\Http\Requests\StorePagarCuota;
+
+use App\Services\PrestamoService;
 use App\Services\PrestamoPdfService;
+use App\Services\EstadosPrestamoService;
 
 class PrestamoController extends Controller
 {
@@ -19,12 +21,17 @@ class PrestamoController extends Controller
 
     private $prestamoPdfService;
 
-    public function __construct(PrestamoService $prestamoService, PrestamoPdfService $prestamoPdfService)
-    {
-        $this->prestamoPdfService = $prestamoPdfService;
-        $this->prestamoService = $prestamoService;
-    }
+    private $estadosPrestamoService;
 
+    public function __construct(
+        PrestamoService $prestamoService,
+        PrestamoPdfService $prestamoPdfService,
+        EstadosPrestamoService $estadosPrestamoService
+    ) {
+        $this->prestamoService = $prestamoService;
+        $this->prestamoPdfService = $prestamoPdfService;
+        $this->estadosPrestamoService = $estadosPrestamoService;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -85,18 +92,18 @@ class PrestamoController extends Controller
 
     public function cambiarEstado(EstadoRequest $request, string $id)
     {
-        $this->prestamoService->cambiarEstado($id, $request->all());
+        $this->estadosPrestamoService->cambiarEstado($id, $request->all());
         return response()->json(['message' => 'Estado cambiado correctamente'], 200);
     }
 
     public function prestamosByEstado(string $estado)
     {
-        return PrestamoResource::collection($this->prestamoService->getPrestamosByEstado($estado));
+        return PrestamoResource::collection($this->estadosPrestamoService->getPrestamosByEstado($estado));
     }
 
     public function historial(string $id)
     {
-        return HistoricoEstadoResource::collection($this->prestamoService->getHistorial($id));
+        return HistoricoEstadoResource::collection($this->estadosPrestamoService->getHistorial($id));
     }
 
     public function generatePdf(string $id)
