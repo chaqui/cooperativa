@@ -4,12 +4,13 @@ namespace App\Services;
 
 use App\Constants\EstadoPrestamo;
 use App\EstadosPrestamo\ControladorEstado;
+use App\Traits\Loggable;
 
 
 class PrestamoExistenService
 {
 
-
+    use Loggable;
     protected $controladorEstado;
 
     public function __construct(
@@ -21,7 +22,7 @@ class PrestamoExistenService
     public function procesarPrestamoExistente($prestamo, $data)
     {
         $prestamo->saldo_existente = $data['saldo'];
-        $prestamo->$prestamo->save();
+        $prestamo->save();
         $this->prestamoCreado($prestamo, $data);
         $this->prestamoAutorizado($prestamo, $data);
         $this->desembolsarPrestamo($prestamo, $data);
@@ -29,6 +30,8 @@ class PrestamoExistenService
 
     private function prestamoCreado($prestamo, $data)
     {
+        $this->log('Cambio de estado a CREADO' .
+            ' para el prestamo con id: ' . $prestamo->id);
         $dataEstado = [
             'razon' => 'Préstamo creado',
             'estado' => EstadoPrestamo::$CREADO,
@@ -39,6 +42,9 @@ class PrestamoExistenService
 
     private function prestamoAutorizado($prestamo, $data)
     {
+
+        $this->log('Cambio de estado a APROBADO' .
+            ' para el prestamo con id: ' . $prestamo->id);
         $dataCambionEstado = [
             'estado' => EstadoPrestamo::$APROBADO,
             'fecha' => $data['fecha_autorizacion'],
@@ -51,14 +57,15 @@ class PrestamoExistenService
 
     private function desembolsarPrestamo($prestamo, $data)
     {
-
+        $this->log('Cambio de estado a DESEMBOLZADO' .
+            ' para el prestamo con id: ' . $prestamo->id);
         $dataDesembolso = [
             'estado' => EstadoPrestamo::$DESEMBOLZADO,
             'razones' => 'Se desembolsó el préstamo automáticamente porque ya existe',
             'fecha' => $data['fecha_desembolso'],
             'numero_documento' => $data['numero_documento'],
             'tipo_documento' => $data['tipo_documento'],
-            'cuota_pagada' => $data['cuota_pagada']
+            'numero_cuota_pagada' => $data['numero_cuota_pagada']
         ];
         $this->controladorEstado->cambiarEstado($prestamo, $dataDesembolso);
     }

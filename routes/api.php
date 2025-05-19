@@ -64,6 +64,7 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
     Route::get('inversiones/{id}/estados', [InversionController::class, 'historico']);
     Route::get('inversiones/{id}/depositos', [InversionController::class, 'getDepositosInversion']);
     Route::get('inversiones/{id}/pdf', [InversionController::class, 'generatePdf']);
+    Route::get('inversiones/{id}/beneficiarios', [InversionController::class, 'getBeneficiariosInversion']);
 });
 
 
@@ -193,5 +194,4 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('declaraciones/{id}', [DeclaracionController::class, 'show']);
     Route::get('declaraciones/{id}/transacciones', [DeclaracionController::class, 'getTransacciones']);
     Route::put('declaraciones/{id}', [DeclaracionController::class, 'declarar']);
-
 });

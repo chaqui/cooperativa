@@ -62,20 +62,90 @@ class InversionService extends CodigoService
     }
 
     /**
+     * Crea una nueva inversión y calcula la cuota de inversión
      *
-     * Method to create a new inversion and calculate the cuota inversion
-     * @param array $inversionData
+     * @param array $inversionData Datos de la inversión
      * @return \App\Models\Inversion
+     * @throws \Exception Si ocurre un error durante el proceso
      */
     public function createInversion(array $inversionData): Inversion
     {
+        // Validar los datos de la inversión
+        $this->validarInversionData($inversionData);
+
         DB::beginTransaction();
-        $inversionData['fecha'] = now();
-        $inversionData['codigo'] = $this->createCode();
-        $inversion = Inversion::create($inversionData);
-        $this->controladorEstado->cambiarEstado($inversion, ['estado' => EstadoInversion::$CREADO]);
-        DB::commit();
-        return $inversion;
+
+        try {
+            $this->log("Creando inversión con los siguientes datos: " . json_encode($inversionData));
+            // Asignar valores predeterminados
+            $inversionData['fecha'] = now();
+            $inversionData['codigo'] = $this->createCode();
+
+            // Crear la inversión
+            $inversion = Inversion::create($inversionData);
+
+            // Crear beneficiarios si existen
+            $this->crearBeneficiarios($inversion, $inversionData['beneficiarios'] ?? []);
+
+            // Cambiar el estado de la inversión a "CREADO"
+            $this->controladorEstado->cambiarEstado($inversion, ['estado' => EstadoInversion::$CREADO]);
+
+            DB::commit();
+
+            $this->log("Inversión creada con éxito: {$inversion->codigo}");
+            return $inversion;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError("Error al crear la inversión: " . $e->getMessage());
+            throw new \Exception("Error al crear la inversión: " . $e->getMessage(), 0, $e);
+        }
+    }
+
+    /**
+     * Crea los beneficiarios de una inversión
+     *
+     * @param \App\Models\Inversion $inversion
+     * @param array $beneficiarios
+     * @return void
+     */
+    private function crearBeneficiarios(Inversion $inversion, array $beneficiarios): void
+    {
+        foreach ($beneficiarios as $beneficiario) {
+            $inversion->beneficiarios()->create($beneficiario);
+        }
+    }
+
+    /**
+     * Valida los datos de la inversión
+     *
+     * @param array $inversionData
+     * @return void
+     * @throws \InvalidArgumentException Si los datos no son válidos
+     */
+    private function validarInversionData(array $inversionData): void
+    {
+        // Validar los datos de la inversión aquí
+        if ($inversionData['monto'] <= 0) {
+            throw new \InvalidArgumentException("El monto de la inversión debe ser un número positivo");
+        }
+        if ($inversionData['interes'] <= 0) {
+            throw new \InvalidArgumentException("El interés de la inversión debe ser un número positivo");
+        }
+        if ($inversionData['plazo'] <= 0) {
+            throw new \InvalidArgumentException("El plazo de la inversión debe ser un número positivo");
+        }
+
+        $beneficiarios = $inversionData['beneficiarios'] ?? [];
+        if (empty($beneficiarios) || !is_array($beneficiarios)) {
+            throw new \InvalidArgumentException("Los beneficiarios deben ser un arreglo");
+        }
+        $totalPorcentaje = 0;
+        foreach ($beneficiarios as $beneficiario) {
+            $totalPorcentaje += $beneficiario['porcentaje'];
+        }
+        if ($totalPorcentaje != 100) {
+            throw new \InvalidArgumentException("El total de los porcentajes de los beneficiarios debe ser 100");
+        }
     }
 
     public function updateInversion(Inversion $inversion, array $inversionData): Inversion
@@ -133,6 +203,12 @@ class InversionService extends CodigoService
             $depositos->push($inversion->deposito);
         }
         return  $depositos;
+    }
+
+    public function getBeneficiarios($id)
+    {
+        $inversion = $this->getInversion($id);
+        return $inversion->beneficiarios;
     }
 
     public function getPdf($id)

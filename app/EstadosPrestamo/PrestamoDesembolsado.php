@@ -38,10 +38,11 @@ class PrestamoDesembolsado extends EstadoBasePrestamo
         if (!$data['tipo_documento']) {
             throw new \Exception('El tipo de documento es requerido');
         }
-        $prestamo->fecha_inicio = now();
+        $prestamo->fecha_inicio = $data['fecha'] ?? now();
         parent::cambiarEstado($prestamo, $data);
 
-        $cuotaPagada =  $data['cuota_pagada'] ?? 0;
+        $cuotaPagada =  $data['numero_cuota_pagada'] ?? 0;
+        $this->log("Las cuotas pagadas son: {$cuotaPagada}");
         $this->cuotaHipotecariaService->calcularCuotas($prestamo, $cuotaPagada);
 
         $this->generarYGuardarEstadoDeCuenta($prestamo);

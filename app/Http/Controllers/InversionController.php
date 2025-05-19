@@ -9,10 +9,11 @@ use Illuminate\Http\Request;
 
 use App\Services\InversionService;
 use App\Services\CuotaInversionService;
-use App\Http\Resources\CuotaInversion as CuotaResource;
-use App\Http\Resources\Inversion as InversionResource;
-use App\Http\Resources\HistoricoEstado as HistoricoEstadoResource;
 use App\Http\Resources\Deposito as DepositoResource;
+use App\Http\Resources\Inversion as InversionResource;
+use App\Http\Resources\CuotaInversion as CuotaResource;
+use App\Http\Resources\Beneficiario as BeneficiarioResource;
+use App\Http\Resources\HistoricoEstado as HistoricoEstadoResource;
 
 class InversionController extends Controller
 {
@@ -116,6 +117,13 @@ class InversionController extends Controller
         $depositos = $this->inversionService->getDepositos($id);
         $this->log($depositos);
         return DepositoResource::collection($depositos);
+    }
+
+    public function getBeneficiariosInversion($id)
+    {
+        $this->log('Obteniendo beneficios para la inversion:' . $id);
+        $beneficiarios = $this->inversionService->getBeneficiarios($id);
+        return BeneficiarioResource::collection($beneficiarios);
     }
 
     public function generatePdf($id)

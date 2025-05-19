@@ -42,6 +42,8 @@ class PrestamoRequest extends FormRequest
             'fecha_desembolso' => 'required|string',
             'gastos_formalidad' => 'required|numeric',
             'gastos_administrativos' => 'required|numeric',
+            'numero_documento' => 'required|string',
+            'tipo_documento' => 'required|string',
         ];
     }
 

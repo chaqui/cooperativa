@@ -62,5 +62,8 @@ class Inversion extends Model
         return $this->hasOne(Deposito::class, 'id_inversion');
     }
 
-
+    public function beneficiarios()
+    {
+        return $this->hasMany(Beneficiario::class, 'id_inversion');
+    }
 }
