@@ -162,4 +162,12 @@ class Prestamo_Hipotecario extends Model
         $fecha = now()->startOfMonth()->addDays(5);
         return $this->pagos()->where('realizado', 0)->where('fecha', '<=', $fecha)->get();
     }
+
+    public function tieneCuotaInvalida(){
+        $cuota = $this->pagos()->where('numero_pago_prestamo', 0)->first();
+        if ($cuota) {
+            return true;
+        }
+        return false;
+    }
 }

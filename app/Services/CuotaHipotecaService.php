@@ -126,6 +126,7 @@ class CuotaHipotecaService extends CuotaService
 
     private function registrarPagoExistente($pago)
     {
+        $this->log("El pago {$pago->numero_pago_prestamo} ya ha sido pagado, registrando como realizado");
         $montoOriginal = $pago->interes + $pago->capital + $pago->penalizacion;
         $montoRestante = $montoOriginal;
         $detallesPago = [
@@ -175,7 +176,7 @@ class CuotaHipotecaService extends CuotaService
 
         if (!$this->esFechaValida($prestamoHipotecario->fecha_inicio)) {
             $this->log("Fecha de inicio {$prestamoHipotecario->fecha_inicio} no es válida, generando pago parcial inicial");
-            $pagoAnterior = $this->generarPagoInvalido($prestamoHipotecario);
+            $pagoAnterior = $this->generarPagoInvalido($prestamoHipotecario, $cuotaPagada);
         }
 
         for ($i = 0; $i < $plazo; $i++) {
@@ -246,7 +247,13 @@ class CuotaHipotecaService extends CuotaService
         $this->log("Capital mensual calculado: Q{$capitalMensual}");
 
         // Ajustar el saldo y el capital si es necesario
-        $nuevoSaldo = max(0, $saldoBase - $capitalMensual);
+        $nuevoSaldo = $this->calcularNuevoSaldo(
+            $prestamo,
+            $pagoAnterior,
+            $saldoBase,
+            $capitalMensual,
+            $cuotaPagada
+        );
         if ($nuevoSaldo < 0.01) {
             $nuevoSaldo = 0;
             $capitalMensual = $saldoBase;
@@ -263,8 +270,11 @@ class CuotaHipotecaService extends CuotaService
             $cuotaPagada
         );
 
+        if ($prestamo->existente && $cuotaPagada > 0 && $prestamo->tieneCuotaInvalida()) {
+            $cuotaPagada = $cuotaPagada - 1;
+        }
+
         if ($pago->numero_pago_prestamo <= $cuotaPagada) {
-            $this->log("El pago {$pago->numero_pago_prestamo} ya ha sido pagado, registrando como realizado");
             $this->registrarPagoExistente($pago);
         }
 
@@ -276,6 +286,24 @@ class CuotaHipotecaService extends CuotaService
 
         $this->log("Pago generado con éxito: ID {$pago->id}, Capital: {$pago->capital}, Interés: {$pago->interes}, Saldo: {$pago->saldo}");
         return $pago;
+    }
+
+    /**
+     * Calcula el nuevo saldo del préstamo después de un pago
+     *
+     * @param Prestamo_Hipotecario $prestamo Información del préstamo
+     * @param Pago|null $pagoAnterior Información del pago anterior
+     * @param float $saldoBase Saldo base del préstamo
+     * @param float $capitalMensual Capital mensual a pagar
+     * @param int $cuotaPagada Número de cuotas ya pagadas
+     * @return float Nuevo saldo del préstamo
+     */
+    private function calcularNuevoSaldo($prestamo, $pagoAnterior, $saldoBase, $capitalMensual, $cuotaPagada)
+    {
+        if ($prestamo->existente && $pagoAnterior !== null && $pagoAnterior->numero_pago_prestamo == $cuotaPagada - 1) {
+            return $prestamo->saldo_existente;
+        }
+        return max(0, $saldoBase - $capitalMensual);
     }
 
     /**
@@ -359,11 +387,9 @@ class CuotaHipotecaService extends CuotaService
     {
         $this->log("Obteniendo saldo base para el préstamo #{$prestamo->id}");
         $this->log(" El pago anterior es: " . ($pagoAnterior ? $pagoAnterior->numero_pago_prestamo : 'N/A'));
-        if ($prestamo->existente && $pagoAnterior !== null && $pagoAnterior->numero_pago_prestamo == $cuotaPagada - 1) {
-            $saldoBase = $prestamo->saldo_existente;
-        } else {
-            $saldoBase = $pagoAnterior ? $pagoAnterior->saldo : $prestamo->monto;
-        }
+
+        $saldoBase = $pagoAnterior ? $pagoAnterior->saldo : $prestamo->monto;
+
         $this->log("Saldo base calculado: Q{$saldoBase}");
 
 
@@ -435,7 +461,7 @@ class CuotaHipotecaService extends CuotaService
      * @return Pago Pago generado
      * @throws \InvalidArgumentException Si la fecha de inicio del préstamo no es válida
      */
-    private function generarPagoInvalido($prestamo)
+    private function generarPagoInvalido($prestamo, $cuotaPagada)
     {
         $this->log("Generando pago parcial inicial para préstamo #{$prestamo->id}");
 
@@ -454,23 +480,19 @@ class CuotaHipotecaService extends CuotaService
         $this->log("Días restantes hasta próximo mes: {$diasRestantes}, Interés acumulado: {$interesAcumulado}");
 
         // Crear el registro de pago inicial
-        $pago = new Pago();
-        $pago->id_prestamo = $prestamo->id;
-        $pago->capital = 0; // No se amortiza capital en este pago parcial
-        $pago->interes = $interesAcumulado;
-        $pago->fecha = $this->obtenerFechaSiguienteMes($fecha, true);
-        $pago->numero_pago_prestamo = 0; // Número de pago inicial
-        $pago->saldo = $prestamo->monto; // El saldo se mantiene igual
-        $pago->realizado = false;
-
-        // Inicializar campos adicionales
-        $pago->interes_pagado = 0;
-        $pago->capital_pagado = 0;
-        $pago->monto_pagado = 0;
-        $pago->penalizacion = 0;
-        $pago->recargo = 0;
+        $fecha = $this->obtenerFechaSiguienteMes($fecha, true);
+        $pago = Pago::generarPagoInvalido(
+            $prestamo,
+            $interesAcumulado,
+            $fecha
+        );
 
         $pago->save();
+
+        if ($prestamo->existente && $cuotaPagada > 0) {
+            $this->registrarPagoExistente($pago);
+        }
+
 
         $this->log("Pago parcial inicial generado con éxito: ID {$pago->id}, Interés: {$pago->interes}");
 

@@ -59,16 +59,29 @@ class Pago extends Model
         return $this->hasMany(Deposito::class, 'id_pago');
     }
 
-    public static function generarPago($prestamo, $interesMensual, $capitalMensual, $nuevoSaldo, $cuotaPagada, $fecha, $pagoAnterior)
+    /**
+     * Método reutilizable para inicializar un pago
+     *
+     * @param Prestamo_Hipotecario $prestamo
+     * @param float $interes
+     * @param float $capital
+     * @param float $saldo
+     * @param string $fecha
+     * @param int|null $numeroPago
+     * @param bool $realizado
+     * @param Pago|null $pagoAnterior
+     * @return Pago
+     */
+    private static function inicializarPago($prestamo, $interes, $capital, $saldo, $fecha, $numeroPago = null, $realizado = false, $pagoAnterior = null): Pago
     {
         $pago = new Pago();
         $pago->id_prestamo = $prestamo->id;
-        $pago->interes = $interesMensual;
-        $pago->capital = $capitalMensual;
-        $pago->saldo = $nuevoSaldo;
+        $pago->interes = $interes;
+        $pago->capital = $capital;
+        $pago->saldo = $saldo;
         $pago->fecha = $fecha;
-        $pago->numero_pago_prestamo = $pagoAnterior ? $pagoAnterior->numero_pago_prestamo + 1 : 1;
-        $pago->realizado = $prestamo->existente && $pago->numero_pago_prestamo <= $cuotaPagada;
+        $pago->numero_pago_prestamo = $numeroPago ?? ($pagoAnterior ? $pagoAnterior->numero_pago_prestamo + 1 : 1);
+        $pago->realizado = $realizado;
         $pago->id_pago_anterior = $pagoAnterior ? $pagoAnterior->id : null;
 
         // Inicializar campos adicionales
@@ -78,6 +91,56 @@ class Pago extends Model
         $pago->penalizacion = 0;
         $pago->recargo = 0;
         $pago->fecha_pago = null;
+
         return $pago;
+    }
+
+    /**
+     * Genera un pago válido
+     *
+     * @param Prestamo_Hipotecario $prestamo
+     * @param float $interesMensual
+     * @param float $capitalMensual
+     * @param float $nuevoSaldo
+     * @param int $cuotaPagada
+     * @param string $fecha
+     * @param Pago|null $pagoAnterior
+     * @return Pago
+     */
+    public static function generarPago($prestamo, $interesMensual, $capitalMensual, $nuevoSaldo, $cuotaPagada, $fecha, $pagoAnterior): Pago
+    {
+        $realizado = $prestamo->existente && ($pagoAnterior ? $pagoAnterior->numero_pago_prestamo + 1 : 1) <= $cuotaPagada;
+
+        return self::inicializarPago(
+            $prestamo,
+            $interesMensual,
+            $capitalMensual,
+            $nuevoSaldo,
+            $fecha,
+            null,
+            $realizado,
+            $pagoAnterior
+        );
+    }
+
+    /**
+     * Genera un pago inválido
+     *
+     * @param Prestamo_Hipotecario $prestamo
+     * @param float $interesAcumulado
+     * @param string $fecha
+     * @return Pago
+     */
+    public static function generarPagoInvalido($prestamo, $interesAcumulado, $fecha): Pago
+    {
+        return self::inicializarPago(
+            $prestamo,
+            $interesAcumulado,
+            0, // No se amortiza capital en un pago inválido
+            $prestamo->monto, // El saldo se mantiene igual
+            $fecha,
+            0, // Número de pago inicial
+            false // No realizado
+        );
     }
 }
