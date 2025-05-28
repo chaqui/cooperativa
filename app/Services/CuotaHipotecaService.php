@@ -242,7 +242,7 @@ class CuotaHipotecaService extends CuotaService
         $this->log("Tasa de interés mensual: {$tasaInteresMensual}");
         $interesMensual = $this->calcularInteres($saldoBase, $tasaInteresMensual);
         $this->log("Interés mensual calculado: Q{$interesMensual}");
-        $capitalMensual = $this->calcularCapital($pagoAnterior, $prestamo, $saldoBase, $plazo, $pagoAnterior);
+        $capitalMensual = $this->calcularCapital($interesMensual, $prestamo, $saldoBase, $plazo, $pagoAnterior);
         $this->log("Capital mensual calculado: Q{$capitalMensual}");
 
         // Ajustar el saldo y el capital si es necesario
@@ -366,9 +366,7 @@ class CuotaHipotecaService extends CuotaService
         }
         $this->log("Saldo base calculado: Q{$saldoBase}");
 
-        if ($saldoBase <= 0) {
-            throw new \InvalidArgumentException("El saldo base debe ser mayor que cero");
-        }
+
         return $saldoBase;
     }
 
@@ -392,7 +390,8 @@ class CuotaHipotecaService extends CuotaService
 
         // Caso 1: Frecuencia de pago mensual
         if ($frecuenciaPago == FrecuenciaPago::$MENSUAL) {
-            $capital = $prestamo->cuota - $interes;
+            $this->log("Calculando capital para frecuencia mensual");
+            $capital = floatval($prestamo->cuota) - floatval($interes);
             $this->log("Capital calculado para frecuencia mensual: Q{$capital}");
             return max(0, $capital);
         }
@@ -638,7 +637,7 @@ class CuotaHipotecaService extends CuotaService
             $prestamoHipotecario->tipo_plazo
         );
         $pagoSiguiente->interes = $this->calcularInteres($nuevoSaldo, $this->calcularTaza($prestamoHipotecario->interes));
-        $capital = $this->calcularCapital($pagoSiguiente, $prestamoHipotecario, $nuevoSaldo, $plazo, $pago);
+        $capital = $this->calcularCapital($pagoSiguiente->interes, $prestamoHipotecario, $nuevoSaldo, $plazo, $pago);
 
         // Ajustar el capital si el saldo restante es menor
         if ($nuevoSaldo < $capital) {
