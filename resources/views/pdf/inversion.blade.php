@@ -221,9 +221,9 @@
                     <td></td>
                 </tr>
                 <tr>
-                    <td style="text-align: center;"><strong>firma y sello <br/> COPECRECI</strong></td>
+                    <td style="text-align: center;"><strong>firma y sello <br /> COPECRECI</strong></td>
                     <td></td>
-                    <td style="text-align: center;"><strong>firma y huella <br/> CLIENTE</strong></td>
+                    <td style="text-align: center;"><strong>firma y huella <br /> CLIENTE</strong></td>
                     <td></td>
                 </tr>
             </table>
@@ -239,37 +239,32 @@
         <p class="linea">ESTE DEPÓSITO ESTA SUJETO A LAS SIGUIENTES CONDICIONES:</p>
         <div class="content">
             <ul style="font-size: 13px; text-align: left;">
-                <li>Será pagado el día de su vencimiento mediante la entrega del presente Certificado en original.</li>
+                <li style="text-align: justify;">Será pagado el día de su vencimiento mediante la entrega del presente
+                    Certificado en original.</li>
                 <br />
-                <li>Si este certificado no es presentado para su cancelación en la fecha de su vencimiento, será
-                    prorrogable
-                    automáticamente por el mismo plazo a la tasa de interés vigente y así sucesivamente.</li>
+                <li style="text-align: justify;">Si este certificado no es presentado para su cancelación en la fecha de
+                    su vencimiento, será prorrogable automáticamente por el mismo plazo a la tasa de interés vigente y
+                    así sucesivamente.</li>
                 <br />
-                <li>Si COPECRECI S.A., disminuye o aumenta la tasa de interés para los depósitos de inversiones a plazo
-                    fijo,
-                    deberá dar aviso de las nuevas tasas para las aperturas y renovaciones automáticas con noventa días
-                    de anticipación a la entrada en vigencia de las nuevas tasas.</li>
+                <li style="text-align: justify;">Si COPECRECI S.A., disminuye o aumenta la tasa de interés para los
+                    depósitos de inversiones a plazo fijo, deberá dar aviso de las nuevas tasas para las aperturas y
+                    renovaciones automáticas con noventa días de anticipación a la entrada en vigencia de las nuevas
+                    tasas.</li>
                 <br />
-                <li>En caso de que el depositante opte por retirarlo antes del vencimiento del plazo, el depósito no
-                    devengará
-                    intereses por el lapso transcurrido entre el vencimiento y la fecha de cancelación, como también
-                    quedará
-                    sujeto a un porcentaje de penalización establecido en política vigente de COPECRECI.</li>
+                <li style="text-align: justify;">En caso de que el depositante opte por retirarlo antes del vencimiento
+                    del plazo, el depósito no devengará intereses por el lapso transcurrido entre el vencimiento y la
+                    fecha de cancelación, como también quedará sujeto a un porcentaje de penalización establecido en
+                    política vigente de COPECRECI.</li>
                 <br />
-                <li>En caso de fallecimiento del titular, y si éste hubiese instituido beneficiario (s), los fondos
-                    depositados serán
-                    entregados a éstos con sus respectivos intereses, en las proporciones designadas por el titular, y
-                    en
-                    caso de que no la hiciera, se entenderá que la distribución será por partes iguales. COPECRECI
-                    estará en
-                    la obligación de comunicar por escrito a los beneficiarios, la designación que a su favor se hubiere
-                    hecho,
-                    dentro de los tres días siguientes en que se tuviere conocimiento cierto del fallecimiento del
-                    cliente.</li>
+                <li style="text-align: justify;">En caso de fallecimiento del titular, y si éste hubiese instituido
+                    beneficiario (s), los fondos depositados serán entregados a éstos con sus respectivos intereses, en
+                    las proporciones designadas por el titular, y en caso de que no la hiciera, se entenderá que la
+                    distribución será por partes iguales. COPECRECI estará en la obligación de comunicar por escrito a
+                    los beneficiarios, la designación que a su favor se hubiere hecho, dentro de los tres días
+                    siguientes en que se tuviere conocimiento cierto del fallecimiento del cliente.</li>
                 <br />
-                <li>Este Certificado será válido únicamente con la firma del Representante Legal o Jefe de Agencia con
-                    su
-                    respectivo sello y también con la firma y/o huella del cliente.</li>
+                <li style="text-align: justify;">Este Certificado será válido únicamente con la firma del Representante
+                    Legal o Jefe de Agencia con su respectivo sello y también con la firma y/o huella del cliente.</li>
             </ul>
         </div>
     </div>
