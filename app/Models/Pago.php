@@ -109,7 +109,6 @@ class Pago extends Model
      */
     public static function generarPago($prestamo, $interesMensual, $capitalMensual, $nuevoSaldo, $cuotaPagada, $fecha, $pagoAnterior): Pago
     {
-        $realizado = $prestamo->existente && ($pagoAnterior ? $pagoAnterior->numero_pago_prestamo + 1 : 1) <= $cuotaPagada;
 
         return self::inicializarPago(
             $prestamo,
@@ -118,7 +117,7 @@ class Pago extends Model
             $nuevoSaldo,
             $fecha,
             null,
-            $realizado,
+            false,
             $pagoAnterior
         );
     }

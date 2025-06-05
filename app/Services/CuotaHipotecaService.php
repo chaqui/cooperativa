@@ -139,6 +139,7 @@ class CuotaHipotecaService extends CuotaService
         $montoRestante = $this->procesarCapital($pago, $montoRestante, $detallesPago);
         $pago->monto_pagado += $montoOriginal;
         $pago->fecha_pago = $pago->fecha;
+        $pago->realizado = true;
         $pago->save();
     }
 
@@ -181,6 +182,10 @@ class CuotaHipotecaService extends CuotaService
 
         for ($i = 0; $i < $plazo; $i++) {
             $numeroCuota = $i + 1;
+            if($prestamoHipotecario->existente && $pagoAnterior && $pagoAnterior->saldo <=0) {
+                $this->log("El saldo del pago anterior es cero, no se generará más cuotas");
+                continue;
+            }
             $this->log("Generando cuota #{$numeroCuota} de {$plazo}");
             $pagoAnterior = $this->generarPago(
                 $pagoAnterior,
@@ -235,6 +240,7 @@ class CuotaHipotecaService extends CuotaService
 
         // Determinar el saldo base y la fecha base
         $saldoBase = $this->obtenerSaldoBase($prestamo, $pagoAnterior, $cuotaPagada);
+
         $fechaBase = $pagoAnterior ? $pagoAnterior->fecha : $prestamo->fecha_inicio;
         $this->log("Saldo base: Q{$saldoBase}, Fecha base: {$fechaBase}");
 
@@ -245,6 +251,9 @@ class CuotaHipotecaService extends CuotaService
         $this->log("Interés mensual calculado: Q{$interesMensual}");
         $capitalMensual = $this->calcularCapital($interesMensual, $prestamo, $saldoBase, $plazo, $pagoAnterior);
         $this->log("Capital mensual calculado: Q{$capitalMensual}");
+        if ($prestamo->existente && $cuotaPagada > 0 && $prestamo->tieneCuotaInvalida()) {
+            $cuotaPagada = $cuotaPagada - 1;
+        }
 
         // Ajustar el saldo y el capital si es necesario
         $nuevoSaldo = $this->calcularNuevoSaldo(
@@ -269,10 +278,6 @@ class CuotaHipotecaService extends CuotaService
             $fechaBase,
             $cuotaPagada
         );
-
-        if ($prestamo->existente && $cuotaPagada > 0 && $prestamo->tieneCuotaInvalida()) {
-            $cuotaPagada = $cuotaPagada - 1;
-        }
 
         if ($pago->numero_pago_prestamo <= $cuotaPagada) {
             $this->registrarPagoExistente($pago);
