@@ -76,9 +76,9 @@ class Pago extends Model
     {
         $pago = new Pago();
         $pago->id_prestamo = $prestamo->id;
-        $pago->interes = $interes;
-        $pago->capital = $capital;
-        $pago->saldo = $saldo;
+        $pago->interes = round($interes, 2); // Redondear a 2 decimales
+        $pago->capital = round($capital, 2); // Redondear a 2 decimales
+        $pago->saldo = round($saldo, 2); // Redondear a 2 decimales
         $pago->fecha = $fecha;
         $pago->numero_pago_prestamo = $numeroPago ?? ($pagoAnterior ? $pagoAnterior->numero_pago_prestamo + 1 : 1);
         $pago->realizado = $realizado;

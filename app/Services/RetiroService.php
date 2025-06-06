@@ -159,7 +159,7 @@ class RetiroService
     {
         $this->log("Actualizando estado de préstamo #{$retiro->id_prestamo} a DESEMBOLSADO");
 
-        $prestamoService = app(PrestamoService::class);
+        $prestamoService = app(EstadosPrestamoService::class);
         $estadoData = array_merge($data, ['estado' => EstadoPrestamo::$DESEMBOLZADO]);
 
         try {
