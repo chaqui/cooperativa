@@ -97,8 +97,15 @@ class ClientService extends CodigoService
         $references = $data['referencias'];
 
         foreach ($references as $reference) {
+            $this->log($reference);
             $reference['dpi_cliente'] = $client->dpi;
-            $reference = $this->referenceService->updateReference($reference['id'], $reference);
+            if (isset($reference['id']) && $reference['id'] !== null) {
+                 $reference = $this->referenceService->updateReference($reference['id'], $reference);
+            } else {
+                // Create new reference
+                $reference = $this->referenceService->createReference($reference);
+            }
+
             $client->references()->save($reference);
         }
     }
