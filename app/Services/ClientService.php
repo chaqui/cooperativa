@@ -216,7 +216,9 @@ class ClientService extends CodigoService
     public function generatePdf($id)
     {
         $client = $this->getDataForPDF($id);
+          $this->log($client);
         $html = view('pdf.client', data: compact('client'))->render();
+
         $pdf = $this->pdfService->generatePdf($html);
         return $pdf;
     }

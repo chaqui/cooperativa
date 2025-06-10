@@ -183,12 +183,14 @@
                 <th>Nombre</th>
                 <th>Telefono</th>
             </tr>
-            @foreach ($client->referenciasLaborales as $reference)
-                <tr>
-                    <td>{{ $reference->nombre }}</td>
-                    <td>{{ $reference->telefono }}</td>
-                </tr>
-            @endforeach
+            @if(!empty($client->referenciasLaborales) && (is_array($client->referenciasLaborales) || is_object($client->referenciasLaborales)))
+                @foreach ($client->referenciasLaborales as $reference)
+                    <tr>
+                        <td>{{ is_array($reference) ? $reference['nombre'] ?? '' : ($reference->nombre ?? '') }}</td>
+                        <td>{{ is_array($reference) ? $reference['telefono'] ?? '' : ($reference->telefono ?? '') }}</td>
+                    </tr>
+                @endforeach
+            @endif
         </table>
     @else
         <h3>Referencias Comerciales</h3>
@@ -197,12 +199,14 @@
                 <th>Nombre</th>
                 <th>Telefono</th>
             </tr>
-            @foreach ($client->referenciascomerciales as $reference)
-                <tr>
-                    <td>{{ $reference->nombre }}</td>
-                    <td>{{ $reference->telefono }}</td>
-                </tr>
-            @endforeach
+            @if(!empty($client->referenciasComerciales) && (is_array($client->referenciasComerciales) || is_object($client->referenciasComerciales)))
+                @foreach ($client->referenciasComerciales as $reference)
+                   <tr>
+                        <td>{{ is_array($reference) ? $reference['nombre'] ?? '' : ($reference->nombre ?? '') }}</td>
+                        <td>{{ is_array($reference) ? $reference['telefono'] ?? '' : ($reference->telefono ?? '') }}</td>
+                    </tr>
+                @endforeach
+            @endif
         </table>
     @endif
     <h3>Referencias Personales</h3>
@@ -211,12 +215,14 @@
             <th>Nombre</th>
             <th>Telefono</th>
         </tr>
-        @foreach ($client->referenciasPersonales as $reference)
-            <tr>
-                <td>{{ $reference->nombre }}</td>
-                <td>{{ $reference->telefono }}</td>
-            </tr>
-        @endforeach
+        @if(!empty($client->referenciasPersonales) && (is_array($client->referenciasPersonales) || is_object($client->referenciasPersonales)))
+            @foreach ($client->referenciasPersonales as $reference)
+                <tr>
+                        <td>{{ is_array($reference) ? $reference['nombre'] ?? '' : ($reference->nombre ?? '') }}</td>
+                        <td>{{ is_array($reference) ? $reference['telefono'] ?? '' : ($reference->telefono ?? '') }}</td>
+                    </tr>
+            @endforeach
+        @endif
     </table>
 
     <h3>Referencias Familiares</h3>
@@ -225,13 +231,15 @@
             <th>Nombre</th>
             <th>Telefono</th>
         </tr>
-        @foreach ($client->referenciasFamiliares as $reference)
-            <tr>
-                <td>{{ $reference->nombre }}</td>
-                <td>{{ $reference->telefono }}</td>
-        @endforeach
+        @if(!empty($client->referenciasFamiliares) && (is_array($client->referenciasFamiliares) || is_object($client->referenciasFamiliares)))
+            @foreach ($client->referenciasFamiliares as $reference)
+                <tr>
+                    <td>{{ is_array($reference) ? $reference['nombre'] ?? '' : ($reference->nombre ?? '') }}</td>
+                    <td>{{ is_array($reference) ? $reference['telefono'] ?? '' : ($reference->telefono ?? '') }}</td>
+                </tr>
+            @endforeach
+        @endif
     </table>
-
     <table class="content">
         <tr>
             <td>
@@ -255,5 +263,4 @@
         </tr>
     </table>
 </body>
-
 </html>
