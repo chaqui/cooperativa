@@ -100,6 +100,12 @@ class Client extends Model
         $client->tipoCliente = $data['tipoCliente'];
         $client->path = $data['path'];
         $client->codigo = $data['codigo'];
+        if($data['estado_civil'] == '18') {
+            $client->conyuge = $data['conyuge'];
+            $client->cargas_familiares = $data['cargas_familiares'];
+            $client->integrantes_nucleo_familiar = $data['integrantes_nucleo_familiar'];
+            $client->estabilidad_domiciliaria = $data['estabilidad_domiciliaria'];
+        }
         $client->etado_cliente  = 1;
         return $client;
     }
