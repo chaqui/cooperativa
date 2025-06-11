@@ -105,6 +105,7 @@ class Client extends Model
             $client->cargas_familiares = $data['cargas_familiares'];
             $client->integrantes_nucleo_familiar = $data['integrantes_nucleo_familiar'];
             $client->estabilidad_domiciliaria = $data['estabilidad_domiciliaria'];
+            $client->tipo_vivienda = $data['tipo_vivienda'];
         }
         $client->etado_cliente  = 1;
         return $client;

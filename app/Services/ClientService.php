@@ -241,7 +241,7 @@ class ClientService extends CodigoService
                 'estado_civil' => 'estadoCivil',
                 'genero' => 'genero',
                 'tipoCliente' => 'nombreTipoCliente',
-                'tipo_vivienda' => 'casa_donde_vive'
+                'tipo_vivienda' => 'tipo_vivienda'
             ];
 
             foreach ($catalogosAEnriquecer as $codigoCatalogo => $nombrePropiedad) {

@@ -174,12 +174,12 @@
                 <td>{{ $client->integrantes_nucleo_familiar }}</td>
             </tr>
             <tr>
-                <td><strong>La casa donde vive es:</strong></td>
-                <td>{{ $client->casa_donde_vive }}</td>
+                <td><strong>La casa donde vive:</strong></td>
+                <td>{{ $client->tipo_vivienda }}</td>
             </tr>
             <tr>
                 <td><strong>Tiempo de estabilidad domiciliar:</strong></td>
-                <td>{{ $client->tiempo_estabilidad_domiciliar }} año(s)</td>
+                <td>{{ $client->estabilidad_domiciliaria }} año(s)</td>
             </tr>
         </table>
 
