@@ -128,6 +128,8 @@ class Client extends Model
         $client->puesto = $data['puesto'];
         $client->fechaInicio = $data['fechaInicio'];
         $client->nombreEmpresa = $data['nombreEmpresa'];
+        $client->direccionEmpresa = $data['direccionEmpresa'];
+        $client->telefonoEmpresa = $data['telefonoEmpresa'];
         $client->otrosIngresos = $data['otrosIngresos'];
         return $client;
     }
