@@ -152,8 +152,12 @@
         </tr>
         @if ($client->tipoCliente != '390')
             <tr>
-                <td><strong>Ingresos Mensuales:</strong></td>
+                <td><strong>Otros Ingresos:</strong></td>
                 <td colspan="3">{{ $client->otrosIngresos }}</td>
+            </tr>
+             <tr>
+                <td><strong>Razon Otros Ingresos:</strong></td>
+                <td colspan="3">{{ $client->razon_otros_ingresos }}</td>
             </tr>
         @endif
     </table>
