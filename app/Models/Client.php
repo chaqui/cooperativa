@@ -40,6 +40,7 @@ class Client extends Model
         'fechaInicio', //
         'tipoCliente', //-
         'otrosIngresos', //
+        'razon_otros_ingresos', //
         'numeroPatente', //
         'nombreEmpresa', //
         'telefonoEmpresa', //
@@ -131,6 +132,7 @@ class Client extends Model
         $client->direccionEmpresa = $data['direccionEmpresa'];
         $client->telefonoEmpresa = $data['telefonoEmpresa'];
         $client->otrosIngresos = $data['otrosIngresos'];
+        $client->razon_otros_ingresos = $data['razon_otros_ingresos'] ?? null;
         return $client;
     }
 
