@@ -22,7 +22,7 @@
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         table {
@@ -37,7 +37,7 @@
         }
 
         .content {
-            margin: 10px;
+            margin: 5px;
             border: 1px solid black;
             padding: 5px;
         }
@@ -69,7 +69,7 @@
             <img src="{{ base64Image($client->path) }}" alt="Fotografía del Cliente" class="client-photo">
         @endif
         <h2>
-            Cliente: {{ $client->nombres }} {{ $client->apellidos }} ({{ $client->codigo }})
+            {{ $client->nombres }} {{ $client->apellidos }} ({{ $client->codigo }})
         </h2>
     </div>
     <table class="content">
@@ -105,7 +105,7 @@
             <td><strong>Genero:</strong></td>
             <td>{{ $client->genero }}</td>
             <td><strong>Estado Civil:</strong></td>
-            <td>{{ $client->estadoCivil }}</td>
+            <td>{{ $client->estadoCivil }}(a)</td>
         </tr>
     </table>
     <table class="content">
@@ -146,16 +146,16 @@
         @endif
         <tr>
             <td><strong>Ingresos Mensuales:</strong></td>
-            <td>{{ $client->ingresos_mensuales }}</td>
+            <td>Q. {{ number_format($client->ingresos_mensuales, 2, '.', ',') }}</td>
             <td><strong>Egresos Mensuales:</strong></td>
-            <td>{{ $client->egresos_mensuales }}</td>
+            <td>Q. {{ number_format($client->egresos_mensuales, 2, '.', ',')  }}</td>
         </tr>
         @if ($client->tipoCliente != '390')
             <tr>
                 <td><strong>Otros Ingresos:</strong></td>
-                <td colspan="3">{{ $client->otrosIngresos }}</td>
+                <td colspan="3"> Q. {{ number_format($client->otrosIngresos, 2, '.', ',') }}</td>
             </tr>
-             <tr>
+            <tr>
                 <td><strong>Razon Otros Ingresos:</strong></td>
                 <td colspan="3">{{ $client->razon_otros_ingresos }}</td>
             </tr>
@@ -236,7 +236,6 @@
             @endforeach
         @endif
     </table>
-
     <h3>Referencias Familiares</h3>
     <table class="content">
         <tr>
@@ -254,13 +253,15 @@
     </table>
     <table class="content">
         <tr>
-            <td>
+            <td style="text-align: justify;">
                 Yo <strong>{{ $client->nombres }} {{ $client->apellidos }}</strong> con CUI
-                <strong>{{ $client->dpi }}</strong> originario de <strong>{{ $client->nombreMunicipio }}</strong> del
+                <strong>
+                {{ substr($client->dpi, 0, 4) }} {{ substr($client->dpi, 4, 5) }} {{ substr($client->dpi, 9, 4) }}
+            </strong> originario de <strong>{{ $client->nombreMunicipio }}</strong> del
                 departamento de <strong>{{ $client->nombreDepartamento }}</strong> con domicilio en
                 <strong>{{ $client->direccion }}</strong> con número de teléfono
                 <strong>{{ $client->telefono }}</strong> de estado civil
-                <strong>{{ $client->estadoCivil }}</strong> con fecha de nacimiento
+                <strong>{{ $client->estadoCivil}}(a)</strong> con fecha de nacimiento
                 <strong>{{ Carbon::parse($client->fecha_nacimiento)->translatedFormat('d \d\e F \d\e Y') }}</strong>
                 declaro de forma
                 expresa
@@ -271,7 +272,8 @@
         <tr>
             <td class="signature"> F. ______________________ <br />
                 {{ $client->nombres }} {{ $client->apellidos }} <br />
-                CUI. {{$client->dpi}} </td>
+                CUI.  {{ substr($client->dpi, 0, 4) }} {{ substr($client->dpi, 4, 5) }} {{ substr($client->dpi, 9, 4) }}
+
         </tr>
     </table>
 </body>
