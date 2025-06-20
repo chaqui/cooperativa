@@ -18,6 +18,7 @@
         /* Agrega tus estilos aquí */
         body {
             font-family: Arial, sans-serif;
+            font-size: 12px;
         }
 
         .header {
@@ -77,7 +78,7 @@
             <td><strong>Nombre:</strong></td>
             <td>{{ $client->nombres }} {{ $client->apellidos }}</td>
             <td><strong>CUI:</strong></td>
-            <td>{{ $client->dpi}}</td>
+            <td> {{ substr($client->dpi, 0, 4) }} {{ substr($client->dpi, 4, 5) }} {{ substr($client->dpi, 9, 4) }}</td>
             <td><strong>Tipo De Cliente:</strong></td>
             <td>{{ $client->nombreTipoCliente}}</td>
         </tr>
@@ -254,10 +255,10 @@
     <table class="content">
         <tr>
             <td style="text-align: justify;">
-                Yo <strong>{{ $client->nombres }} {{ $client->apellidos }}</strong> con CUI
+                Yo <strong>{{ $client->nombres }} {{ $client->apellidos }}</strong> con CUI :
                 <strong>
-                {{ substr($client->dpi, 0, 4) }} {{ substr($client->dpi, 4, 5) }} {{ substr($client->dpi, 9, 4) }}
-            </strong> originario de <strong>{{ $client->nombreMunicipio }}</strong> del
+                    {{ substr($client->dpi, 0, 4) }} {{ substr($client->dpi, 4, 5) }} {{ substr($client->dpi, 9, 4) }}
+                </strong> originario de <strong>{{ $client->nombreMunicipio }}</strong> del
                 departamento de <strong>{{ $client->nombreDepartamento }}</strong> con domicilio en
                 <strong>{{ $client->direccion }}</strong> con número de teléfono
                 <strong>{{ $client->telefono }}</strong> de estado civil
@@ -272,7 +273,7 @@
         <tr>
             <td class="signature"> F. ______________________ <br />
                 {{ $client->nombres }} {{ $client->apellidos }} <br />
-                CUI.  {{ substr($client->dpi, 0, 4) }} {{ substr($client->dpi, 4, 5) }} {{ substr($client->dpi, 9, 4) }}
+                CUI: {{ substr($client->dpi, 0, 4) }} {{ substr($client->dpi, 4, 5) }} {{ substr($client->dpi, 9, 4) }}
 
         </tr>
     </table>
