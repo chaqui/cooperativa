@@ -73,6 +73,36 @@
             border-bottom: 1px solid #ddd;
             padding-bottom: 5px;
         }
+
+        .receipt-number {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 15px 0;
+            border: 2px solid #007bff;
+        }
+
+        .receipt-number h3 {
+            margin: 0;
+            color: #007bff;
+            font-size: 18px;
+        }
+
+        .deposit-info {
+            background-color: #f0f8f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #28a745;
+        }
+
+        .deposit-info h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
     </style>
 </head>
 
@@ -82,9 +112,12 @@
             <img src="{{ base64Image('images/logoNegro.png') }}" alt="Logo" class="logo">
             <p style="margin: 5px 0; font-size: 14px;">Recibo de Depósito</p>
         </div>
-        <div class="details">
-            <p><strong>Número de Recibo:</strong> {{ $deposito->id }}</p>
 
+        <div class="receipt-number">
+            <h3>Número de Recibo: {{ $deposito->id }}</h3>
+        </div>
+
+        <div class="details">
             @php
                 $cliente = null;
                 if ($deposito->inversion && $deposito->inversion->cliente) {
@@ -105,15 +138,18 @@
                 @endif
             </div>
             @endif
+
+            <div class="deposit-info">
+                <h4>Información del Depósito</h4>
+                <p><strong>Monto Depositado:</strong> Q{{ number_format($deposito->monto, 2) }}</p>
+                <p><strong>Tipo Documento:</strong> {{$deposito->tipo_documento}}</p>
+                <p><strong>Número de Documento:</strong> {{$deposito->numero_documento}}</p>
+                <p><strong>Motivo:</strong> {{$deposito->motivo}}</p>
+            </div>
         </div>
-        <div class="amount">
-            <p>Monto Depositado: Q{{ number_format($deposito->monto, 2) }}</p>
-            <p>Tipo Documento: {{$deposito->tipo_documento}}</p>
-            <p>Numero de Documento: {{$deposito->numero_documento}}</p>
-            <p>Motivo: {{$deposito->motivo}}</p>
-        </div>
+
         <div class="footer">
-            <p>Documento que confirma el deposito</p>
+            <p>Documento que confirma el depósito</p>
         </div>
     </div>
 </body>
