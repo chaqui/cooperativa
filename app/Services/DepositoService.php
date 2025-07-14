@@ -263,12 +263,22 @@ class DepositoService
 
         $deposito = $this->getDeposito($id);
         $prestamo = $deposito->pago ? $deposito->pago->prestamo : null;
-        $montoPendiente = $prestamo ? $prestamo->saldoPendiente() : 0;
-        $totalPagado = $prestamo ? $prestamo->totalPagado() : 0;
+        $this->log("Obteniendo datos del depósito: " . json_encode($deposito));
+
+        // Calculate loan information only if there's an associated loan
+        $montoPendiente = 0;
+        $totalPagado = 0;
+
+        if ($prestamo) {
+            $montoPendiente = $prestamo->saldoPendiente();
+            $totalPagado = $prestamo->totalPagado();
+        }
+
         $html = view('pdf.deposito', [
             'deposito' => $deposito,
             'montoPendiente' => $montoPendiente,
             'totalPagado' => $totalPagado,
+            'prestamo' => $prestamo,
         ])->render();
         return $this->pdfService->generatePdf($html);
     }

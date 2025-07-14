@@ -163,11 +163,6 @@
             </div>
 
             @if($deposito->pago && $deposito->pago->prestamo)
-                @php
-                    $prestamo = $deposito->pago->prestamo;
-                    $totalPagado = $prestamo->pagos->sum('monto');
-                    $montoPendiente = $prestamo->monto - $totalPagado;
-                @endphp
                 <div class="payment-info">
                     <h4>Estado del Préstamo</h4>
                     <p><strong>Monto Total del Préstamo:</strong> Q{{ number_format($prestamo->monto, 2) }}</p>
@@ -178,7 +173,14 @@
         </div>
 
         <div class="footer">
-            <p>Documento que confirma el depósito</p>
+            <p><strong>Documento que confirma el depósito realizado</strong></p>
+            <p style="font-size: 10px; margin-top: 15px;">
+                Este recibo constituye comprobante oficial del depósito efectuado.
+                Conserve este documento para sus registros contables.
+            </p>
+            <p style="font-size: 10px; color: #666;">
+                Fecha de emisión: {{ Carbon::now()->translatedFormat('d \d\e F \d\e Y \a \l\a\s H:i') }}
+            </p>
         </div>
     </div>
 </body>
