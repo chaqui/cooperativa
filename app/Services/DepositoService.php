@@ -262,7 +262,14 @@ class DepositoService
         $this->log("Iniciando generación de PDF para depósito #{$id}");
 
         $deposito = $this->getDeposito($id);
-        $html = view('pdf.deposito', ['deposito' => $deposito])->render();
+        $prestamo = $deposito->pago ? $deposito->pago->prestamo : null;
+        $montoPendiente = $prestamo ? $prestamo->saldoPendiente() : 0;
+        $totalPagado = $prestamo ? $prestamo->totalPagado() : 0;
+        $html = view('pdf.deposito', [
+            'deposito' => $deposito,
+            'montoPendiente' => $montoPendiente,
+            'totalPagado' => $totalPagado,
+        ])->render();
         return $this->pdfService->generatePdf($html);
     }
 

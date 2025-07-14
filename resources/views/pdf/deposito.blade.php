@@ -103,6 +103,21 @@
             border-bottom: 1px solid #ddd;
             padding-bottom: 5px;
         }
+
+        .payment-info {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+
+        .payment-info h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
     </style>
 </head>
 
@@ -146,6 +161,20 @@
                 <p><strong>Número de Documento:</strong> {{$deposito->numero_documento}}</p>
                 <p><strong>Motivo:</strong> {{$deposito->motivo}}</p>
             </div>
+
+            @if($deposito->pago && $deposito->pago->prestamo)
+                @php
+                    $prestamo = $deposito->pago->prestamo;
+                    $totalPagado = $prestamo->pagos->sum('monto');
+                    $montoPendiente = $prestamo->monto - $totalPagado;
+                @endphp
+                <div class="payment-info">
+                    <h4>Estado del Préstamo</h4>
+                    <p><strong>Monto Total del Préstamo:</strong> Q{{ number_format($prestamo->monto, 2) }}</p>
+                    <p><strong>Total Pagado:</strong> Q{{ number_format($totalPagado, 2) }}</p>
+                    <p><strong>Saldo Pendiente:</strong> Q{{ number_format($montoPendiente, 2) }}</p>
+                </div>
+            @endif
         </div>
 
         <div class="footer">
