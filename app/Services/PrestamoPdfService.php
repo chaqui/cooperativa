@@ -55,6 +55,7 @@ class PrestamoPdfService extends PrestamoService
             $html = view($plantilla, [
                 'prestamo' => $prestamo,
                 'pagos' => $pagos,
+                'orientation' => $orientation,
             ])->render();
 
             // Generar el PDF
