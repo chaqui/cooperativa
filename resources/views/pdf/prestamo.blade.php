@@ -17,9 +17,21 @@
     <meta charset="UTF-8">
     <title>Solicitud de Financiamiento</title>
     <style>
+         body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
+        }
+
+        h2{
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: bold;
         }
 
         th,
@@ -45,10 +57,36 @@
         h1 {
             text-align: center;
         }
+
+        .page-number {
+            position: fixed;
+            top: 10px;
+            right: 20px;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .page-number:before {
+            content: "Página " counter(page);
+        }
+
+        .signatures-section {
+            page-break-before: auto;
+            page-break-inside: avoid;
+            margin-top: 50px;
+        }
+
+        @media print {
+            .signatures-section {
+                page-break-before: auto;
+                page-break-inside: avoid;
+            }
+        }
     </style>
 </head>
 
 <body>
+    <div class="page-number"></div>
     <div class="header">
         <img src="{{ base64Image('images/logoNegro.png') }}" alt="Logo" class="logo">
     </div>
@@ -122,7 +160,7 @@
         </tr>
         <tr>
             <td colspan="2"><strong>NOMBRE DEL CONYUGE:</strong></td>
-            <td colspan="4">
+            <td colspan="4>
                 {{ $prestamo->cliente->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->cliente->conyuge ?? 'No ingresada') }}
             </td>
         </tr>
@@ -176,9 +214,6 @@
             </td>
         </tr>
     </table>
-    <br />
-    <br />
-    <br />
     <br />
     <h2>III. REFERENCIAS</h2>
     @if ($prestamo->cliente->tipoCliente != '390')
@@ -253,7 +288,7 @@
         </tr>
         <tr>
             <td><strong>TASA DE INTERES:</strong></td>
-            <td>{{ $prestamo->interes ?? 'No ingresada' }}%</td>
+            <td>{{ $prestamo->interes ?? 'No ingresada' }}% mensual</td>
             <td><strong>PLAZO:</strong></td>
             <td>{{ $prestamo->plazo ? $prestamo->plazo . ' ' . $prestamo->tipoPlazo->nombre : 'No ingresada' }}</td>
             <td><strong>FRECUENCIA PAGO:</strong></td>
@@ -270,13 +305,41 @@
             <td><strong>DESCRIPCION DE LA GARANTIA:</strong></td>
         </tr>
         <tr>
-            <td colspan="4">{{ $prestamo->propiedad->Descripcion ?? 'No ingresada' }}</td>
+            @php
+                $descripcion = $prestamo->propiedad->Descripcion ?? 'No ingresada';
+                $maxLength = 60; // caracteres por fila
+                $lineasDescripcion = [];
+                if ($descripcion !== 'No ingresada') {
+                    $lineasDescripcion = str_split($descripcion, $maxLength);
+                } else {
+                    $lineasDescripcion[] = $descripcion;
+                }
+            @endphp
+            @foreach($lineasDescripcion as $linea)
+                <tr>
+                    <td colspan="4">{{ $linea }}</td>
+                </tr>
+            @endforeach
         </tr>
         <tr>
             <td><strong>DIRECCION DE LA GARANTIA:</strong></td>
         </tr>
         <tr>
-            <td>{{ $prestamo->propiedad->Direccion ?? 'No ingresada' }}</td>
+            @php
+                $direccion = $prestamo->propiedad->Direccion ?? 'No ingresada';
+                $maxLength = 60; // caracteres por fila
+                $lineas = [];
+                if ($direccion !== 'No ingresada') {
+                    $lineas = str_split($direccion, $maxLength);
+                } else {
+                    $lineas[] = $direccion;
+                }
+            @endphp
+            @foreach($lineas as $linea)
+                <tr>
+                    <td>{{ $linea }}</td>
+                </tr>
+            @endforeach
         </tr>
     </table>
     @if($prestamo->fiador_dpi)
@@ -345,34 +408,50 @@
     @endif
     <br />
     <br />
-    <table>
-        <tr>
-            <td style="text-align: center;">________________________</td>
-            <td></td>
-            <td style="text-align: center;">________________________</td>
-            <td></td>
-        </tr>
-        <tr>
-            <td style="text-align: center;"><strong>FIRMA DEL DEUDOR</strong></td>
-            <td><strong></strong></td>
-            <td style="text-align: center;"><strong>
-                    @if($prestamo->fiador_dpi)
-                        FIRMA DEL CODEUDOR/FIADOR
-                    @else
-                        Firma del Asesor
-                    @endif </strong></td>
-            <td><strong></strong></td>
-        </tr>
-        @if($prestamo->fiador_dpi)
-            <tr></tr>
+
+        <table>
             <tr>
-                <td colspan="4" style="text-align: center;">_____________________</td>
+                <td style="text-align: center;">________________________</td>
+                <td></td>
+                <td style="text-align: center;">________________________</td>
+                <td></td>
             </tr>
             <tr>
-                <td colspan="4" style="text-align: center;"><strong>Firma del Asesor</strong></td>
+                <td style="text-align: center;"><strong>FIRMA DEL DEUDOR</strong></td>
+                <td><strong></strong></td>
+                <td style="text-align: center;"><strong>
+                        @if($prestamo->fiador_dpi)
+                            FIRMA DEL CODEUDOR/FIADOR
+                        @else
+                            Firma del Asesor
+                        @endif </strong></td>
+                <td><strong></strong></td>
             </tr>
-        @endif
-    </table>
+            @if($prestamo->fiador_dpi)
+                <tr></tr>
+                <tr>
+                    <td colspan="4" style="text-align: center; height: 45px;">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td colspan="4" style="text-align: center;">_____________________</td>
+                </tr>
+                <tr>
+                    <td colspan="4" style="text-align: center;"><strong>Firma del Asesor</strong></td>
+                </tr>
+            @endif
+        </table>
+
+    <script type="text/php">
+        if (isset($pdf)) {
+            $x = 520;
+            $y = 15;
+            $text = "Página {PAGE_NUM} de {PAGE_COUNT}";
+            $font = $fontMetrics->get_font("Arial, Helvetica, sans-serif", "normal");
+            $size = 9;
+            $color = array(0.5,0.5,0.5);
+            $pdf->page_text($x, $y, $text, $font, $size, $color);
+        }
+    </script>
 </body>
 
 </html>
