@@ -99,7 +99,7 @@ class DepositoService
 
     public function getDeposito($id)
     {
-        return Deposito::findOrFail($id);
+        return Deposito::with(['inversion.cliente', 'pago.prestamo.cliente'])->findOrFail($id);
     }
     public function getDepositos()
     {

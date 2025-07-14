@@ -124,7 +124,8 @@ class PrestamoController extends Controller
 
     public function generarEstadoCuenta(string $id)
     {
-        $pdf = $this->prestamoPdfService->generarEstadoCuentaPdf($id);
+        $orientation = request()->query('orientation', 'landscape');
+        $pdf = $this->prestamoPdfService->generarEstadoCuentaPdf($id, false, $orientation);
         return response($pdf, 200)->header('Content-Type', 'application/pdf');
     }
 

@@ -59,6 +59,20 @@
             text-align: center;
             margin: 20px 0;
         }
+
+        .client-info {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+
+        .client-info h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
     </style>
 </head>
 
@@ -70,6 +84,27 @@
         </div>
         <div class="details">
             <p><strong>Número de Recibo:</strong> {{ $deposito->id }}</p>
+
+            @php
+                $cliente = null;
+                if ($deposito->inversion && $deposito->inversion->cliente) {
+                    $cliente = $deposito->inversion->cliente;
+                } elseif ($deposito->pago && $deposito->pago->prestamo && $deposito->pago->prestamo->cliente) {
+                    $cliente = $deposito->pago->prestamo->cliente;
+                }
+            @endphp
+
+            @if($cliente)
+            <div class="client-info">
+                <h4>Información del Cliente</h4>
+                <p><strong>DPI:</strong> {{ $cliente->dpi }}</p>
+                <p><strong>Nombre:</strong> {{ $cliente->nombres }} {{ $cliente->apellidos }}</p>
+                <p><strong>Teléfono:</strong> {{ $cliente->telefono }}</p>
+                @if($cliente->nit)
+                <p><strong>NIT:</strong> {{ $cliente->nit }}</p>
+                @endif
+            </div>
+            @endif
         </div>
         <div class="amount">
             <p>Monto Depositado: Q{{ number_format($deposito->monto, 2) }}</p>

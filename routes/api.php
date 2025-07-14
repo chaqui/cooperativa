@@ -23,6 +23,7 @@ use App\Http\Controllers\RetiroController;
 use App\Http\Controllers\TipoCuentaInternaController;
 use App\Http\Controllers\DeclaracionController;
 use App\Http\Controllers\ImpuestoController;
+use App\Http\Controllers\OrientacionController;
 
 $rolesEdicion = implode('|', [Roles::$ADMIN, Roles::$ASESOR]);
 $rolesSoloLectura = implode('|', [Roles::$ADMIN, Roles::$ASESOR, Roles::$CAJERO]);
@@ -194,4 +195,8 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('declaraciones/{id}', [DeclaracionController::class, 'show']);
     Route::get('declaraciones/{id}/transacciones', [DeclaracionController::class, 'getTransacciones']);
     Route::put('declaraciones/{id}', [DeclaracionController::class, 'declarar']);
+});
+
+Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
+    Route::get('orientaciones', [OrientacionController::class, 'index']);
 });
