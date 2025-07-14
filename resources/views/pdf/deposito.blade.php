@@ -19,7 +19,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 12px;
+            font-size: 9px;
             margin: 0;
             padding: 0;
         }
@@ -86,7 +86,7 @@
         .receipt-number h3 {
             margin: 0;
             color: #007bff;
-            font-size: 18px;
+            font-size: 11px;
         }
 
         .deposit-info {
@@ -118,6 +118,24 @@
             border-bottom: 1px solid #ddd;
             padding-bottom: 5px;
         }
+
+        .payment-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .payment-table th,
+        .payment-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .payment-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -125,7 +143,7 @@
     <div class="receipt-container">
         <div class="header">
             <img src="{{ base64Image('images/logoNegro.png') }}" alt="Logo" class="logo">
-            <p style="margin: 5px 0; font-size: 14px;">Recibo de Depósito</p>
+            <p style="margin: 5px 0; font-size: 12px;">Recibo de Depósito</p>
         </div>
 
         <div class="receipt-number">
@@ -143,31 +161,41 @@
             @endphp
 
             @if($cliente)
-            <div class="client-info">
-                <h4>Información del Cliente</h4>
-                <p><strong>DPI:</strong> {{ $cliente->dpi }}</p>
-                <p><strong>Nombre:</strong> {{ $cliente->nombres }} {{ $cliente->apellidos }}</p>
-                <p><strong>Teléfono:</strong> {{ $cliente->telefono }}</p>
-                @if($cliente->nit)
-                <p><strong>NIT:</strong> {{ $cliente->nit }}</p>
-                @endif
-            </div>
+                <div class="client-info">
+                    <h4>Información del Cliente</h4>
+                    <p><strong>DPI:</strong> {{ $cliente->dpi }} | <strong>Nombre:</strong> {{ $cliente->nombres }}
+                        {{ $cliente->apellidos }}</p>
+                </div>
             @endif
 
             <div class="deposit-info">
                 <h4>Información del Depósito</h4>
-                <p><strong>Monto Depositado:</strong> Q{{ number_format($deposito->monto, 2) }}</p>
-                <p><strong>Tipo Documento:</strong> {{$deposito->tipo_documento}}</p>
-                <p><strong>Número de Documento:</strong> {{$deposito->numero_documento}}</p>
+                <p><strong>Monto Depositado:</strong> Q{{ number_format($deposito->monto, 2) }} | <strong>Tipo:</strong>
+                    {{$deposito->tipo_documento}} | <strong>No. Documento:</strong> {{$deposito->numero_documento}}</p>
                 <p><strong>Motivo:</strong> {{$deposito->motivo}}</p>
             </div>
 
             @if($deposito->pago && $deposito->pago->prestamo)
                 <div class="payment-info">
                     <h4>Estado del Préstamo</h4>
-                    <p><strong>Monto Total del Préstamo:</strong> Q{{ number_format($prestamo->monto, 2) }}</p>
-                    <p><strong>Total Pagado:</strong> Q{{ number_format($totalPagado, 2) }}</p>
-                    <p><strong>Saldo Pendiente:</strong> Q{{ number_format($montoPendiente, 2) }}</p>
+                    <table class="payment-table">
+                        <tr>
+                            <th>Concepto</th>
+                            <th>Monto</th>
+                        </tr>
+                        <tr>
+                            <td>Monto Total del Préstamo</td>
+                            <td>Q{{ number_format($prestamo->monto, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td>Total Pagado</td>
+                            <td>Q{{ number_format($totalPagado, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Saldo Pendiente</strong></td>
+                            <td><strong>Q{{ number_format($montoPendiente, 2) }}</strong></td>
+                        </tr>
+                    </table>
                 </div>
             @endif
         </div>
