@@ -16,7 +16,7 @@
         </tr>
         <tr>
             <th>Saldo Pendiente</th>
-            <td>Q. {{ number_format($prestamo->saldoPendiente, 2) }}</td>
+            <td>Q. {{ number_format($prestamo->saldoPendienteConInteresAlDia(), 2) }}</td>
         </tr>
     </table>
 </div>

@@ -129,6 +129,20 @@ class Prestamo_Hipotecario extends Model
         }
         return $monto;
     }
+    public function saldoPendienteConInteresAlDia(){
+        $pagos = $this->getCuotasPendientes();
+        $monto = 0;
+        foreach ($pagos as $pago) {
+            $monto += $pago->capitalFaltante();
+            if($pago->fecha < now()){
+
+                $monto += $pago->interesFaltante();
+            }
+        }
+
+
+        return $monto;
+    }
 
     public function capitalPagado()
     {

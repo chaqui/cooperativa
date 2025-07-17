@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\Loggable;
 use Illuminate\Database\Eloquent\Model;
 
 class Pago extends Model
 {
+
+    use Loggable;
 
     protected $table = 'pagos';
     protected $fillable = ['fecha', 'fecha_pago', 'realizado', 'id_prestamo', 'interes', 'capital', 'saldo', 'monto_pagado', 'penalizacion', 'capital_pagado', 'id_pago_anterior', 'no_documento', 'tipo_documento', 'fecha_documento', 'recargo', 'interes_pagado', 'nuevo_saldo', 'numero_pago_prestamo'];
@@ -26,6 +29,26 @@ class Pago extends Model
     {
         return $this->capital - $this->capital_pagado;
     }
+
+    public function interesFaltante()
+    {
+        $fechaAnterior = $this->pagoAnterior()?->fecha ?? $this->prestamo?->fecha_inicio;
+        $fechaAnteriorCarbon = \Carbon\Carbon::parse($fechaAnterior);
+
+        $diasTranscuridos = $fechaAnteriorCarbon->diffInDays(now());
+
+        $diasMesAnterior = $fechaAnteriorCarbon->daysInMonth;
+        if($diasTranscuridos > $diasMesAnterior) {
+           $interesCalculado = $this->interes;
+        }
+        else {
+            $interesCalculado =$this->interes * ($diasTranscuridos / $diasMesAnterior);
+        }
+
+        return max(0, $interesCalculado - $this->interes_pagado);
+    }
+
+
 
     public function saldoFaltante()
     {

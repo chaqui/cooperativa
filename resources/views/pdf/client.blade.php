@@ -70,7 +70,7 @@
             <img src="{{ base64Image($client->path) }}" alt="Fotografía del Cliente" class="client-photo">
         @endif
         <h2>
-            {{ $client->nombres }} {{ $client->apellidos }} ({{ $client->codigo }})
+           ({{ $client->codigo }}) {{ $client->nombres }} {{ $client->apellidos }}
         </h2>
     </div>
     <table class="content">
