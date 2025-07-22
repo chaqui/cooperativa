@@ -61,6 +61,10 @@ class StoreClientRequest extends FormRequest
             'referencias.*.nombre' => 'required|string|max:255',
             'referencias.*.telefono' => 'required|string|max:20',
             'referencias.*.tipo' => 'required|string|max:20',
+            'beneficiarios' => ['required', 'array'],
+            'beneficiarios.*.nombre' => ['required', 'string'],
+            'beneficiarios.*.parentezco' => ['required', 'string'],
+            'beneficiarios.*.porcentaje' => ['required', 'numeric', 'min:0', 'max:100'],
         ];
     }
 

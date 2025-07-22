@@ -29,10 +29,6 @@ class StoreInversionRequest extends FormRequest
             'dpi_cliente' => ['required', 'string'],
             'cuenta_recaudadora' => ['required', 'string'],
             'tipo_plazo' => ['required', 'numeric'],
-            'beneficiarios' => ['required', 'array'],
-            'beneficiarios.*.nombre' => ['required', 'string'],
-            'beneficiarios.*.parentezco' => ['required', 'string'],
-            'beneficiarios.*.porcentaje' => ['required', 'numeric', 'min:0', 'max:100'],
         ];
     }
 }

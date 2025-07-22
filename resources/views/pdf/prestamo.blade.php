@@ -92,318 +92,420 @@
     </div>
     <h1>SOLICITUD DE FINANCIAMIENTO</h1>
     <table>
-        <tr>
-            <td><strong>LUGAR Y FECHA:</strong></td>
-            <td>San Marcos, San Marcos,
-                {{ Carbon::parse($prestamo->created_at)->translatedFormat('d \d\e F \d\e Y') }}
-            </td>
-        </tr>
-        <tr>
-            <td><strong>ASESOR:</strong></td>
-            <td>{{ $prestamo->asesor->name ?? 'No ingresada' }}</td>
-        </tr>
+        @if($prestamo->created_at)
+            <tr>
+                <td><strong>LUGAR Y FECHA:</strong></td>
+                <td>San Marcos, San Marcos,
+                    {{ Carbon::parse($prestamo->created_at)->translatedFormat('d \d\e F \d\e Y') }}
+                </td>
+            </tr>
+        @endif
+        @if($prestamo->asesor && $prestamo->asesor->name)
+            <tr>
+                <td><strong>ASESOR:</strong></td>
+                <td>{{ $prestamo->asesor->name }}</td>
+            </tr>
+        @endif
     </table>
     <h2>I. DATOS GENERALES</h2>
     <table>
-        <tr>
-            <td colspan="2"><strong>NOMBRE COMPLETO:</strong></td>
-            <td colspan="4">{{ $prestamo->cliente->nombres ?? 'No ingresada' }}
-                {{ $prestamo->cliente->apellidos ?? 'No ingresada' }}
-            </td>
-        </tr>
-        <tr>
-            <td><strong>CUI:</strong></td>
-            <td colspan="2">{{ $prestamo->cliente->dpi ?? 'No ingresada' }}</td>
-            <td style="text-align: right;"><strong>No. CLIENTE:</strong></td>
-            <td colspan="2">{{ $prestamo->cliente->codigo ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td><strong>DIRECCION:</strong></td>
-            <td colspan="4">{{ $prestamo->cliente->direccion ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td><strong>TELEFONO:</strong></td>
-            <td colspan="2">{{ $prestamo->cliente->telefono ?? 'No ingresada' }}</td>
-            <td style="text-align: right;"><strong>E-MAIL:</strong></td>
-            <td colspan="3">{{ $prestamo->cliente->correo ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td><strong>SEXO:</strong></td>
-            <td>{{ $prestamo->cliente->genero ?? 'No ingresada' }}</td>
-            <td colspan="2" style="text-align: right;"><strong>ESTADO CIVIL:</strong></td>
-            <td>{{ $prestamo->cliente->estadoCivil ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td><strong>EDAD:</strong></td>
-            <td>{{ $prestamo->cliente->fecha_nacimiento ? Carbon::parse($prestamo->cliente->fecha_nacimiento)->age . ' años' : 'No ingresada' }}
-            </td>
-            <td colspan="2" style="text-align: right;"><strong>FECHA DE NACIMIENTO:</strong></td>
-            <td colspan="2">
-                {{ $prestamo->cliente->fecha_nacimiento ? Carbon::parse($prestamo->cliente->fecha_nacimiento)->translatedFormat('d \d\e F \d\e Y') : 'No ingresada' }}
-            </td>
-        </tr>
-        <tr>
-            <td><strong>NIT:</strong></td>
-            <td>{{ $prestamo->cliente->nit ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td colspan="2"><strong>GRADO DE ESCOLARIDAD:</strong></td>
-            <td>{{ $prestamo->cliente->nivel_academico ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td colspan="2"><strong>PROFESION U OFICIO:</strong></td>
-            <td>{{$prestamo->cliente->profesion}}</td>
-        </tr>
-        <tr>
-            <td colspan="2"><strong>OCUPACION:</strong></td>
-            <td>{{$prestamo->cliente->nombreTipoCliente}}</td>
-        </tr>
-        <tr>
-            <td colspan="2"><strong>NOMBRE DEL CONYUGE:</strong></td>
-            <td colspan="4>
-                {{ $prestamo->cliente->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->cliente->conyuge ?? 'No ingresada') }}
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2"><strong>CARGAS FAMILIARES:</strong></td>
-            <td>{{ $prestamo->cliente->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->cliente->cargas_familiares ?? 'No ingresada') }}
-            </td>
-        </tr>
-        <tr>
-            <td colspan="4"><strong>No. INTEGRANTES DE SU NUCLEO FAMILIAR:</strong></td>
-            <td>{{ $prestamo->cliente->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->cliente->integrantes_nucleo_familiar ?? 'No ingresada') }}
-            </td>
-        </tr>
-        <tr>
-            <td colspan="4"><strong>LA CASA DONDE VIVE ES:</strong></td>
-            <td>{{ $prestamo->cliente->casa_donde_vive ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td colspan="4"><strong>TIEMPO DE ESTABILIDAD DOMICILIAR:</strong></td>
-            <td>{{ $prestamo->cliente->estabilidad_domiciliaria ? $prestamo->cliente->estabilidad_domiciliaria . ' año(s)' : 'No ingresada' }}
-            </td>
-        </tr>
-    </table>
-    <h2>II. DATOS LABORALES</h2>
-    <table>
-        <tr>
-            <td><strong>TIPO DE LABOR:</strong></td>
-            <td>{{ $prestamo->cliente->nombreTipoCliente ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td colspan="4"><strong>NOMBRE DE LA EMPRESA DONDE TRABAJA, NEGOCIO O ACTIVIDAD:</strong></td>
-        </tr>
-        <tr>
-            <td>{{ $prestamo->cliente->nombreEmpresa ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td><strong>DIRECCION:</strong></td>
-            <td>{{ $prestamo->cliente->direccionEmpresa ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td><strong>TELEFONO:</strong></td>
-            <td>{{ $prestamo->cliente->telefonoEmpresa ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td><strong>CARGO:</strong></td>
-            <td>{{ $prestamo->cliente->puesto ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td><strong>FECHA DE INICIO:</strong></td>
-            <td>{{ $prestamo->cliente->fechaInicio ? Carbon::parse($prestamo->cliente->fechaInicio)->translatedFormat('d \d\e F \d\e Y') : 'No ingresada' }}
-            </td>
-        </tr>
-    </table>
-    <br />
-    <h2>III. REFERENCIAS</h2>
-    @if ($prestamo->cliente->tipoCliente != '390')
-        <h3>Referencias Laborales</h3>
-        <table class="content">
+        @if($prestamo->cliente && ($prestamo->cliente->nombres || $prestamo->cliente->apellidos))
             <tr>
-                <th>Nombre</th>
-                <th>Telefono</th>
+                <td colspan="2"><strong>NOMBRE COMPLETO:</strong></td>
+                <td colspan="4">{{ $prestamo->cliente->nombres ?? '' }}
+                    {{ $prestamo->cliente->apellidos ?? '' }}
+                </td>
             </tr>
-            @foreach ($prestamo->cliente->referenciasLaborales as $reference)
-                <tr>
-                    <td>{{ $reference->nombre ?? 'No ingresada' }}</td>
-                    <td>{{ $reference->telefono ?? 'No ingresada' }}</td>
-                </tr>
-            @endforeach
-        </table>
-    @else
-        <h3>Referencias Comerciales</h3>
-        <table class="content">
+        @endif
+        <tr>
+            @if($prestamo->cliente && $prestamo->cliente->dpi)
+                <td><strong>CUI:</strong></td>
+                <td colspan="2">{{ $prestamo->cliente->dpi }}</td>
+            @endif
+            @if($prestamo->cliente && $prestamo->cliente->codigo)
+                <td style="text-align: right;"><strong>No. CLIENTE:</strong></td>
+                <td colspan="2">{{ $prestamo->cliente->codigo }}</td>
+            @endif
+        </tr>
+        @if($prestamo->cliente && $prestamo->cliente->direccion)
             <tr>
-                <th>Nombre</th>
-                <th>Telefono</th>
+                <td><strong>DIRECCION:</strong></td>
+                <td colspan="4">{{ $prestamo->cliente->direccion }}</td>
             </tr>
-            @foreach ($prestamo->cliente->referenciasComerciales as $reference)
+        @endif
+        <tr>
+            @if($prestamo->cliente && $prestamo->cliente->telefono)
+                <td><strong>TELEFONO:</strong></td>
+                <td colspan="2">{{ $prestamo->cliente->telefono }}</td>
+            @endif
+            @if($prestamo->cliente && $prestamo->cliente->correo)
+                <td style="text-align: right;"><strong>E-MAIL:</strong></td>
+                <td colspan="3">{{ $prestamo->cliente->correo }}</td>
+            @endif
+        </tr>
+        <tr>
+            @if($prestamo->cliente && $prestamo->cliente->genero)
+                <td><strong>SEXO:</strong></td>
+                <td>{{ $prestamo->cliente->genero }}</td>
+            @endif
+            @if($prestamo->cliente && $prestamo->cliente->estadoCivil)
+                <td colspan="2" style="text-align: right;"><strong>ESTADO CIVIL:</strong></td>
+                <td>{{ $prestamo->cliente->estadoCivil }}</td>
+            @endif
+        </tr>
+        <tr>
+            @if($prestamo->cliente && $prestamo->cliente->fecha_nacimiento)
+                <td><strong>EDAD:</strong></td>
+                <td>{{ Carbon::parse($prestamo->cliente->fecha_nacimiento)->age }} años</td>
+                <td colspan="2" style="text-align: right;"><strong>FECHA DE NACIMIENTO:</strong></td>
+                <td colspan="2">{{ Carbon::parse($prestamo->cliente->fecha_nacimiento)->translatedFormat('d \d\e F \d\e Y') }}</td>
+            @endif
+        </tr>
+        @if($prestamo->cliente && $prestamo->cliente->nit)
+            <tr>
+                <td><strong>NIT:</strong></td>
+                <td>{{ $prestamo->cliente->nit }}</td>
+            </tr>
+        @endif
+        @if($prestamo->cliente && $prestamo->cliente->nivel_academico)
+            <tr>
+                <td colspan="2"><strong>GRADO DE ESCOLARIDAD:</strong></td>
+                <td>{{ $prestamo->cliente->nivel_academico }}</td>
+            </tr>
+        @endif
+        @if($prestamo->cliente && $prestamo->cliente->profesion)
+            <tr>
+                <td colspan="2"><strong>PROFESION U OFICIO:</strong></td>
+                <td>{{ $prestamo->cliente->profesion }}</td>
+            </tr>
+        @endif
+        @if($prestamo->cliente && $prestamo->cliente->nombreTipoCliente)
+            <tr>
+                <td colspan="2"><strong>OCUPACION:</strong></td>
+                <td>{{ $prestamo->cliente->nombreTipoCliente }}</td>
+            </tr>
+        @endif
+        @if($prestamo->cliente && ($prestamo->cliente->conyuge || $prestamo->cliente->estadoCivil != 'Soltero'))
+            <tr>
+                <td colspan="2"><strong>NOMBRE DEL CONYUGE:</strong></td>
+                <td colspan="4">
+                    {{ $prestamo->cliente->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->cliente->conyuge ?? 'No ingresada') }}
+                </td>
+            </tr>
+        @endif
+        @if($prestamo->cliente && ($prestamo->cliente->cargas_familiares || $prestamo->cliente->estadoCivil != 'Soltero'))
+            <tr>
+                <td colspan="2"><strong>CARGAS FAMILIARES:</strong></td>
+                <td>{{ $prestamo->cliente->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->cliente->cargas_familiares ?? 'No ingresada') }}
+                </td>
+            </tr>
+        @endif
+        @if($prestamo->cliente && ($prestamo->cliente->integrantes_nucleo_familiar || $prestamo->cliente->estadoCivil != 'Soltero'))
+            <tr>
+                <td colspan="4"><strong>No. INTEGRANTES DE SU NUCLEO FAMILIAR:</strong></td>
+                <td>{{ $prestamo->cliente->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->cliente->integrantes_nucleo_familiar ?? 'No ingresada') }}
+                </td>
+            </tr>
+        @endif
+        @if($prestamo->cliente && $prestamo->cliente->casa_donde_vive)
+            <tr>
+                <td colspan="4"><strong>LA CASA DONDE VIVE ES:</strong></td>
+                <td>{{ $prestamo->cliente->casa_donde_vive }}</td>
+            </tr>
+        @endif
+        @if($prestamo->cliente && $prestamo->cliente->estabilidad_domiciliaria)
+            <tr>
+                <td colspan="4"><strong>TIEMPO DE ESTABILIDAD DOMICILIAR:</strong></td>
+                <td>{{ $prestamo->cliente->estabilidad_domiciliaria }} año(s)</td>
+            </tr>
+        @endif
+    </table>
+    @if($prestamo->cliente && ($prestamo->cliente->nombreTipoCliente || $prestamo->cliente->nombreEmpresa || $prestamo->cliente->direccionEmpresa || $prestamo->cliente->telefonoEmpresa || $prestamo->cliente->puesto || $prestamo->cliente->fechaInicio))
+        <h2>II. DATOS LABORALES</h2>
+        <table>
+            @if($prestamo->cliente->nombreTipoCliente)
                 <tr>
-                    <td>{{ $reference['nombre'] ?? 'No ingresada' }}</td>
-                    <td>{{ $reference['telefono'] ?? 'No ingresada' }}</td>
-
+                    <td><strong>TIPO DE LABOR:</strong></td>
+                    <td>{{ $prestamo->cliente->nombreTipoCliente }}</td>
                 </tr>
-            @endforeach
+            @endif
+            @if($prestamo->cliente->nombreEmpresa)
+                <tr>
+                    <td colspan="4"><strong>NOMBRE DE LA EMPRESA DONDE TRABAJA, NEGOCIO O ACTIVIDAD:</strong></td>
+                </tr>
+                <tr>
+                    <td>{{ $prestamo->cliente->nombreEmpresa }}</td>
+                </tr>
+            @endif
+            @if($prestamo->cliente->direccionEmpresa)
+                <tr>
+                    <td><strong>DIRECCION:</strong></td>
+                    <td>{{ $prestamo->cliente->direccionEmpresa }}</td>
+                </tr>
+            @endif
+            @if($prestamo->cliente->telefonoEmpresa)
+                <tr>
+                    <td><strong>TELEFONO:</strong></td>
+                    <td>{{ $prestamo->cliente->telefonoEmpresa }}</td>
+                </tr>
+            @endif
+            @if($prestamo->cliente->puesto)
+                <tr>
+                    <td><strong>CARGO:</strong></td>
+                    <td>{{ $prestamo->cliente->puesto }}</td>
+                </tr>
+            @endif
+            @if($prestamo->cliente->fechaInicio)
+                <tr>
+                    <td><strong>FECHA DE INICIO:</strong></td>
+                    <td>{{ Carbon::parse($prestamo->cliente->fechaInicio)->translatedFormat('d \d\e F \d\e Y') }}</td>
+                </tr>
+            @endif
         </table>
+        <br />
     @endif
-    <h3>Referencias Personales</h3>
-    <table class="content">
-        <tr>
-            <th>Nombre</th>
-            <th>Telefono</th>
-        </tr>
-        @foreach ($prestamo->cliente->referenciasPersonales as $reference)
-            <tr>
-                <td>{{ $reference['nombre'] ?? 'No ingresada' }}</td>
-                <td>{{ $reference['telefono'] ?? 'No ingresada' }}</td>
-            </tr>
-        @endforeach
-    </table>
+    @if($prestamo->cliente && ($prestamo->cliente->referenciasLaborales->count() > 0 || $prestamo->cliente->referenciasComerciales->count() > 0 || $prestamo->cliente->referenciasPersonales->count() > 0 || $prestamo->cliente->referenciasFamiliares->count() > 0))
+        <h2>III. REFERENCIAS</h2>
+        @if ($prestamo->cliente->tipoCliente != '390' && $prestamo->cliente->referenciasLaborales->count() > 0)
+            <h3>Referencias Laborales</h3>
+            <table class="content">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Telefono</th>
+                </tr>
+                @foreach ($prestamo->cliente->referenciasLaborales as $reference)
+                    @if($reference->nombre || $reference->telefono)
+                        <tr>
+                            <td>{{ $reference->nombre ?? '' }}</td>
+                            <td>{{ $reference->telefono ?? '' }}</td>
+                        </tr>
+                    @endif
+                @endforeach
+            </table>
+        @elseif($prestamo->cliente->tipoCliente == '390' && $prestamo->cliente->referenciasComerciales->count() > 0)
+            <h3>Referencias Comerciales</h3>
+            <table class="content">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Telefono</th>
+                </tr>
+                @foreach ($prestamo->cliente->referenciasComerciales as $reference)
+                    @if((is_array($reference) && ($reference['nombre'] ?? $reference['telefono'])) || (is_object($reference) && ($reference->nombre || $reference->telefono)))
+                        <tr>
+                            <td>{{ is_array($reference) ? ($reference['nombre'] ?? '') : ($reference->nombre ?? '') }}</td>
+                            <td>{{ is_array($reference) ? ($reference['telefono'] ?? '') : ($reference->telefono ?? '') }}</td>
+                        </tr>
+                    @endif
+                @endforeach
+            </table>
+        @endif
 
-    <h3>Referencias Familiares</h3>
-    <table class="content">
-        <tr>
-            <th>Nombre</th>
-            <th>Telefono</th>
-        </tr>
-        @foreach ($prestamo->cliente->referenciasFamiliares as $reference)
-            <tr>
-                <td>{{ $reference['nombre'] ?? 'No ingresada' }}</td>
-                <td>{{ $reference['telefono'] ?? 'No ingresada' }}</td>
-            </tr>
-        @endforeach
-    </table>
+        @if($prestamo->cliente->referenciasPersonales->count() > 0)
+            <h3>Referencias Personales</h3>
+            <table class="content">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Telefono</th>
+                </tr>
+                @foreach ($prestamo->cliente->referenciasPersonales as $reference)
+                    @if((is_array($reference) && ($reference['nombre'] ?? $reference['telefono'])) || (is_object($reference) && ($reference->nombre || $reference->telefono)))
+                        <tr>
+                            <td>{{ is_array($reference) ? ($reference['nombre'] ?? '') : ($reference->nombre ?? '') }}</td>
+                            <td>{{ is_array($reference) ? ($reference['telefono'] ?? '') : ($reference->telefono ?? '') }}</td>
+                        </tr>
+                    @endif
+                @endforeach
+            </table>
+        @endif
+
+        @if($prestamo->cliente->referenciasFamiliares->count() > 0)
+            <h3>Referencias Familiares</h3>
+            <table class="content">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Telefono</th>
+                </tr>
+                @foreach ($prestamo->cliente->referenciasFamiliares as $reference)
+                    @if((is_array($reference) && ($reference['nombre'] ?? $reference['telefono'])) || (is_object($reference) && ($reference->nombre || $reference->telefono)))
+                        <tr>
+                            <td>{{ is_array($reference) ? ($reference['nombre'] ?? '') : ($reference->nombre ?? '') }}</td>
+                            <td>{{ is_array($reference) ? ($reference['telefono'] ?? '') : ($reference->telefono ?? '') }}</td>
+                        </tr>
+                    @endif
+                @endforeach
+            </table>
+        @endif
+    @endif
 
     <h2>IV. DEL CREDITO</h2>
     <table>
         <tr>
-            <td><strong>MONTO SOLICITADO:</strong></td>
-            <td colspan="2">Q. {{ number_format($prestamo->monto, 2) }}</td>
-            <td><strong>DESTINO:</strong></td>
-            <td>{{ $prestamo->nombreDestino ?? 'No ingresada' }}</td>
+            @if($prestamo->monto)
+                <td><strong>MONTO SOLICITADO:</strong></td>
+                <td colspan="2">Q. {{ number_format($prestamo->monto, 2) }}</td>
+            @endif
+            @if($prestamo->nombreDestino)
+                <td><strong>DESTINO:</strong></td>
+                <td>{{ $prestamo->nombreDestino }}</td>
+            @endif
         </tr>
+        @if($prestamo->uso_prestamo)
+            <tr>
+                <td><strong>USO DEL FINANCIAMIENTO:</strong></td>
+                <td>{{ $prestamo->uso_prestamo }}</td>
+            </tr>
+        @endif
         <tr>
-            <td><strong>USO DEL FINANCIAMIENTO:</strong></td>
-            <td>{{ $prestamo->uso_prestamo ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td><strong>TASA DE INTERES:</strong></td>
-            <td>{{ $prestamo->interes ?? 'No ingresada' }}% mensual</td>
-            <td><strong>PLAZO:</strong></td>
-            <td>{{ $prestamo->plazo ? $prestamo->plazo . ' ' . $prestamo->tipoPlazo->nombre : 'No ingresada' }}</td>
-            <td><strong>FRECUENCIA PAGO:</strong></td>
-            <td>{{ $prestamo->nombreFrecuenciaPago ?? 'No ingresada' }}</td>
+            @if($prestamo->interes)
+                <td><strong>TASA DE INTERES:</strong></td>
+                <td>{{ $prestamo->interes }}% mensual</td>
+            @endif
+            @if($prestamo->plazo && $prestamo->tipoPlazo)
+                <td><strong>PLAZO:</strong></td>
+                <td>{{ $prestamo->plazo }} {{ $prestamo->tipoPlazo->nombre }}</td>
+            @endif
+            @if($prestamo->nombreFrecuenciaPago)
+                <td><strong>FRECUENCIA PAGO:</strong></td>
+                <td>{{ $prestamo->nombreFrecuenciaPago }}</td>
+            @endif
         </tr>
     </table>
-    <h2>V. GARANTIA</h2>
-    <table>
-        <tr>
-            <td><strong>TIPO DE GARANTIA:</strong></td>
-            <td>{{ $prestamo->propiedad->nombreTipo ?? 'No ingresada' }}</td>
-        </tr>
-        <tr>
-            <td><strong>DESCRIPCION DE LA GARANTIA:</strong></td>
-        </tr>
-        <tr>
-            @php
-                $descripcion = $prestamo->propiedad->Descripcion ?? 'No ingresada';
-                $maxLength = 60; // caracteres por fila
-                $lineasDescripcion = [];
-                if ($descripcion !== 'No ingresada') {
-                    $lineasDescripcion = str_split($descripcion, $maxLength);
-                } else {
-                    $lineasDescripcion[] = $descripcion;
-                }
-            @endphp
-            @foreach($lineasDescripcion as $linea)
+    @if($prestamo->propiedad && ($prestamo->propiedad->nombreTipo || $prestamo->propiedad->Descripcion || $prestamo->propiedad->Direccion))
+        <h2>V. GARANTIA</h2>
+        <table>
+            @if($prestamo->propiedad->nombreTipo)
                 <tr>
-                    <td colspan="4">{{ $linea }}</td>
+                    <td><strong>TIPO DE GARANTIA:</strong></td>
+                    <td>{{ $prestamo->propiedad->nombreTipo }}</td>
                 </tr>
-            @endforeach
-        </tr>
-        <tr>
-            <td><strong>DIRECCION DE LA GARANTIA:</strong></td>
-        </tr>
-        <tr>
-            @php
-                $direccion = $prestamo->propiedad->Direccion ?? 'No ingresada';
-                $maxLength = 60; // caracteres por fila
-                $lineas = [];
-                if ($direccion !== 'No ingresada') {
-                    $lineas = str_split($direccion, $maxLength);
-                } else {
-                    $lineas[] = $direccion;
-                }
-            @endphp
-            @foreach($lineas as $linea)
+            @endif
+            @if($prestamo->propiedad->Descripcion)
                 <tr>
-                    <td>{{ $linea }}</td>
+                    <td><strong>DESCRIPCION DE LA GARANTIA:</strong></td>
                 </tr>
-            @endforeach
-        </tr>
-    </table>
-    @if($prestamo->fiador_dpi)
+                <tr>
+                    @php
+                        $descripcion = $prestamo->propiedad->Descripcion;
+                        $maxLength = 60; // caracteres por fila
+                        $lineasDescripcion = str_split($descripcion, $maxLength);
+                    @endphp
+                    @foreach($lineasDescripcion as $linea)
+                        <tr>
+                            <td colspan="4">{{ $linea }}</td>
+                        </tr>
+                    @endforeach
+                </tr>
+            @endif
+            @if($prestamo->propiedad->Direccion)
+                <tr>
+                    <td><strong>DIRECCION DE LA GARANTIA:</strong></td>
+                </tr>
+                <tr>
+                    @php
+                        $direccion = $prestamo->propiedad->Direccion;
+                        $maxLength = 60; // caracteres por fila
+                        $lineas = str_split($direccion, $maxLength);
+                    @endphp
+                    @foreach($lineas as $linea)
+                        <tr>
+                            <td>{{ $linea }}</td>
+                        </tr>
+                    @endforeach
+                </tr>
+            @endif
+        </table>
+    @endif
+    @if($prestamo->fiador_dpi && $prestamo->fiador)
         <h2>VI. DATOS DEL CODEUDOR/FIADOR</h2>
         <table>
+            @if($prestamo->fiador->nombres || $prestamo->fiador->apellidos)
+                <tr>
+                    <td><strong>NOMBRE:</strong></td>
+                    <td colspan="3">{{ $prestamo->fiador->nombres ?? '' }}
+                        {{ $prestamo->fiador->apellidos ?? '' }}
+                    </td>
+                </tr>
+            @endif
             <tr>
-                <td><strong>NOMBRE:</strong></td>
-                <td colspan="3">{{ $prestamo->fiador->nombres ?? 'No ingresada' }}
-                    {{ $prestamo->fiador->apellidos ?? 'No ingresada' }}
-                </td>
+                @if($prestamo->fiador->dpi)
+                    <td><strong>CUI:</strong></td>
+                    <td colspan="2">{{ $prestamo->fiador->dpi }}</td>
+                @endif
+                @if($prestamo->fiador->codigo)
+                    <td><strong>No. DE CUENTA:</strong></td>
+                    <td colspan="3">{{ $prestamo->fiador->codigo }}</td>
+                @endif
+            </tr>
+            @if($prestamo->fiador->direccion)
+                <tr>
+                    <td><strong>DIRECCION:</strong></td>
+                    <td colspan="3">{{ $prestamo->fiador->direccion }}</td>
+                </tr>
+            @endif
+            <tr>
+                @if($prestamo->parentesco)
+                    <td><strong>PARENTESCO:</strong></td>
+                    <td colspan="2">{{ $prestamo->parentesco }}</td>
+                @endif
+                @if($prestamo->fiador->fecha_nacimiento)
+                    <td><strong>EDAD:</strong></td>
+                    <td>{{ Carbon::parse($prestamo->fiador->fecha_nacimiento)->age }} años</td>
+                @endif
             </tr>
             <tr>
-                <td><strong>CUI:</strong></td>
-                <td colspan="2">{{ $prestamo->fiador->dpi ?? 'No ingresada' }}</td>
-                <td><strong>No. DE CUENTA:</strong></td>
-                <td colspan="3">{{ $prestamo->fiador->codigo ?? 'No ingresada' }}</td>
+                @if($prestamo->fiador->estadoCivil)
+                    <td colspan="2"><strong>ESTADO CIVIL:</strong></td>
+                    <td>{{ $prestamo->fiador->estadoCivil }}</td>
+                @endif
+                @if($prestamo->fiador->telefono)
+                    <td><strong>TELEFONO:</strong></td>
+                    <td>{{ $prestamo->fiador->telefono }}</td>
+                @endif
             </tr>
-            <tr>
-                <td><strong>DIRECCION:</strong></td>
-                <td colspan="3">{{ $prestamo->fiador->direccion ?? 'No ingresada' }}</td>
-            </tr>
-            <tr>
-                <td><strong>PARENTESCO:</strong></td>
-                <td colspan="2">{{ $prestamo->parentesco ?? 'No ingresada' }}</td>
-                <td><strong>EDAD:</strong></td>
-                <td>{{ $prestamo->fiador->fecha_nacimiento ? Carbon::parse($prestamo->fiador->fecha_nacimiento)->age . ' años' : 'No ingresada' }}
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2"><strong>ESTADO CIVIL:</strong></td>
-                <td>{{ $prestamo->fiador->estadoCivil ?? 'No ingresada' }}</td>
-                <td><strong>TELEFONO:</strong></td>
-                <td>{{ $prestamo->fiador->telefono ?? 'No ingresada' }}</td>
-            </tr>
-            <tr>
-                <td colspan="2"><strong>GRADO DE ESCOLARIDAD:</strong></td>
-                <td>{{ $prestamo->fiador->nivel_academico ?? 'No ingresada' }}</td>
-            </tr>
-            <tr>
-                <td colspan="2"><strong>PROFESION U OFICIO:</strong></td>
-                <td>{{ $prestamo->fiador->profesion ?? 'No ingresada' }}</td>
-            </tr>
-            <tr>
-                <td colspan="2"><strong>OCUPACION:</strong></td>
-                <td>{{ $prestamo->fiador->nombreTipoCliente ?? 'No ingresada' }}</td>
-            </tr>
-            <tr>
-                <td colspan="2"><strong>CARGAS FAMILIARES:</strong></td>
-                <td>{{ $prestamo->fiador->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->fiador->cargas_familiares ?? 'No ingresada') }}
-                </td>
-            </tr>
-            <tr>
-                <td colspan="4"><strong>No. INTEGRANTES DE SU NUCLEO FAMILIAR:</strong></td>
-                <td>{{ $prestamo->fiador->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->fiador->integrantes_nucleo_familiar ?? 'No ingresada') }}
-                </td>
-            </tr>
-            <tr>
-                <td colspan="4"><strong>INGRESOS MENSUALES APROXIMADOS:</strong></td>
-                <td>Q. {{ number_format($prestamo->fiador->ingresos_mensuales ?? 0, 2) }}</td>
-            </tr>
-            <tr>
-                <td colspan="4"><strong>EGRESOS MENSUALES APROX:</strong></td>
-                <td>Q. {{ number_format($prestamo->fiador->egresos_mensuales ?? 0, 2) }}</td>
-            </tr>
+            @if($prestamo->fiador->nivel_academico)
+                <tr>
+                    <td colspan="2"><strong>GRADO DE ESCOLARIDAD:</strong></td>
+                    <td>{{ $prestamo->fiador->nivel_academico }}</td>
+                </tr>
+            @endif
+            @if($prestamo->fiador->profesion)
+                <tr>
+                    <td colspan="2"><strong>PROFESION U OFICIO:</strong></td>
+                    <td>{{ $prestamo->fiador->profesion }}</td>
+                </tr>
+            @endif
+            @if($prestamo->fiador->nombreTipoCliente)
+                <tr>
+                    <td colspan="2"><strong>OCUPACION:</strong></td>
+                    <td>{{ $prestamo->fiador->nombreTipoCliente }}</td>
+                </tr>
+            @endif
+            @if($prestamo->fiador->cargas_familiares || $prestamo->fiador->estadoCivil != 'Soltero')
+                <tr>
+                    <td colspan="2"><strong>CARGAS FAMILIARES:</strong></td>
+                    <td>{{ $prestamo->fiador->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->fiador->cargas_familiares ?? 'No ingresada') }}
+                    </td>
+                </tr>
+            @endif
+            @if($prestamo->fiador->integrantes_nucleo_familiar || $prestamo->fiador->estadoCivil != 'Soltero')
+                <tr>
+                    <td colspan="4"><strong>No. INTEGRANTES DE SU NUCLEO FAMILIAR:</strong></td>
+                    <td>{{ $prestamo->fiador->estadoCivil == 'Soltero' ? 'No Aplica' : ($prestamo->fiador->integrantes_nucleo_familiar ?? 'No ingresada') }}
+                    </td>
+                </tr>
+            @endif
+            @if($prestamo->fiador->ingresos_mensuales)
+                <tr>
+                    <td colspan="4"><strong>INGRESOS MENSUALES APROXIMADOS:</strong></td>
+                    <td>Q. {{ number_format($prestamo->fiador->ingresos_mensuales, 2) }}</td>
+                </tr>
+            @endif
+            @if($prestamo->fiador->egresos_mensuales)
+                <tr>
+                    <td colspan="4"><strong>EGRESOS MENSUALES APROX:</strong></td>
+                    <td>Q. {{ number_format($prestamo->fiador->egresos_mensuales, 2) }}</td>
+                </tr>
+            @endif
         </table>
     @endif
     <br />

@@ -11,6 +11,7 @@ use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\StoreFotografiaRequest;
 use App\Http\Resources\Client as ClientResource;
 use App\Http\Resources\CuentaBancaria as CuentaBancariaResource;
+use App\Http\Resources\Beneficiario as BeneficiarioResource;
 use App\Http\Resources\Inversion as InversionResource;
 use App\Http\Resources\Reference as ReferenceResource;
 use App\Http\Resources\Propiedad as PropiedadResource;
@@ -164,5 +165,12 @@ class ClientController extends Controller
         $pdf = $this->clientService->generatePdf($id);
         $this->log('Generando PDF del cliente con id: ' . $id);
         return response($pdf, 200)->header('Content-Type', 'application/pdf');
+    }
+
+    public function getBeneficiarios(string $id)
+    {
+        $this->log('Obteniendo beneficiarios para el cliente: ' . $id);
+        $beneficiarios = $this->clientService->getBeneficiarios($id);
+        return BeneficiarioResource::collection($beneficiarios);
     }
 }

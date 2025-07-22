@@ -24,6 +24,7 @@ use App\Http\Controllers\TipoCuentaInternaController;
 use App\Http\Controllers\DeclaracionController;
 use App\Http\Controllers\ImpuestoController;
 use App\Http\Controllers\OrientacionController;
+use App\Http\Controllers\ExcelController;
 use App\Http\Resources\Rol;
 
 $rolesEdicion = implode('|', [Roles::$ADMIN, Roles::$ASESOR]);
@@ -48,6 +49,7 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
     Route::get('clients/{id}/references', [ClientController::class, 'referencias']);
     Route::get('clients/{id}/pdf', [ClientController::class, 'generateClientPdf']);
     Route::get('clients/{id}/cuotas', [ClientController::class, 'cuotas']);
+    Route::get('clients/{id}/beneficiarios', [ClientController::class, 'getBeneficiarios']);
 });
 
 //inversiones
@@ -66,7 +68,6 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
     Route::get('inversiones/{id}/estados', [InversionController::class, 'historico']);
     Route::get('inversiones/{id}/depositos', [InversionController::class, 'getDepositosInversion']);
     Route::get('inversiones/{id}/pdf', [InversionController::class, 'generatePdf']);
-    Route::get('inversiones/{id}/beneficiarios', [InversionController::class, 'getBeneficiariosInversion']);
 });
 
 
@@ -137,6 +138,7 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
 //prestamos
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('prestamos', action: [PrestamoController::class, 'index']);
+    Route::get('prestamos/excel', [PrestamoController::class, 'downloadExcelPrestamo']);
     Route::post('prestamos', [PrestamoController::class, 'store']);
     Route::get('prestamos/{id}', [PrestamoController::class, 'show']);
     Route::get('prestamos/retiros', [PrestamoController::class, 'getRetirosPendientes']);

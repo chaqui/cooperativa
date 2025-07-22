@@ -27,7 +27,12 @@ class Pago extends Model
 
     public function capitalFaltante()
     {
-        return $this->capital - $this->capital_pagado;
+        return max(0, $this->capital - $this->capital_pagado);
+    }
+
+    public function penalizacionFaltante()
+    {
+        return max(0, $this->penalizacion - $this->recargo);
     }
 
     public function interesFaltante()
@@ -38,11 +43,10 @@ class Pago extends Model
         $diasTranscuridos = $fechaAnteriorCarbon->diffInDays(now());
 
         $diasMesAnterior = $fechaAnteriorCarbon->daysInMonth;
-        if($diasTranscuridos > $diasMesAnterior) {
-           $interesCalculado = $this->interes;
-        }
-        else {
-            $interesCalculado =$this->interes * ($diasTranscuridos / $diasMesAnterior);
+        if ($diasTranscuridos > $diasMesAnterior) {
+            $interesCalculado = $this->interes;
+        } else {
+            $interesCalculado = $this->interes * ($diasTranscuridos / $diasMesAnterior);
         }
 
         return max(0, $interesCalculado - $this->interes_pagado);
@@ -53,10 +57,8 @@ class Pago extends Model
     public function saldoFaltante()
     {
         $interesFaltante = max(0, $this->interes - $this->interes_pagado);
-        $capitalFaltante = max(0, $this->capitalFaltante());
-        $recargoFaltante = max(0, $this->penalizacion - $this->recargo);
 
-        return $interesFaltante + $capitalFaltante + $recargoFaltante;
+        return $interesFaltante + $this->capitalFaltante() + $this->penalizacionFaltante();
     }
 
     public function saldoPagado()

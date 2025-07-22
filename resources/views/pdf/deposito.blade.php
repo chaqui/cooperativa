@@ -163,7 +163,7 @@
             @if($cliente)
                 <div class="client-info">
                     <h4>Información del Cliente</h4>
-                    <p><strong>DPI:</strong> {{ $cliente->dpi }} | <strong>Nombre:</strong> {{ $cliente->nombres }}
+                    <p><strong>DPI:</strong>  {{ substr($client->dpi, 0, 4) }} {{ substr($client->dpi, 4, 5) }} {{ substr($client->dpi, 9, 4) }}| <strong>Nombre:</strong> {{ $cliente->nombres }}
                         {{ $cliente->apellidos }}</p>
                 </div>
             @endif

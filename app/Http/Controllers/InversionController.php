@@ -119,13 +119,6 @@ class InversionController extends Controller
         return DepositoResource::collection($depositos);
     }
 
-    public function getBeneficiariosInversion($id)
-    {
-        $this->log('Obteniendo beneficios para la inversion:' . $id);
-        $beneficiarios = $this->inversionService->getBeneficiarios($id);
-        return BeneficiarioResource::collection($beneficiarios);
-    }
-
     public function generatePdf($id)
     {
         return $this->inversionService->getPdf($id);

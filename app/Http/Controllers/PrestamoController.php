@@ -13,6 +13,8 @@ use App\Http\Requests\StorePagarCuota;
 use App\Services\PrestamoService;
 use App\Services\PrestamoPdfService;
 use App\Services\EstadosPrestamoService;
+use App\Services\PrestamoExcelService;
+use App\Traits\Loggable;
 
 class PrestamoController extends Controller
 {
@@ -23,14 +25,20 @@ class PrestamoController extends Controller
 
     private $estadosPrestamoService;
 
+    private $prestamoExcelService;
+
+    use Loggable;
+
     public function __construct(
         PrestamoService $prestamoService,
         PrestamoPdfService $prestamoPdfService,
-        EstadosPrestamoService $estadosPrestamoService
+        EstadosPrestamoService $estadosPrestamoService,
+        PrestamoExcelService $prestamoExcelService
     ) {
         $this->prestamoService = $prestamoService;
         $this->prestamoPdfService = $prestamoPdfService;
         $this->estadosPrestamoService = $estadosPrestamoService;
+        $this->prestamoExcelService = $prestamoExcelService;
     }
     /**
      * Display a listing of the resource.
@@ -143,4 +151,27 @@ class PrestamoController extends Controller
         $this->prestamoService->pagarCuota($id, $request->all());
         return response()->json(['message' => 'Pago realizado correctamente'], 200);
     }
+
+
+
+    /**
+     * Genera y descarga un Excel con un préstamo específico
+     */
+    public function downloadExcelPrestamo()
+    {
+        try {
+
+            $excelData = $this->prestamoExcelService->generateExcel();
+
+            return response($excelData['content'])
+                ->withHeaders($excelData['headers']);
+
+        } catch (\Exception $e) {
+            $this->log('Error al generar el archivo Excel: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Error al generar el archivo Excel: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

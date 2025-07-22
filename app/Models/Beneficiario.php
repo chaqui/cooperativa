@@ -11,11 +11,14 @@ class Beneficiario extends Model
         'nombre',
         'parentezco',
         'porcentaje',
-        'id_inversion'
+        'dpi_cliente' // Nuevo campo para DPI del cliente
     ];
-    public function inversion()
+
+
+    public function cliente()
     {
-        return $this->belongsTo(Inversion::class, 'id_inversion');
+        return $this->belongsTo(Client::class, 'dpi_cliente');
     }
+
 
 }

@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Traits\Loggable;
 use Illuminate\Support\Facades\DB;
 use App\Constants\InicialesCodigo;
+use App\Models\Beneficiario;
 
 class ClientService extends CodigoService
 {
@@ -55,6 +56,17 @@ class ClientService extends CodigoService
                 $this->log('No se proporcionaron referencias');
             }
 
+            if (isset($data['beneficiarios']) && is_array($data['beneficiarios'])) {
+                $this->log('Procesando ' . count($data['beneficiarios']) . ' beneficiarios');
+                $totalPorcentaje = array_sum(array_column($data['beneficiarios'], 'porcentaje'));
+                if ($totalPorcentaje !== 100) {
+                    throw new \Exception('La suma de los porcentajes de los beneficiarios debe ser igual a 100.');
+                }
+                $this->addBeneficiarios($client, $data['beneficiarios']);
+            } else {
+                $this->log('No se proporcionaron beneficiarios');
+            }
+
             DB::commit();
             $this->log('Cliente creado exitosamente id ' . $client->id . ' codigo ' . $client->codigo);
 
@@ -82,31 +94,117 @@ class ClientService extends CodigoService
         }
     }
 
+
+    private function addBeneficiarios($inversion, $beneficiarios)
+    {
+        foreach ($beneficiarios as $beneficiario) {
+            $beneficiario['dpi_cliente'] = $inversion->cliente->dpi;
+            $beneficiarioModel = new Beneficiario($beneficiario);
+            $inversion->beneficiarios()->save($beneficiarioModel);
+        }
+    }
+
     /**
-     *
      * Method to update a client
      * @param mixed $data The data of the client
      * @param mixed $id The id of the client
-     * @return void
+     * @return Client
      */
     public function updateClient($data, $id)
     {
-        $client = $this->getClient($id);
-        $client = Client::updateData($data, $client);
-        $client->save();
-        $references = $data['referencias'];
+        DB::beginTransaction();
+        try {
+            $client = $this->getClient($id);
 
-        foreach ($references as $reference) {
-            $this->log($reference);
-            $reference['dpi_cliente'] = $client->dpi;
-            if (isset($reference['id']) && $reference['id'] !== null) {
-                 $reference = $this->referenceService->updateReference($reference['id'], $reference);
-            } else {
-                // Create new reference
-                $reference = $this->referenceService->createReference($reference);
+            // Update client data
+            $client = Client::updateData($data, $client);
+            $client->save();
+            $this->log('Cliente actualizado exitosamente id ' . $client->id);
+
+            // Validate and update references
+            if (isset($data['referencias']) && is_array($data['referencias'])) {
+                $this->updateReferences($client, $data['referencias']);
             }
 
-            $client->references()->save($reference);
+            // Validate and update beneficiarios
+            if (isset($data['beneficiarios']) && is_array($data['beneficiarios'])) {
+                $this->validateBeneficiarioPercentages($data['beneficiarios']);
+                $this->updateBeneficiarios($client, $data['beneficiarios']);
+            }
+
+            DB::commit();
+            $this->log('Cliente y relaciones actualizadas exitosamente');
+
+            return $client;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError('Error al actualizar cliente: ' . $e->getMessage());
+            throw new \Exception('No se pudo actualizar el cliente: ' . $e->getMessage(), 0, $e);
+        }
+    }
+
+    /**
+     * Update references for a client
+     * @param Client $client
+     * @param array $referencias
+     * @return void
+     */
+    private function updateReferences($client, $referencias)
+    {
+        $this->log('Procesando ' . count($referencias) . ' referencias');
+
+        foreach ($referencias as $reference) {
+            $reference['dpi_cliente'] = $client->dpi;
+
+            if (isset($reference['id']) && $reference['id'] !== null) {
+                // Update existing reference
+                $this->referenceService->updateReference($reference['id'], $reference);
+            } else {
+                // Create new reference
+                $newReference = $this->referenceService->createReference($reference);
+                $client->references()->save($newReference);
+            }
+        }
+    }
+
+    /**
+     * Update beneficiarios for a client
+     * @param Client $client
+     * @param array $beneficiarios
+     * @return void
+     */
+    private function updateBeneficiarios($client, $beneficiarios)
+    {
+        $this->log('Procesando ' . count($beneficiarios) . ' beneficiarios');
+
+        foreach ($beneficiarios as $beneficiario) {
+            $beneficiario['dpi_cliente'] = $client->dpi;
+
+            if (isset($beneficiario['id']) && $beneficiario['id'] !== null) {
+                // Update existing beneficiario
+                $beneficiarioModel = Beneficiario::find($beneficiario['id']);
+                if ($beneficiarioModel) {
+                    $beneficiarioModel->update($beneficiario);
+                }
+            } else {
+                // Create new beneficiario
+                $beneficiarioModel = new Beneficiario($beneficiario);
+                $client->beneficiarios()->save($beneficiarioModel);
+            }
+        }
+    }
+
+    /**
+     * Validate that beneficiario percentages sum to 100
+     * @param array $beneficiarios
+     * @return void
+     * @throws \Exception
+     */
+    private function validateBeneficiarioPercentages($beneficiarios)
+    {
+        $totalPorcentaje = array_sum(array_column($beneficiarios, 'porcentaje'));
+        if ($totalPorcentaje !== 100) {
+            throw new \Exception('La suma de los porcentajes de los beneficiarios debe ser igual a 100.');
         }
     }
 
@@ -195,17 +293,38 @@ class ClientService extends CodigoService
         return $client->propiedades;
     }
 
+    /**
+     * Get the loans of a client
+     * @param mixed $id The id of the client
+     * @return mixed
+     */
     public function getPrestamos($id): mixed
     {
         $client = $this->getClient($id);
         return $client->prestamosHipotecarios;
     }
 
+    /**
+     * Get the pending quotas of a client
+     * @param mixed $id The id of the client
+     * @return mixed
+     */
     public function getCuotas($id): mixed
     {
         $client = $this->getClient($id);
         $cuotas = $client->getCuotasPendientes();
         return $cuotas;
+    }
+
+    /**
+     * Get the beneficiarios of a client
+     * @param mixed $id The id of the client
+     * @return mixed
+     */
+    public function getBeneficiarios($id): mixed
+    {
+        $client = $this->getClient($id);
+        return $client->beneficiarios;
     }
 
     /**
@@ -216,7 +335,7 @@ class ClientService extends CodigoService
     public function generatePdf($id)
     {
         $client = $this->getDataForPDF($id);
-          $this->log($client);
+        $this->log($client);
         $html = view('pdf.client', data: compact('client'))->render();
 
         $pdf = $this->pdfService->generatePdf($html);

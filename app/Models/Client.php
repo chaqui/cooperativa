@@ -51,7 +51,9 @@ class Client extends Model
         'cargas_familiares',
         'integrantes_nucleo_familiar',
         'tipo_vivienda',
-        'estabilidad_domiciliaria'
+        'estabilidad_domiciliaria',
+        'nacionalidad', // Nuevo campo para nacionalidad
+        'carga_familiar' // Nuevo campo para carga familiar
 
     ];
 
@@ -101,7 +103,7 @@ class Client extends Model
         $client->tipoCliente = $data['tipoCliente'];
         $client->path = $data['path'];
         $client->codigo = $data['codigo'];
-        if($data['estado_civil'] == '18') {
+        if ($data['estado_civil'] == '18') {
             $client->conyuge = $data['conyuge'];
             $client->cargas_familiares = $data['cargas_familiares'];
             $client->integrantes_nucleo_familiar = $data['integrantes_nucleo_familiar'];
@@ -178,4 +180,13 @@ class Client extends Model
         return $cuotas;
     }
 
+    /**
+     *
+     * Get the beneficiarios associated with the client.
+     * @return HasMany<Beneficiario, Client>
+     */
+    public function beneficiarios()
+    {
+        return $this->hasMany(Beneficiario::class, 'dpi_cliente');
+    }
 }

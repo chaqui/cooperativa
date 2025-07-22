@@ -76,6 +76,7 @@ class PrestamoService extends CodigoService
             }
 
             // Validar propiedad
+
             $this->propiedadService->getPropiedad($data['propiedad_id']);
 
             // Generar código único para el préstamo

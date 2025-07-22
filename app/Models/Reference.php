@@ -14,6 +14,7 @@ class Reference extends Model
         'telefono',
         'tipo',
         'dpi_cliente',
+        'afinidad' // Nuevo campo para afinidad
     ];
 
     public function cliente()

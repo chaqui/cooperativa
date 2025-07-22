@@ -84,9 +84,6 @@ class InversionService extends CodigoService
             // Crear la inversión
             $inversion = Inversion::create($inversionData);
 
-            // Crear beneficiarios si existen
-            $this->crearBeneficiarios($inversion, $inversionData['beneficiarios'] ?? []);
-
             // Cambiar el estado de la inversión a "CREADO"
             $this->controladorEstado->cambiarEstado($inversion, ['estado' => EstadoInversion::$CREADO]);
 
@@ -101,19 +98,6 @@ class InversionService extends CodigoService
         }
     }
 
-    /**
-     * Crea los beneficiarios de una inversión
-     *
-     * @param \App\Models\Inversion $inversion
-     * @param array $beneficiarios
-     * @return void
-     */
-    private function crearBeneficiarios(Inversion $inversion, array $beneficiarios): void
-    {
-        foreach ($beneficiarios as $beneficiario) {
-            $inversion->beneficiarios()->create($beneficiario);
-        }
-    }
 
     /**
      * Valida los datos de la inversión
@@ -205,11 +189,6 @@ class InversionService extends CodigoService
         return  $depositos;
     }
 
-    public function getBeneficiarios($id)
-    {
-        $inversion = $this->getInversion($id);
-        return $inversion->beneficiarios;
-    }
 
     public function getPdf($id)
     {

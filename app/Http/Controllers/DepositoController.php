@@ -15,6 +15,11 @@ class DepositoController extends Controller
         $this->depositoService =  $depositoService;
     }
 
+    /**
+     * Crea un depósito interno y lo deposita
+     * @param DepositoInternoRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function crearDepositoyDepositar(DepositoInternoRequest $request)
     {
         try {
@@ -26,17 +31,32 @@ class DepositoController extends Controller
         }
     }
 
+    /**
+     * Obtiene el PDF del depósito
+     * @param mixed $id
+     * @return \Illuminate\Http\JsonResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse
+     */
     public function getPDF($id)
     {
-        try {
-            $pdf = $this->depositoService->generarPdf($id);
-            return response($pdf, 200)->header('Content-Type', 'application/pdf');
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Error al obtener el deposito', 'error' => $e->getMessage()], 500);
+        $deposito = $this->depositoService->find($id);
+        if (!$deposito) {
+            return response()->json(['message' => 'Deposito no encontrado'], 404);
         }
+
+        if (!$deposito->path_pdf) {
+            return response()->json(['message' => 'PDF no disponible'], 404);
+        }
+
+        return response()->download($deposito->path_pdf);
     }
 
 
+    /**
+     * Realiza un depósito en una cuenta específica
+     * @param DepositoRequest $request
+     * @param int $id ID de la cuenta donde se realizará el depósito
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function depositar(DepositoRequest $request, $id)
     {
         try {

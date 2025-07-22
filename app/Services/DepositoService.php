@@ -151,6 +151,9 @@ class DepositoService
                 $this->actualizarEstadoInversion($deposito, $data['descripcion'] ?? null);
             }
 
+            // Generar y guardar el PDF del depósito
+            $this->generarYGuardarPdfDeposito($deposito);
+
             DB::commit();
             return $deposito;
         } catch (\Exception $e) {
@@ -248,20 +251,50 @@ class DepositoService
     }
 
     /**
+     * Genera y guarda el PDF del depósito
+     * @param mixed $deposito
+     * @return string
+     */
+    private function generarYGuardarPdfDeposito($deposito)
+    {
+        $this->log("Generando PDF del depósito con ID: {$deposito->id}");
+        $pdf = $this->generarPdf($deposito);
+        // Definir la ruta y nombre del archivo
+        $path = storage_path('app/depositos/');
+        $fileName = 'deposito_' . $deposito->id . '_' . time() . '.pdf';
+
+        // Guardar el archivo usando el servicio de archivos
+        $pathArchivo = app(ArchivoService::class)->guardarArchivo($pdf, $path, $fileName);
+
+        // Registrar la ruta en el depósito
+        $deposito->path_pdf = $pathArchivo;
+        $deposito->save();
+        return $pathArchivo;
+    }
+
+    public function find($id)
+    {
+        $this->log("Buscando depósito con ID: {$id}");
+        $deposito = Deposito::find($id);
+        if (!$deposito) {
+            throw new \Exception('Depósito no encontrado');
+        }
+        return $deposito;
+    }
+
+
+    /**
      * Genera un PDF del depósito
      *
      * @param int $id ID del depósito a generar el PDF
      * @return string Ruta del archivo PDF generado
      */
-    public function generarPdf($id)
+    private function generarPdf($deposito)
     {
-        if ($id <= 0) {
-            throw new \InvalidArgumentException("El ID del depósito debe ser un número entero positivo");
-        }
 
-        $this->log("Iniciando generación de PDF para depósito #{$id}");
 
-        $deposito = $this->getDeposito($id);
+        $this->log("Iniciando generación de PDF para depósito #{$deposito->id}");
+
         $prestamo = $deposito->pago ? $deposito->pago->prestamo : null;
         $this->log("Obteniendo datos del depósito: " . json_encode($deposito));
 
@@ -308,4 +341,7 @@ class DepositoService
             throw new \InvalidArgumentException("El motivo es requerido");
         }
     }
+
+
+
 }

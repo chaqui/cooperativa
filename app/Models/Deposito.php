@@ -18,6 +18,7 @@ class Deposito extends Model
         'id_pago',
         'tipo_cuenta_interna_id',
         'motivo',
+        'path_pdf',
     ];
 
     public static function crear($datos)

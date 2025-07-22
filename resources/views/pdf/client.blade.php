@@ -75,119 +75,192 @@
     </div>
     <table class="content">
         <tr>
-            <td><strong>Nombre:</strong></td>
-            <td>{{ $client->nombres }} {{ $client->apellidos }}</td>
-            <td><strong>CUI:</strong></td>
-            <td> {{ substr($client->dpi, 0, 4) }} {{ substr($client->dpi, 4, 5) }} {{ substr($client->dpi, 9, 4) }}</td>
-            <td><strong>Tipo De Cliente:</strong></td>
-            <td>{{ $client->nombreTipoCliente}}</td>
+            @if($client->nombres || $client->apellidos)
+                <td><strong>Nombre:</strong></td>
+                <td>{{ $client->nombres }} {{ $client->apellidos }}</td>
+            @endif
+            @if($client->dpi)
+                <td><strong>CUI:</strong></td>
+                <td> {{ substr($client->dpi, 0, 4) }} {{ substr($client->dpi, 4, 5) }} {{ substr($client->dpi, 9, 4) }}</td>
+            @endif
+            @if($client->nombreTipoCliente)
+                <td><strong>Tipo De Cliente:</strong></td>
+                <td>{{ $client->nombreTipoCliente}}</td>
+            @endif
         </tr>
     </table>
     <table class="content">
         <tr>
-            <td><strong>Email:</strong></td>
-            <td colspan="2">{{ $client->correo }}</td>
-            <td><strong>Telefono:</strong></td>
-            <td colspan="2">{{ $client->telefono }}</td>
+            @if($client->correo)
+                <td><strong>Email:</strong></td>
+                <td colspan="2">{{ $client->correo }}</td>
+            @endif
+            @if($client->telefono)
+                <td><strong>Telefono:</strong></td>
+                <td colspan="2">{{ $client->telefono }}</td>
+            @endif
         </tr>
-        <tr>
-            <td><strong>Direccion:</strong></td>
-            <td colspan="5">{{ $client->direccion }}</td>
-        </tr>
-        <tr>
-            <td><strong>Municipio:</strong></td>
-            <td colspan="2">{{ $client->nombreMunicipio }}</td>
-            <td><strong>Departamento:</strong></td>
-            <td colspan="2">{{ $client->nombreDepartamento }}</td>
-        </tr>
-        <tr>
-            <td><strong>Fecha de Nacimiento:</strong></td>
-            <td>{{ Carbon::parse($client->fecha_nacimiento)->translatedFormat('d \d\e F \d\e Y') }}</td>
-            <td><strong>Genero:</strong></td>
-            <td>{{ $client->genero }}</td>
-            <td><strong>Estado Civil:</strong></td>
-            <td>{{ $client->estadoCivil }}(a)</td>
-        </tr>
-    </table>
-    <table class="content">
-        <tr>
-            <td><strong>Nivel Academico:</strong></td>
-            <td>{{ $client->nivel_academico }}</td>
-            <td><strong>Profesion:</strong></td>
-            <td>{{ $client->profesion }}</td>
-        </tr>
-    </table>
-    <table class="content">
-        <tr>
-            <td><strong>Nombre de la Empresa:</strong></td>
-            <td>{{ $client->nombreEmpresa }}</td>
-            <td><strong>Fecha de Inicio:</strong></td>
-            <td>{{ Carbon::parse($client->fechaInicio)->translatedFormat('d \d\e F \d\e Y') }}</td>
-        </tr>
-        <tr>
-            <td><strong>Direccion de la Empresa:</strong></td>
-            <td colspan="3">{{ $client->direccionEmpresa }}</td>
-        </tr>
-        <tr>
-            <td><strong>Telefono de la Empresa:</strong></td>
-            <td colspan="3">{{ $client->telefonoEmpresa }}</td>
-        </tr>
-        @if ($client->tipoCliente == '390')
+        @if($client->direccion)
             <tr>
-                <td><strong>Número de Patente:</strong></td>
-                <td>{{ $client->numeroPatente }}</td>
-                <td><strong>NIT:</strong></td>
-                <td>{{ $client->nit }}</td>
-            </tr>
-        @else
-            <tr>
-                <td><strong>Puesto:</strong></td>
-                <td colspan="3">{{ $client->puesto }}</td>
+                <td><strong>Direccion:</strong></td>
+                <td colspan="5">{{ $client->direccion }}</td>
             </tr>
         @endif
         <tr>
-            <td><strong>Ingresos Mensuales:</strong></td>
-            <td>Q. {{ number_format($client->ingresos_mensuales, 2, '.', ',') }}</td>
-            <td><strong>Egresos Mensuales:</strong></td>
-            <td>Q. {{ number_format($client->egresos_mensuales, 2, '.', ',')  }}</td>
+            @if($client->nombreMunicipio)
+                <td><strong>Municipio:</strong></td>
+                <td colspan="2">{{ $client->nombreMunicipio }}</td>
+            @endif
+            @if($client->nombreDepartamento)
+                <td><strong>Departamento:</strong></td>
+                <td colspan="2">{{ $client->nombreDepartamento }}</td>
+            @endif
         </tr>
-        @if ($client->tipoCliente != '390')
+        @if($client->nacionalidad)
             <tr>
-                <td><strong>Otros Ingresos:</strong></td>
-                <td colspan="3"> Q. {{ number_format($client->otrosIngresos, 2, '.', ',') }}</td>
-            </tr>
-            <tr>
-                <td><strong>Razon Otros Ingresos:</strong></td>
-                <td colspan="3">{{ $client->razon_otros_ingresos }}</td>
+                <td><strong>Nacionalidad:</strong></td>
+                <td colspan="5">{{ $client->nacionalidad }}</td>
             </tr>
         @endif
+        <tr>
+            @if($client->fecha_nacimiento)
+                <td><strong>Fecha de Nacimiento:</strong></td>
+                <td>{{ Carbon::parse($client->fecha_nacimiento)->translatedFormat('d \d\e F \d\e Y') }}</td>
+            @endif
+            @if($client->genero)
+                <td><strong>Genero:</strong></td>
+                <td>{{ $client->genero }}</td>
+            @endif
+            @if($client->estadoCivil)
+                <td><strong>Estado Civil:</strong></td>
+                <td>{{ $client->estadoCivil }}(a)</td>
+            @endif
+        </tr>
     </table>
-
-    @if ($client->estado_civil == '18')
-        <h3>Información Familiar</h3>
+    @if($client->nivel_academico || $client->profesion)
         <table class="content">
             <tr>
-                <td><strong>Conyuge:</strong></td>
-                <td>{{ $client->conyuge }}</td>
-            </tr>
-            <tr>
-                <td><strong>Cargas Familiares:</strong></td>
-                <td>{{ $client->cargas_familiares }}</td>
-            </tr>
-            <tr>
-                <td><strong>No. Integrantes nucleo familar</strong></td>
-                <td>{{ $client->integrantes_nucleo_familiar }}</td>
-            </tr>
-            <tr>
-                <td><strong>La casa donde vive:</strong></td>
-                <td>{{ $client->tipo_vivienda }}</td>
-            </tr>
-            <tr>
-                <td><strong>Tiempo de estabilidad domiciliar:</strong></td>
-                <td>{{ $client->estabilidad_domiciliaria }} año(s)</td>
+                @if($client->nivel_academico)
+                    <td><strong>Nivel Academico:</strong></td>
+                    <td>{{ $client->nivel_academico }}</td>
+                @endif
+                @if($client->profesion)
+                    <td><strong>Profesion:</strong></td>
+                    <td>{{ $client->profesion }}</td>
+                @endif
             </tr>
         </table>
+    @endif
+    @if($client->nombreEmpresa || $client->fechaInicio || $client->direccionEmpresa || $client->telefonoEmpresa || $client->numeroPatente || $client->nit || $client->puesto || $client->ingresos_mensuales || $client->egresos_mensuales || $client->otrosIngresos || $client->razon_otros_ingresos)
+        <table class="content">
+            @if($client->nombreEmpresa || $client->fechaInicio)
+                <tr>
+                    @if($client->nombreEmpresa)
+                        <td><strong>Nombre de la Empresa:</strong></td>
+                        <td>{{ $client->nombreEmpresa }}</td>
+                    @endif
+                    @if($client->fechaInicio)
+                        <td><strong>Fecha de Inicio:</strong></td>
+                        <td>{{ Carbon::parse($client->fechaInicio)->translatedFormat('d \d\e F \d\e Y') }}</td>
+                    @endif
+                </tr>
+            @endif
+            @if($client->direccionEmpresa)
+                <tr>
+                    <td><strong>Direccion de la Empresa:</strong></td>
+                    <td colspan="3">{{ $client->direccionEmpresa }}</td>
+                </tr>
+            @endif
+            @if($client->telefonoEmpresa)
+                <tr>
+                    <td><strong>Telefono de la Empresa:</strong></td>
+                    <td colspan="3">{{ $client->telefonoEmpresa }}</td>
+                </tr>
+            @endif
+            @if ($client->tipoCliente == '390')
+                @if($client->numeroPatente || $client->nit)
+                    <tr>
+                        @if($client->numeroPatente)
+                            <td><strong>Número de Patente:</strong></td>
+                            <td>{{ $client->numeroPatente }}</td>
+                        @endif
+                        @if($client->nit)
+                            <td><strong>NIT:</strong></td>
+                            <td>{{ $client->nit }}</td>
+                        @endif
+                    </tr>
+                @endif
+            @else
+                @if($client->puesto)
+                    <tr>
+                        <td><strong>Puesto:</strong></td>
+                        <td colspan="3">{{ $client->puesto }}</td>
+                    </tr>
+                @endif
+            @endif
+            @if($client->ingresos_mensuales || $client->egresos_mensuales)
+                <tr>
+                    @if($client->ingresos_mensuales)
+                        <td><strong>Ingresos Mensuales:</strong></td>
+                        <td>Q. {{ number_format($client->ingresos_mensuales, 2, '.', ',') }}</td>
+                    @endif
+                    @if($client->egresos_mensuales)
+                        <td><strong>Egresos Mensuales:</strong></td>
+                        <td>Q. {{ number_format($client->egresos_mensuales, 2, '.', ',')  }}</td>
+                    @endif
+                </tr>
+            @endif
+            @if ($client->tipoCliente != '390')
+                @if($client->otrosIngresos)
+                    <tr>
+                        <td><strong>Otros Ingresos:</strong></td>
+                        <td colspan="3"> Q. {{ number_format($client->otrosIngresos, 2, '.', ',') }}</td>
+                    </tr>
+                @endif
+                @if($client->razon_otros_ingresos)
+                    <tr>
+                        <td><strong>Razon Otros Ingresos:</strong></td>
+                        <td colspan="3">{{ $client->razon_otros_ingresos }}</td>
+                    </tr>
+                @endif
+            @endif
+        </table>
+    @endif
 
+    @if ($client->estado_civil == '18' && ($client->conyuge || $client->cargas_familiares || $client->integrantes_nucleo_familiar || $client->tipo_vivienda || $client->estabilidad_domiciliaria))
+        <h3>Información Familiar</h3>
+        <table class="content">
+            @if($client->conyuge)
+                <tr>
+                    <td><strong>Conyuge:</strong></td>
+                    <td>{{ $client->conyuge }}</td>
+                </tr>
+            @endif
+            @if($client->cargas_familiares)
+                <tr>
+                    <td><strong>Cargas Familiares:</strong></td>
+                    <td>{{ $client->cargas_familiares }}</td>
+                </tr>
+            @endif
+            @if($client->integrantes_nucleo_familiar)
+                <tr>
+                    <td><strong>No. Integrantes nucleo familar</strong></td>
+                    <td>{{ $client->integrantes_nucleo_familiar }}</td>
+                </tr>
+            @endif
+            @if($client->tipo_vivienda)
+                <tr>
+                    <td><strong>La casa donde vive:</strong></td>
+                    <td>{{ $client->tipo_vivienda }}</td>
+                </tr>
+            @endif
+            @if($client->estabilidad_domiciliaria)
+                <tr>
+                    <td><strong>Tiempo de estabilidad domiciliar:</strong></td>
+                    <td>{{ $client->estabilidad_domiciliaria }} año(s)</td>
+                </tr>
+            @endif
+        </table>
     @endif
     @if ($client->tipoCliente != '390')
         <h3>Referencias Laborales</h3>
@@ -255,26 +328,48 @@
     <table class="content">
         <tr>
             <td style="text-align: justify;">
-                Yo <strong>{{ $client->nombres }} {{ $client->apellidos }}</strong> con CUI :
-                <strong>
-                    {{ substr($client->dpi, 0, 4) }} {{ substr($client->dpi, 4, 5) }} {{ substr($client->dpi, 9, 4) }}
-                </strong> originario de <strong>{{ $client->nombreMunicipio }}</strong> del
-                departamento de <strong>{{ $client->nombreDepartamento }}</strong> con domicilio en
-                <strong>{{ $client->direccion }}</strong> con número de teléfono
-                <strong>{{ $client->telefono }}</strong> de estado civil
-                <strong>{{ $client->estadoCivil}}(a)</strong> con fecha de nacimiento
-                <strong>{{ Carbon::parse($client->fecha_nacimiento)->translatedFormat('d \d\e F \d\e Y') }}</strong>
-                declaro de forma
-                expresa
-                que todos los datos e información que ahí apartados son veraces y que han sido consignados de forma
-                voluntaria.
+                Yo
+                @if($client->nombres || $client->apellidos)
+                    <strong>{{ $client->nombres }} {{ $client->apellidos }}</strong>,
+                @endif
+                @if($client->dpi)
+                    con CUI :
+                    <strong>
+                        {{ substr($client->dpi, 0, 4) }} {{ substr($client->dpi, 4, 5) }} {{ substr($client->dpi, 9, 4) }}
+                    </strong>,
+                @endif
+                @if($client->nombreMunicipio)
+                    originario de <strong>{{ $client->nombreMunicipio }}</strong>,
+                @endif
+                @if($client->nombreDepartamento)
+                    @if($client->nombreMunicipio) del @endif departamento de <strong>{{ $client->nombreDepartamento }}</strong>,
+                @endif
+                @if($client->direccion)
+                    con domicilio en <strong>{{ $client->direccion }}</strong>,
+                @endif
+                @if($client->telefono)
+                    con número de teléfono <strong>{{ $client->telefono }}</strong>,
+                @endif
+                @if($client->estadoCivil)
+                    de estado civil <strong>{{ $client->estadoCivil}}(a)</strong>,
+                @endif
+                @if($client->fecha_nacimiento)
+                    con fecha de nacimiento
+                    <strong>{{ Carbon::parse($client->fecha_nacimiento)->translatedFormat('d \d\e F \d\e Y') }}</strong>,
+                @endif
+                declaro de forma expresa que todos los datos e información que ahí apartados son veraces y que han sido consignados de forma voluntaria.
             </td>
         </tr>
         <tr>
-            <td class="signature"> F. ______________________ <br />
-                {{ $client->nombres }} {{ $client->apellidos }} <br />
-                CUI: {{ substr($client->dpi, 0, 4) }} {{ substr($client->dpi, 4, 5) }} {{ substr($client->dpi, 9, 4) }}
-
+            <td class="signature">
+                F. ______________________ <br />
+                @if($client->nombres || $client->apellidos)
+                    {{ $client->nombres }} {{ $client->apellidos }} <br />
+                @endif
+                @if($client->dpi)
+                    CUI: {{ substr($client->dpi, 0, 4) }} {{ substr($client->dpi, 4, 5) }} {{ substr($client->dpi, 9, 4) }}
+                @endif
+            </td>
         </tr>
     </table>
 </body>

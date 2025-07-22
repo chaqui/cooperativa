@@ -129,18 +129,39 @@ class Prestamo_Hipotecario extends Model
         }
         return $monto;
     }
-    public function saldoPendienteConInteresAlDia(){
+    public function saldoPendienteConInteresAlDia()
+    {
+        return $this->saldoPendienteCapital() + $this->saldoPendienteIntereses() + $this->saldoPendientePenalizacion();
+    }
+
+    public function saldoPendienteIntereses()
+    {
+        $pagos = $this->getCuotasPendientes();
+        $monto = 0;
+        foreach ($pagos as $pago) {
+            if ($pago->fecha < now()) {
+                $monto += $pago->interesFaltante();
+            }
+        }
+        return $monto;
+    }
+
+    public function saldoPendienteCapital()
+    {
         $pagos = $this->getCuotasPendientes();
         $monto = 0;
         foreach ($pagos as $pago) {
             $monto += $pago->capitalFaltante();
-            if($pago->fecha < now()){
-
-                $monto += $pago->interesFaltante();
-            }
         }
-
-
+        return $monto;
+    }
+    public function saldoPendientePenalizacion()
+    {
+        $pagos = $this->getCuotasPendientes();
+        $monto = 0;
+        foreach ($pagos as $pago) {
+            $monto += $pago->penalizacionFaltante();
+        }
         return $monto;
     }
 
@@ -177,7 +198,8 @@ class Prestamo_Hipotecario extends Model
         return $this->pagos()->where('realizado', 0)->where('fecha', '<=', $fecha)->get();
     }
 
-    public function tieneCuotaInvalida(){
+    public function tieneCuotaInvalida()
+    {
         $cuota = $this->pagos()->where('numero_pago_prestamo', 0)->first();
         if ($cuota) {
             return true;
