@@ -155,7 +155,8 @@ class PrestamoExcelService extends PrestamoService
                 if (isset($p->cliente) && $p->cliente) {
                     $clienteCodigo = $p->cliente->codigo ?? '';
                     $clienteTelefono = $p->cliente->telefono ?? '';
-                    $clienteGenero = $p->cliente->genero ?? '';
+                    $clienteGenero = $this->catalogoService->getCatalogo($p->cliente->genero)['value'] ?? '';
+
                 }
 
                 $propiedadInfo = '';
@@ -190,6 +191,8 @@ class PrestamoExcelService extends PrestamoService
                         $fechaFin = '';
                     }
                 }
+
+                $p->nombreDestino = $this->catalogoService->getCatalogo($p->destino)['value'] ?? 'No especificado';
 
                 // Llenar las celdas
                 $sheet->setCellValue('A' . $row, $asesorNombre);
