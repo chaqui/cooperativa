@@ -95,12 +95,12 @@ class ClientService extends CodigoService
     }
 
 
-    private function addBeneficiarios($inversion, $beneficiarios)
+    private function addBeneficiarios($cliente, $beneficiarios)
     {
         foreach ($beneficiarios as $beneficiario) {
-            $beneficiario['dpi_cliente'] = $inversion->cliente->dpi;
+            $beneficiario['dpi_cliente'] = $cliente->dpi;
             $beneficiarioModel = new Beneficiario($beneficiario);
-            $inversion->beneficiarios()->save($beneficiarioModel);
+            $cliente->beneficiarios()->save($beneficiarioModel);
         }
     }
 
