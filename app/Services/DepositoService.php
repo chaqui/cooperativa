@@ -306,12 +306,14 @@ class DepositoService
             $montoPendiente = $prestamo->saldoPendiente();
             $totalPagado = $prestamo->totalPagado();
         }
-
+        $cliente = $deposito->inversion ? $deposito->inversion->cliente : ($deposito->pago ? $deposito->pago->prestamo->cliente : null);
+        $this->log("Cliente asociado al depósito: " . ($cliente ? $cliente->getFullNameAttribute() : 'N/A'));
         $html = view('pdf.deposito', [
             'deposito' => $deposito,
             'montoPendiente' => $montoPendiente,
             'totalPagado' => $totalPagado,
             'prestamo' => $prestamo,
+            'cliente' => $cliente
         ])->render();
         return $this->pdfService->generatePdf($html);
     }

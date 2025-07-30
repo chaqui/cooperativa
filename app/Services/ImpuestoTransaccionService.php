@@ -163,6 +163,7 @@ class ImpuestoTransaccionService
         }
         $this->log("Fecha de inicio generada: " . $fechaInicio->format('Y-m-d'));
         $fechaFin = $this->generarFechaFin($tipoImpuesto, $fechaInicio);
+
         $this->log("Fecha de fin generada: " . $fechaFin->format('Y-m-d'));
         $data = [
             'id_tipo_impuesto' => $tipoImpuesto->id,
@@ -170,6 +171,10 @@ class ImpuestoTransaccionService
             'fecha_fin' => $fechaFin,
         ];
         $this->log("Datos de declaración de impuesto generados: " . json_encode($data));
+        if($fechaTransaccion > $fechaFin) {
+            $this->log("La fecha de transacción es posterior a la fecha de fin de la declaración, ajustando fecha de fin.");
+            $this->generarDataDeclaracionImpuesto($tipoImpuesto, $fechaTransaccion);
+        }
         return $data;
     }
 
@@ -191,7 +196,6 @@ class ImpuestoTransaccionService
     {
         try {
             // Obtener la fecha del mes correspondiente
-            $mesesAdicionales = $mesesAdicionales - 1;
             $siguienteFecha = $this->obtenerNumeroSiguienteMes($fechaBase, $mesesAdicionales);
 
             // Extraer año y mes

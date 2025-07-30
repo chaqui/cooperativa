@@ -151,20 +151,15 @@
         </div>
 
         <div class="details">
-            @php
-                $cliente = null;
-                if ($deposito->inversion && $deposito->inversion->cliente) {
-                    $cliente = $deposito->inversion->cliente;
-                } elseif ($deposito->pago && $deposito->pago->prestamo && $deposito->pago->prestamo->cliente) {
-                    $cliente = $deposito->pago->prestamo->cliente;
-                }
-            @endphp
+
 
             @if($cliente)
                 <div class="client-info">
                     <h4>Información del Cliente</h4>
-                    <p><strong>DPI:</strong>  {{ substr($client->dpi, 0, 4) }} {{ substr($client->dpi, 4, 5) }} {{ substr($client->dpi, 9, 4) }}| <strong>Nombre:</strong> {{ $cliente->nombres }}
-                        {{ $cliente->apellidos }}</p>
+                    <p><strong>DPI:</strong> {{ substr($cliente->dpi, 0, 4) }} {{ substr($cliente->dpi, 4, 5) }}
+                        {{ substr($cliente->dpi, 9, 4) }}| <strong>Nombre:</strong> {{ $cliente->nombres }}
+                        {{ $cliente->apellidos }}
+                    </p>
                 </div>
             @endif
 
