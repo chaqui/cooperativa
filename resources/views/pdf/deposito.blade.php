@@ -156,6 +156,7 @@
             @if($cliente)
                 <div class="client-info">
                     <h4>Información del Cliente</h4>
+                    <p><strong>Codigo:</strong> {{ $cliente->codigo }}</p>
                     <p><strong>DPI:</strong> {{ substr($cliente->dpi, 0, 4) }} {{ substr($cliente->dpi, 4, 5) }}
                         {{ substr($cliente->dpi, 9, 4) }}| <strong>Nombre:</strong> {{ $cliente->nombres }}
                         {{ $cliente->apellidos }}

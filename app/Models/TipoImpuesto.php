@@ -33,7 +33,7 @@ class TipoImpuesto extends Model
     {
         return $this->declaracionImpuestos()
             ->where('fecha_fin', '<=', $fecha)
-            ->orderBy('fecha_fin', 'asc')
+            ->orderBy('fecha_fin', 'desc')
             ->first();
     }
 

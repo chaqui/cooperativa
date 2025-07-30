@@ -284,7 +284,7 @@ class ImpuestoTransaccionService
 
     private function generarFechaFin($tipoImpuesto, $fechaInicio): DateTime
     {
-        return $this->generarFecha($fechaInicio, $tipoImpuesto->mesesPlazo(), $tipoImpuesto->dia_fin);
+        return $this->generarFecha($fechaInicio, $tipoImpuesto->mesesPlazo() -1, $tipoImpuesto->dia_fin);
     }
     private function ajustarDiaAlRangoDelMes($anio, $mes, $dia)
     {
