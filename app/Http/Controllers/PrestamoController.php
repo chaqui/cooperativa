@@ -141,6 +141,7 @@ class PrestamoController extends Controller
     {
         $prestamo = $this->prestamoService->get($id);
         if (!$prestamo->estado_cuenta_path) {
+            $this->log('No se ha generado el estado de cuenta para el préstamo: ' . $id);
             return response()->json(['message' => 'No se ha generado el estado de cuenta'], 404);
         }
         return response()->download($prestamo->estado_cuenta_path);
