@@ -262,69 +262,78 @@
             @endif
         </table>
     @endif
-    @if ($client->tipoCliente != '390')
+    @if ($client->tipoCliente != '390' && ($client->referenciasLaborales && (is_array($client->referenciasLaborales) && $client->referenciasLaborales->count() > 0)))
         <h3>Referencias Laborales</h3>
         <table class="content">
             <tr>
                 <th>Nombre</th>
                 <th>Telefono</th>
+                <th>Relación</th>
             </tr>
-            @if(!empty($client->referenciasLaborales) && (is_array($client->referenciasLaborales) || is_object($client->referenciasLaborales)))
+            @if(!empty($client->referenciasLaborales) && (is_array($client->referenciasLaborales) && $client->referenciasLaborales->count() > 0))
                 @foreach ($client->referenciasLaborales as $reference)
                     <tr>
                         <td>{{ is_array($reference) ? $reference['nombre'] ?? '' : ($reference->nombre ?? '') }}</td>
                         <td>{{ is_array($reference) ? $reference['telefono'] ?? '' : ($reference->telefono ?? '') }}</td>
+                        <td>{{ is_array($reference) ? $reference['relacion'] ?? '' : ($reference->relacion ?? '') }}</td>
                     </tr>
                 @endforeach
             @endif
         </table>
-    @else
+    @elseif ($client->referenciasComerciales && (is_array($client->referenciasComerciales) && $client->referenciasComerciales->count() > 0))
         <h3>Referencias Comerciales</h3>
         <table class="content">
             <tr>
                 <th>Nombre</th>
                 <th>Telefono</th>
             </tr>
-            @if(!empty($client->referenciasComerciales) && (is_array($client->referenciasComerciales) || is_object($client->referenciasComerciales)))
+            @if(!empty($client->referenciasComerciales) && (is_array($client->referenciasComerciales) && $client->referenciasComerciales->count() > 0))
                 @foreach ($client->referenciasComerciales as $reference)
                     <tr>
                         <td>{{ is_array($reference) ? $reference['nombre'] ?? '' : ($reference->nombre ?? '') }}</td>
                         <td>{{ is_array($reference) ? $reference['telefono'] ?? '' : ($reference->telefono ?? '') }}</td>
+                        <td>{{ is_array($reference) ? $reference['relacion'] ?? '' : ($reference->relacion ?? '') }}</td>
                     </tr>
                 @endforeach
             @endif
         </table>
     @endif
+    @if ($client->referenciasPersonales && (is_array($client->referenciasPersonales) && $client->referenciasPersonales->count() > 0))
     <h3>Referencias Personales</h3>
     <table class="content">
         <tr>
             <th>Nombre</th>
             <th>Telefono</th>
         </tr>
-        @if(!empty($client->referenciasPersonales) && (is_array($client->referenciasPersonales) || is_object($client->referenciasPersonales)))
+        @if(!empty($client->referenciasPersonales) && (is_array($client->referenciasPersonales) && $client->referenciasPersonales->count() > 0))
             @foreach ($client->referenciasPersonales as $reference)
                 <tr>
                     <td>{{ is_array($reference) ? $reference['nombre'] ?? '' : ($reference->nombre ?? '') }}</td>
                     <td>{{ is_array($reference) ? $reference['telefono'] ?? '' : ($reference->telefono ?? '') }}</td>
+                    <td>{{ is_array($reference) ? $reference['relacion'] ?? '' : ($reference->relacion ?? '') }}</td>
                 </tr>
             @endforeach
         @endif
     </table>
+    @endif
+    @if ($client->referenciasFamiliares && (is_array($client->referenciasFamiliares) && $client->referenciasFamiliares->count() > 0))
     <h3>Referencias Familiares</h3>
     <table class="content">
         <tr>
             <th>Nombre</th>
             <th>Telefono</th>
         </tr>
-        @if(!empty($client->referenciasFamiliares) && (is_array($client->referenciasFamiliares) || is_object($client->referenciasFamiliares)))
+        @if(!empty($client->referenciasFamiliares) && (is_array($client->referenciasFamiliares) && $client->referenciasFamiliares->count() > 0))
             @foreach ($client->referenciasFamiliares as $reference)
                 <tr>
                     <td>{{ is_array($reference) ? $reference['nombre'] ?? '' : ($reference->nombre ?? '') }}</td>
                     <td>{{ is_array($reference) ? $reference['telefono'] ?? '' : ($reference->telefono ?? '') }}</td>
+                    <td>{{ is_array($reference) ? $reference['relacion'] ?? '' : ($reference->relacion ?? '') }}</td>
                 </tr>
             @endforeach
         @endif
     </table>
+    @endif
     <table class="content">
         <tr>
             <td style="text-align: justify;">
