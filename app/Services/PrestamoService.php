@@ -16,11 +16,12 @@ use App\Services\PropiedadService;
 use App\Services\CatologoService;
 use App\Services\UserService;
 use Exception;
+use App\Traits\ErrorHandler;
 
 
 class PrestamoService extends CodigoService
 {
-
+    use ErrorHandler;
     use Calculos;
     protected $controladorEstado;
 
@@ -62,7 +63,7 @@ class PrestamoService extends CodigoService
      * @return Prestamo_Hipotecario Instancia del préstamo creado
      * @throws \Exception Si ocurre un error durante el proceso
      */
-    public function create(array $data): Prestamo_Hipotecario
+    public function create(array $data)
     {
 
         $this->validarFrecuenciaPago($data);
@@ -110,8 +111,9 @@ class PrestamoService extends CodigoService
             return $prestamo;
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->logError("Error al crear el préstamo: " . $e->getMessage());
-            throw new \Exception("Error al crear el préstamo: " . $e->getMessage(), 0, $e);
+            $this->manejarError($e, 'create prestamo');
+            // Esta línea nunca se alcanzará porque manejarError siempre lanza excepción
+            $this->lanzarExcepcionConCodigo("Error inesperado en create");
         }
     }
 
@@ -127,13 +129,11 @@ class PrestamoService extends CodigoService
         ];
 
         if (!isset($frecuenciasValidas[$frecuenciaPago])) {
-            throw new \InvalidArgumentException("La frecuencia de pago '{$frecuenciaPago}' no es válida");
+            $this->lanzarExcepcionConCodigo("La frecuencia de pago '{$frecuenciaPago}' no es válida");
         }
 
         if ($plazo % $frecuenciasValidas[$frecuenciaPago] !== 0) {
-            throw new \InvalidArgumentException(
-                "El plazo debe ser múltiplo de {$frecuenciasValidas[$frecuenciaPago]} meses"
-            );
+            $this->lanzarExcepcionConCodigo("El plazo debe ser múltiplo de {$frecuenciasValidas[$frecuenciaPago]} meses");
         }
     }
     public function update($id, $data)
@@ -155,7 +155,7 @@ class PrestamoService extends CodigoService
         $prestamo = Prestamo_Hipotecario::find($id);
         if (!$prestamo) {
             $this->log('Prestamo no encontrado con id: ' . $id);
-            throw new Exception('Prestamo no encontrado con id: ' . $id);
+            $this->lanzarExcepcionConCodigo('Prestamo no encontrado con id: ' . $id);
         }
         $this->log('Prestamo encontrado con id: ' . $prestamo->id);
         return $prestamo;
@@ -205,7 +205,7 @@ class PrestamoService extends CodigoService
 
             if (!$cuotaApagar) {
                 $this->logError("No hay cuotas activas para el préstamo: {$prestamo->codigo}");
-                throw new Exception("No hay cuotas activas para el préstamo {$prestamo->codigo}");
+                $this->lanzarExcepcionConCodigo("No hay cuotas activas para el préstamo {$prestamo->codigo}");
             }
             $this->log('Realizando pago de cuota' . $cuotaApagar->numero_pago_prestamo . ' del prestamo : ' . $prestamo->codigo);
             $cuotaHipotecaService = app(CuotaHipotecaService::class);

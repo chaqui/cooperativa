@@ -6,9 +6,12 @@ use App\Models\Declaracion_Impuesto;
 use App\Services\TipoImpuestoService;
 use App\Traits\Loggable;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ErrorHandler;
 
 class DeclaracionImpuestoService
 {
+
+    use ErrorHandler;
     use Loggable;
 
     private TipoImpuestoService $tipoImpuestoService;
@@ -41,9 +44,7 @@ class DeclaracionImpuestoService
             $this->log("Declaración de impuesto creada con ID: " . $declaracionImpuesto->id);
             return $declaracionImpuesto;
         } catch (\Exception $e) {
-            DB::rollBack();
-            $this->logError("Error al crear declaración de impuesto: " . $e->getMessage());
-            throw new \Exception('Error al crear la declaración de impuesto: ' . $e->getMessage());
+            $this->manejarError($e);
         }
     }
 
@@ -56,28 +57,28 @@ class DeclaracionImpuestoService
     private function validarDeclaracionImpuesto($data)
     {
         if (!isset($data['id_tipo_impuesto'])) {
-            throw new \Exception('El nombre del tipo de impuesto es requerido');
+            $this->lanzarExcepcionConCodigo("El nombre del tipo de impuesto es requerido");
         }
 
         if (!isset($data['fecha_inicio'])) {
-            throw new \Exception('La fecha de inicio es requerida');
+            $this->lanzarExcepcionConCodigo("La fecha de inicio es requerida");
         }
         if (!isset($data['fecha_fin'])) {
-            throw new \Exception('La fecha de fin es requerida');
+            $this->lanzarExcepcionConCodigo("La fecha de fin es requerida");
         }
 
         $tipoImpuesto = $this->tipoImpuestoService->getTipoImpuestoById($data['id_tipo_impuesto']);
         if (!$tipoImpuesto) {
-            throw new \Exception('Tipo de impuesto no encontrado');
+            $this->lanzarExcepcionConCodigo("Tipo de impuesto no encontrado");
         }
 
         $declaracionImpuesto = $tipoImpuesto->declaracionImpuestoFecha($data['fecha_inicio']);
         if ($declaracionImpuesto) {
-            throw new \Exception('Ya existe una declaración de impuesto para este tipo en el rango de fechas especificado');
+            $this->lanzarExcepcionConCodigo("Ya existe una declaración de impuesto para este tipo en el rango de fechas especificado");
         }
         $declaracionImpuesto = $tipoImpuesto->declaracionImpuestoFecha($data['fecha_fin']);
         if ($declaracionImpuesto) {
-            throw new \Exception('Ya existe una declaración de impuesto para este tipo en el rango de fechas especificado');
+            $this->lanzarExcepcionConCodigo("Ya existe una declaración de impuesto para este tipo en el rango de fechas especificado");
         }
     }
 
@@ -123,7 +124,7 @@ class DeclaracionImpuestoService
         $this->validarDeclaracion($data);
         $declaracionImpuesto = $this->getDeclaracionImpuesto($id);
         if ($declaracionImpuesto->fecha_fin > now()) {
-            throw new \Exception('No se puede declarar un impuesto en el futuro');
+            $this->lanzarExcepcionConCodigo("No se puede declarar un impuesto en el futuro");
         }
         DB::beginTransaction();
         try {
@@ -135,9 +136,7 @@ class DeclaracionImpuestoService
             $this->log("Declaración de impuesto declarada con ID: " . $id);
             return $declaracionImpuesto;
         } catch (\Exception $e) {
-            DB::rollBack();
-            $this->logError("Error al declarar impuesto: " . $e->getMessage());
-            throw new \Exception('Error al declarar el impuesto: ' . $e->getMessage());
+            $this->manejarError($e);
         }
     }
 
@@ -154,7 +153,7 @@ class DeclaracionImpuestoService
             $declaracionImpuesto = Declaracion_Impuesto::find($id);
             if (!$declaracionImpuesto) {
                 $this->logError("Declaración de impuesto no encontrada con ID: " . $id);
-                throw new \Exception('Declaración de impuesto no encontrada');
+                $this->lanzarExcepcionConCodigo("Declaración de impuesto no encontrada");
             }
             $this->log("Declaración de impuesto encontrada con ID: {$id}");
             return $declaracionImpuesto;
@@ -173,10 +172,10 @@ class DeclaracionImpuestoService
     private function validarDeclaracion($data)
     {
         if (!isset($data['numero_formulario'])) {
-            throw new \Exception('El número de formulario es requerido');
+            $this->lanzarExcepcionConCodigo("El número de formulario es requerido");
         }
         if (!isset($data['fecha_presentacion'])) {
-            throw new \Exception('La fecha de presentación es requerida');
+            $this->lanzarExcepcionConCodigo("La fecha de presentación es requerida");
         }
     }
 
@@ -192,8 +191,7 @@ class DeclaracionImpuestoService
             $this->log("Total de declaraciones de impuesto encontradas: " . count($declaracionesImpuesto));
             return $declaracionesImpuesto;
         } catch (\Exception $e) {
-            $this->logError("Error al obtener todas las declaraciones de impuesto: " . $e->getMessage());
-            throw new \Exception('Error al obtener las declaraciones de impuesto: ' . $e->getMessage());
+            $this->manejarError($e);
         }
     }
 }

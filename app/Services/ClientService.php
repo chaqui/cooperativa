@@ -8,10 +8,13 @@ use App\Traits\Loggable;
 use Illuminate\Support\Facades\DB;
 use App\Constants\InicialesCodigo;
 use App\Models\Beneficiario;
+use App\Traits\ErrorHandler;
 
 class ClientService extends CodigoService
 {
     use Loggable;
+
+    use ErrorHandler;
     private $referenceService;
 
     private $pdfService;
@@ -60,7 +63,7 @@ class ClientService extends CodigoService
                 $this->log('Procesando ' . count($data['beneficiarios']) . ' beneficiarios');
                 $totalPorcentaje = array_sum(array_column($data['beneficiarios'], 'porcentaje'));
                 if ($totalPorcentaje !== 100) {
-                    throw new \Exception('La suma de los porcentajes de los beneficiarios debe ser igual a 100.');
+                    $this->lanzarExcepcionConCodigo("La suma de los porcentajes de los beneficiarios debe ser igual a 100.");
                 }
                 $this->addBeneficiarios($client, $data['beneficiarios']);
             } else {
@@ -72,10 +75,7 @@ class ClientService extends CodigoService
 
             return $client;
         } catch (\Exception $e) {
-            DB::rollBack();
-            $this->logError('Error al crear cliente: ' . $e->getMessage());
-
-            throw new \Exception('No se pudo crear el cliente: ' . $e->getMessage(), 0, $e);
+            $this->manejarError($e);
         }
     }
 
@@ -137,9 +137,7 @@ class ClientService extends CodigoService
 
             return $client;
         } catch (\Exception $e) {
-            DB::rollBack();
-            $this->logError('Error al actualizar cliente: ' . $e->getMessage());
-            throw new \Exception('No se pudo actualizar el cliente: ' . $e->getMessage(), 0, $e);
+            $this->manejarError($e);
         }
     }
 
@@ -204,7 +202,7 @@ class ClientService extends CodigoService
     {
         $totalPorcentaje = array_sum(array_column($beneficiarios, 'porcentaje'));
         if ($totalPorcentaje !== 100) {
-            throw new \Exception('La suma de los porcentajes de los beneficiarios debe ser igual a 100.');
+            $this->lanzarExcepcionConCodigo("La suma de los porcentajes de los beneficiarios debe ser igual a 100.");
         }
     }
 
@@ -348,7 +346,7 @@ class ClientService extends CodigoService
         return $this->getDataByClient($client);
     }
 
-    private function getDataByClient($client): Client
+    private function getDataByClient($client)
     {
         $this->log("Iniciando enriquecimiento de datos para cliente #{$client->id}");
 
@@ -411,8 +409,7 @@ class ClientService extends CodigoService
             $this->log("Datos del cliente enriquecidos correctamente");
             return $client;
         } catch (\Exception $e) {
-            $this->logError("Error al enriquecer datos del cliente: " . $e->getMessage());
-            throw new \Exception("Error al procesar datos del cliente: " . $e->getMessage(), 0, $e);
+            $this->manejarError($e);
         }
     }
 }

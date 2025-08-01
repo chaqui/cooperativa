@@ -11,10 +11,11 @@ use Illuminate\Support\Facades\DB;
 use App\Constants\InicialesCodigo;
 
 use App\Models\Inversion;
+use App\Traits\ErrorHandler;
 
 class InversionService extends CodigoService
 {
-
+    use ErrorHandler;
     use Loggable;
     private  CuotaInversionService $cuotaInversionService;
 
@@ -38,7 +39,7 @@ class InversionService extends CodigoService
         // Validar que el ID sea un valor válido
         if (empty($id) || (is_numeric($id) && $id <= 0)) {
             $this->logError("ID de inversión inválido: {$id}");
-            throw new \InvalidArgumentException("El ID de la inversión debe ser un valor positivo");
+            $this->lanzarExcepcionConCodigo("El ID de la inversión debe ser un valor positivo");
         }
         try {
             // Preparar consulta base
@@ -93,8 +94,9 @@ class InversionService extends CodigoService
             return $inversion;
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->logError("Error al crear la inversión: " . $e->getMessage());
-            throw new \Exception("Error al crear la inversión: " . $e->getMessage(), 0, $e);
+            $this->manejarError($e, 'createInversion');
+            // Esta línea nunca se alcanzará porque manejarError siempre lanza excepción
+            throw new \Exception("Error inesperado en createInversion");
         }
     }
 
@@ -110,25 +112,25 @@ class InversionService extends CodigoService
     {
         // Validar los datos de la inversión aquí
         if ($inversionData['monto'] <= 0) {
-            throw new \InvalidArgumentException("El monto de la inversión debe ser un número positivo");
+            $this->lanzarExcepcionConCodigo("El monto de la inversión debe ser un número positivo");
         }
         if ($inversionData['interes'] <= 0) {
-            throw new \InvalidArgumentException("El interés de la inversión debe ser un número positivo");
+            $this->lanzarExcepcionConCodigo("El interés de la inversión debe ser un número positivo");
         }
         if ($inversionData['plazo'] <= 0) {
-            throw new \InvalidArgumentException("El plazo de la inversión debe ser un número positivo");
+            $this->lanzarExcepcionConCodigo("El plazo de la inversión debe ser un número positivo");
         }
 
         $beneficiarios = $inversionData['beneficiarios'] ?? [];
         if (empty($beneficiarios) || !is_array($beneficiarios)) {
-            throw new \InvalidArgumentException("Los beneficiarios deben ser un arreglo");
+            $this->lanzarExcepcionConCodigo("Los beneficiarios deben ser un arreglo");
         }
         $totalPorcentaje = 0;
         foreach ($beneficiarios as $beneficiario) {
             $totalPorcentaje += $beneficiario['porcentaje'];
         }
         if ($totalPorcentaje != 100) {
-            throw new \InvalidArgumentException("El total de los porcentajes de los beneficiarios debe ser 100");
+            $this->lanzarExcepcionConCodigo("El total de los porcentajes de los beneficiarios debe ser 100");
         }
     }
 
@@ -193,7 +195,7 @@ class InversionService extends CodigoService
     public function getPdf($id)
     {
         if ($id <= 0) {
-            throw new \InvalidArgumentException("El ID de la inversion debe ser un número entero positivo");
+            $this->lanzarExcepcionConCodigo("El ID de la inversion debe ser un número entero positivo");
         }
         $this->log("Iniciando generación de PDF para la inversion #{$id}");
         $inversion = $this->getInversion($id);

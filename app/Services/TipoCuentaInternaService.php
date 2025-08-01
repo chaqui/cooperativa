@@ -6,10 +6,11 @@ namespace App\Services;
 use App\Models\TipoCuentaInterna;
 use App\Traits\Loggable;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ErrorHandler;
 
 class TipoCuentaInternaService
 {
-
+    use ErrorHandler;
     use Loggable;
 
     private $cuentaInternaService;
@@ -40,8 +41,7 @@ class TipoCuentaInternaService
             $this->logError("Tipo de cuenta interna no encontrado con ID: $id");
             throw $e; // Reenviar la excepción original para mantener el comportamiento esperado
         } catch (\Exception $e) {
-            $this->logError("Error al buscar tipo de cuenta interna ID $id: " . $e->getMessage());
-            throw new \Exception("No se pudo obtener el tipo de cuenta interna: " . $e->getMessage(), 0, $e);
+            $this->manejarError($e);
         }
     }
 

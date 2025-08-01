@@ -8,6 +8,23 @@
         $data = file_get_contents($fullPath);
         return 'data:image/' . $type . ';base64,' . base64_encode($data);
     }
+
+    function hasReferences($references)
+    {
+        if (empty($references)) {
+            return false;
+        }
+
+        if (is_array($references)) {
+            return count($references) > 0;
+        }
+
+        if (is_object($references) && method_exists($references, 'count')) {
+            return $references->count() > 0;
+        }
+
+        return false;
+    }
 @endphp
 
 <!DOCTYPE html>
@@ -264,9 +281,9 @@
         </table>
         <br />
     @endif
-    @if($prestamo->cliente && ($prestamo->cliente->referenciasLaborales->count() > 0 || $prestamo->cliente->referenciasComerciales->count() > 0 || $prestamo->cliente->referenciasPersonales->count() > 0 || $prestamo->cliente->referenciasFamiliares->count() > 0))
+    @if($prestamo->cliente && (hasReferences($prestamo->cliente->referenciasLaborales) || hasReferences($prestamo->cliente->referenciasComerciales) || hasReferences($prestamo->cliente->referenciasPersonales) || hasReferences($prestamo->cliente->referenciasFamiliares)))
         <h2>III. REFERENCIAS</h2>
-        @if ($prestamo->cliente->tipoCliente != '390' && $prestamo->cliente->referenciasLaborales->count() > 0)
+        @if ($prestamo->cliente->tipoCliente != '390' && hasReferences($prestamo->cliente->referenciasLaborales))
             <h3>Referencias Laborales</h3>
             <table class="content">
                 <tr>
@@ -282,7 +299,7 @@
                     @endif
                 @endforeach
             </table>
-        @elseif($prestamo->cliente->tipoCliente == '390' && $prestamo->cliente->referenciasComerciales->count() > 0)
+        @elseif($prestamo->cliente->tipoCliente == '390' && hasReferences($prestamo->cliente->referenciasComerciales))
             <h3>Referencias Comerciales</h3>
             <table class="content">
                 <tr>
@@ -300,7 +317,7 @@
             </table>
         @endif
 
-        @if($prestamo->cliente->referenciasPersonales->count() > 0)
+        @if(hasReferences($prestamo->cliente->referenciasPersonales))
             <h3>Referencias Personales</h3>
             <table class="content">
                 <tr>
@@ -318,7 +335,7 @@
             </table>
         @endif
 
-        @if($prestamo->cliente->referenciasFamiliares->count() > 0)
+        @if(hasReferences($prestamo->cliente->referenciasFamiliares))
             <h3>Referencias Familiares</h3>
             <table class="content">
                 <tr>

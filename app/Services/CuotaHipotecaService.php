@@ -7,10 +7,12 @@ use App\Models\Prestamo_Hipotecario;
 use App\Models\Pago;
 use App\Traits\Loggable;
 use Illuminate\Support\Facades\DB;
-use PDO;
+use App\Services\DepositoService;
+use App\Traits\ErrorHandler;
 
 class CuotaHipotecaService extends CuotaService
 {
+     use ErrorHandler;
 
     use Loggable;
 
@@ -147,20 +149,20 @@ class CuotaHipotecaService extends CuotaService
     {
         $this->log('Validando pago');
         if (!isset($data['monto']) || $data['monto'] <= 0) {
-            throw new \InvalidArgumentException('El monto es requerido y debe ser mayor que cero');
+            $this->lanzarExcepcionConCodigo("El monto es requerido y debe ser mayor que cero");
         }
         if (!isset($data['tipo_documento']) || empty($data['tipo_documento'])) {
-            throw new \InvalidArgumentException('El tipo de documento es requerido');
+            $this->lanzarExcepcionConCodigo("El tipo de documento es requerido");
         }
         if (!isset($data['no_documento']) || empty($data['no_documento'])) {
-            throw new \InvalidArgumentException('El número de documento es requerido');
+            $this->lanzarExcepcionConCodigo("El número de documento es requerido");
         }
         if (!isset($data['fecha_documento']) || empty($data['fecha_documento'])) {
-            throw new \InvalidArgumentException('La fecha del documento es requerida');
+            $this->lanzarExcepcionConCodigo("La fecha del documento es requerida");
         }
 
         if (new \DateTime($data['fecha_documento']) > new \DateTime()) {
-            throw new \InvalidArgumentException('La fecha del documento no puede ser mayor a la fecha actual');
+            $this->lanzarExcepcionConCodigo("La fecha del documento no puede ser mayor a la fecha actual");
         }
     }
 
@@ -321,11 +323,11 @@ class CuotaHipotecaService extends CuotaService
     private function validarDatosPago(Prestamo_Hipotecario $prestamo, int $plazo): void
     {
         if ($prestamo->cuota <= 0) {
-            throw new \InvalidArgumentException("La cuota debe ser mayor que cero");
+            $this->lanzarExcepcionConCodigo("La cuota debe ser mayor que cero");
         }
 
         if ($plazo <= 0) {
-            throw new \InvalidArgumentException("El plazo debe ser mayor que cero");
+            $this->lanzarExcepcionConCodigo("El plazo debe ser mayor que cero");
         }
     }
 
@@ -474,7 +476,7 @@ class CuotaHipotecaService extends CuotaService
 
         // Validar fecha
         if (!$fecha) {
-            throw new \InvalidArgumentException("La fecha de inicio del préstamo es requerida");
+            $this->lanzarExcepcionConCodigo("La fecha de inicio del préstamo es requerida");
         }
 
         // Calcular el interés diario y multiplicarlo por los días restantes del mes
@@ -514,12 +516,12 @@ class CuotaHipotecaService extends CuotaService
         // Validar que los pagos anteriores estén realizados
         $pagoAnterior = $pago->pagoAnterior();
         if ($pagoAnterior && !$pagoAnterior->realizado) {
-            throw new \Exception('No se puede realizar este pago porque el pago anterior no ha sido completado.');
+            $this->lanzarExcepcionConCodigo("No se puede realizar este pago porque el pago anterior no ha sido completado.");
         }
 
         // Validar que el pago no haya sido realizado
         if ($pago->realizado) {
-            throw new \Exception('El pago ya ha sido realizado');
+            $this->lanzarExcepcionConCodigo("El pago ya ha sido realizado");
         }
 
         // Validar que el saldo sea mayor que cero
@@ -527,7 +529,7 @@ class CuotaHipotecaService extends CuotaService
             $pago->realizado = true;
             $pago->save();
             DB::commit();
-            throw new \Exception('El saldo ya es cero');
+            $this->lanzarExcepcionConCodigo("El saldo ya es cero");
         }
     }
 
@@ -715,13 +717,13 @@ class CuotaHipotecaService extends CuotaService
         // Protección contra recursión excesiva
         if ($nivelActual >= $maxNivel) {
             $this->logError("Se alcanzó el límite de recursión ({$maxNivel}) al eliminar pagos");
-            throw new \Exception("Profundidad de recursión excesiva al eliminar pagos");
+            $this->lanzarExcepcionConCodigo("Profundidad de recursión excesiva al eliminar pagos");
         }
 
         // Verificar que el pago no esté realizado
         if ($pago->realizado) {
             $this->logError("Intento de eliminar pago realizado #{$pago->id}");
-            throw new \Exception("No se puede eliminar un pago ya realizado (#{$pago->id})");
+            $this->lanzarExcepcionConCodigo("No se puede eliminar un pago ya realizado (#{$pago->id})");
         }
 
 
@@ -795,7 +797,7 @@ class CuotaHipotecaService extends CuotaService
 
         // Evitar división por cero o cálculos incorrectos
         if ($tasaInteresMensual <= 0 || $plazo <= 0) {
-            throw new \InvalidArgumentException("La tasa de interés y el plazo deben ser mayores a cero");
+            $this->lanzarExcepcionConCodigo("La tasa de interés y el plazo deben ser mayores a cero");
         }
 
         // Fórmula de amortización francesa: C = P * (r * (1 + r)^n) / ((1 + r)^n - 1)

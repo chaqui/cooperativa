@@ -6,6 +6,7 @@ use App\Traits\Loggable;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Traits\ErrorHandler;
 
 class CatologoService
 {

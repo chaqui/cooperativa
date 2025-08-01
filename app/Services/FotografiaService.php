@@ -4,11 +4,13 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Storage;
 use App\Traits\Loggable;
+use App\Traits\ErrorHandler;
 
 
 class FotografiaService
 {
 
+    use ErrorHandler;
     use Loggable;
 
 
@@ -23,7 +25,7 @@ class FotografiaService
     {
 
         if (!$file->isValid() || !$file->isFile() || !in_array($file->extension(), ['jpg', 'jpeg', 'png', 'gif'])) {
-            throw new \Exception('Invalid file type');
+            $this->lanzarExcepcionConCodigo("Invalid file type");
         }
 
         $filename = $idCliente . '_' . time() . '.' . $file->extension();
@@ -57,6 +59,6 @@ class FotografiaService
             return Storage::disk('public')->get($path);
         }
 
-        throw new \Exception('File not found');
+        $this->lanzarExcepcionConCodigo("File not found");
     }
 }

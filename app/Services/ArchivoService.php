@@ -1,12 +1,13 @@
-<?
+<?php
 
 namespace App\Services;
 
 use App\Traits\Loggable;
+use App\Traits\ErrorHandler;
 
 class ArchivoService
 {
-    use Loggable;
+    use Loggable, ErrorHandler;
     /**
      * Guarda un archivo en el sistema de almacenamiento
      *
@@ -44,24 +45,43 @@ class ArchivoService
                 // Si el archivo es una instancia de UploadedFile
                 $file->move($fullPath, $fileName);
             } else {
-                throw new \Exception("El tipo de archivo no es válido. Debe ser un string o una instancia de UploadedFile.");
+                $this->lanzarExcepcionConCodigo("El tipo de archivo no es válido. Debe ser un string o una instancia de UploadedFile.");
             }
 
             $this->log("Archivo guardado exitosamente en: {$filePath}");
             return $filePath;
         } catch (\Exception $e) {
-            $this->logError("Error al guardar el archivo: " . $e->getMessage());
-            throw new \Exception("Error al guardar el archivo: " . $e->getMessage(), 0, $e);
+            if (strpos($e->getMessage(), 'ARC-') === 0) {
+                // Si ya es una excepción con código de error, la relanzamos
+                throw $e;
+            } else {
+                // Si es una excepción original, la envolvemos con código de error
+                $this->lanzarExcepcionConCodigo("Error al guardar el archivo: " . $e->getMessage(), $e);
+            }
         }
+
+        // Esta línea nunca se ejecutará, pero satisface al analizador estático
+        return '';
     }
 
-    public function obtenerArchivo($path)
+    /**
+     * Obtiene el contenido de un archivo
+     *
+     * @param string $path Ruta del archivo
+     * @return string Contenido del archivo
+     * @throws \Exception Si el archivo no existe
+     */
+    public function obtenerArchivo($path): string
     {
+        $this->log("Obteniendo archivo desde: {$path}");
 
         if (file_exists($path)) {
             return file_get_contents($path);
         } else {
-            throw new \Exception('El archivo no existe');
+            $this->lanzarExcepcionConCodigo("El archivo no existe en la ruta especificada: {$path}");
         }
+
+        // Esta línea nunca se ejecutará, pero satisface al analizador estático
+        return '';
     }
 }

@@ -10,6 +10,7 @@ use PhpOffice\PhpSpreadsheet\Style\Color;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use App\EstadosPrestamo\ControladorEstado;
 use Carbon\Carbon;
+use App\Traits\ErrorHandler;
 
 
 

@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace App\Services;
 
@@ -6,9 +6,11 @@ namespace App\Services;
 use App\Models\Prestamo_Hipotecario;
 use App\EstadosPrestamo\ControladorEstado;
 use App\Constants\Orientacion;
+use App\Traits\ErrorHandler;
 
 class PrestamoPdfService extends PrestamoService
 {
+    use ErrorHandler;
 
     private $pdfService;
 
@@ -64,8 +66,7 @@ class PrestamoPdfService extends PrestamoService
             $this->log("PDF del estado de cuenta generado con éxito para el préstamo: {$prestamo->codigo}");
             return $pdf;
         } catch (\Exception $e) {
-            $this->logError("Error al generar el PDF del estado de cuenta: " . $e->getMessage());
-            throw new \Exception("Error al generar el PDF del estado de cuenta: " . $e->getMessage(), 0, $e);
+            $this->manejarError($e);
         }
     }
 
@@ -88,25 +89,42 @@ class PrestamoPdfService extends PrestamoService
 
     public function generatePdf($id, $orientation = Orientacion::PORTRAIT)
     {
-        $orientation = $this->validateOrientation($orientation);
-        $this->log('Generando PDF del prestamo con id: ' . $id . ' en orientación: ' . $orientation);
-        $prestamo = $this->get($id);
-        $prestamo = $this->getDataForPDF($prestamo);
-        $prestamo->cliente = $this->clientService->getDataForPDF($prestamo->dpi_cliente);
-        $prestamo->propiedad = $this->propiedadService->getDataPDF($prestamo->propiedad);
-        if ($prestamo->fiador_dpi != null) {
-            $prestamo->fiador = $this->clientService->getDataForPDF($prestamo->fiador_dpi);
+        try {
+            $orientation = $this->validateOrientation($orientation);
+            $this->log('Generando PDF del prestamo con id: ' . $id . ' en orientación: ' . $orientation);
+
+            $prestamo = $this->get($id);
+            $prestamo = $this->getDataForPDF($prestamo);
+            $prestamo->cliente = $this->clientService->getDataForPDF($prestamo->dpi_cliente);
+            $prestamo->propiedad = $this->propiedadService->getDataPDF($prestamo->propiedad);
+
+            if ($prestamo->fiador_dpi != null) {
+                $prestamo->fiador = $this->clientService->getDataForPDF($prestamo->fiador_dpi);
+            }
+
+            $html = view('pdf.prestamo', data: compact('prestamo'))->render();
+            $pdf = $this->pdfService->generatePdf($html, $orientation);
+
+            $this->log("PDF del préstamo generado con éxito para el préstamo: {$prestamo->codigo}");
+            return $pdf;
+        } catch (\Exception $e) {
+            $this->manejarError($e, 'generatePdf');
         }
-        $html = view('pdf.prestamo', data: compact('prestamo'))->render();
-        $pdf = $this->pdfService->generatePdf($html, $orientation);
-        return $pdf;
     }
 
     private function getDataForPDF($prestamo)
     {
-        $prestamo->nombreDestino = $this->catalogoService->getCatalogo($prestamo->destino)['value'] ?? 'No especificado';
-        $prestamo->nombreFrecuenciaPago = $this->catalogoService->getCatalogo($prestamo->frecuencia_pago)['value'] ?? 'No especificado';
-        return $prestamo;
+        try {
+            $prestamo->nombreDestino = $this->catalogoService->getCatalogo($prestamo->destino)['value'] ?? 'No especificado';
+            $prestamo->nombreFrecuenciaPago = $this->catalogoService->getCatalogo($prestamo->frecuencia_pago)['value'] ?? 'No especificado';
+            return $prestamo;
+        } catch (\Exception $e) {
+            $this->log("Error al obtener datos del catálogo: " . $e->getMessage());
+            // Asignar valores por defecto en caso de error
+            $prestamo->nombreDestino = 'No especificado';
+            $prestamo->nombreFrecuenciaPago = 'No especificado';
+            return $prestamo;
+        }
     }
 
     /**
@@ -114,9 +132,14 @@ class PrestamoPdfService extends PrestamoService
      *
      * @param string $orientation Orientación solicitada
      * @return string Orientación válida
+     * @throws \Exception Si la orientación es null o inválida de manera crítica
      */
     private function validateOrientation($orientation)
     {
+        if ($orientation === null) {
+            $this->lanzarExcepcionConCodigo("La orientación no puede ser null");
+        }
+
         $orientation = strtolower($orientation);
 
         if (!Orientacion::isValid($orientation)) {

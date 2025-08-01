@@ -5,9 +5,11 @@ namespace App\Services;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 use App\Models\Role;
+use App\Traits\ErrorHandler;
 
 class RoleService
 {
+    use ErrorHandler;
     public function createRole($data)
     {
         Role::create($data);
@@ -36,7 +38,7 @@ class RoleService
         if ($role) {
             return $role;
         }
-        throw new ModelNotFoundException('Role not found');
+        $this->lanzarExcepcionConCodigo("Role not found with ID: {$id}");
     }
 
 

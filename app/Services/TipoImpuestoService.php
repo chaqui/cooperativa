@@ -9,9 +9,11 @@ use App\Models\TipoImpuesto;
 
 use App\Models\Declaracion_Impuesto;
 use App\Traits\Loggable;
+use App\Traits\ErrorHandler;
 
 class TipoImpuestoService
 {
+    use ErrorHandler;
     use Loggable;
 
     /**
@@ -30,8 +32,7 @@ class TipoImpuestoService
 
             return $query->where('nombre', $nombre)->first();
         } catch (\Exception $e) {
-            $this->logError("Error al obtener tipo de impuesto: " . $e->getMessage());
-            throw new \Exception("Error al obtener el tipo de impuesto: " . $e->getMessage(), 0, $e);
+            $this->manejarError($e);
         }
     }
     public function getTipoImpuestoById($id)
@@ -39,7 +40,7 @@ class TipoImpuestoService
         // Validar que el ID sea válido
         if (empty($id) || !is_numeric($id) || $id <= 0) {
             $this->logError("ID de tipo de impuesto inválido: {$id}");
-            throw new \InvalidArgumentException("El ID del tipo de impuesto debe ser un valor numérico positivo");
+            $this->lanzarExcepcionConCodigo("El ID del tipo de impuesto debe ser un valor numérico positivo");
         }
 
         try {
@@ -84,8 +85,7 @@ class TipoImpuestoService
 
             return $tiposImpuestos;
         } catch (\Exception $e) {
-            $this->logError("Error al obtener tipos de impuestos: " . $e->getMessage());
-            throw new \Exception("Error al obtener los tipos de impuestos: " . $e->getMessage(), 0, $e);
+            $this->manejarError($e);
         }
     }
 
@@ -104,8 +104,7 @@ class TipoImpuestoService
             $this->log("Total de declaraciones de impuesto encontradas: " . count($declaraciones));
             return $declaraciones;
         } catch (\Exception $e) {
-            $this->logError("Error al obtener declaraciones de impuesto: " . $e->getMessage());
-            throw new \Exception("Error al obtener las declaraciones de impuesto: " . $e->getMessage(), 0, $e);
+            $this->manejarError($e);
         }
     }
 }

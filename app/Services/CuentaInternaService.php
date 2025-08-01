@@ -5,10 +5,12 @@ namespace App\Services;
 use App\Models\Cuenta_Interna;
 use App\Traits\Loggable;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ErrorHandler;
 
 class CuentaInternaService
 {
 
+    use ErrorHandler;
     use Loggable;
     /**
      * Obtiene todas las cuentas internas
@@ -62,12 +64,7 @@ class CuentaInternaService
 
             return $cuenta;
         } catch (\Exception $e) {
-            DB::rollBack();
-
-            // Registrar el error
-            $this->logError("Error al crear registro en cuenta interna: " . $e->getMessage());
-
-            throw new \Exception("No se pudo crear el registro en la cuenta interna: " . $e->getMessage());
+            $this->manejarError($e);
         }
     }
 
@@ -99,12 +96,12 @@ class CuentaInternaService
 
         // Validar descripción
         if (trim($data['descripcion']) === '') {
-            throw new \InvalidArgumentException("La descripción no puede estar vacía");
+            $this->lanzarExcepcionConCodigo("La descripción no puede estar vacía");
         }
 
         // Validar tipo_cuenta_interna_id
         if (!is_numeric($data['tipo_cuenta_interna_id']) || (int) $data['tipo_cuenta_interna_id'] <= 0) {
-            throw new \InvalidArgumentException("El tipo de cuenta interna debe ser un valor numérico positivo");
+            $this->lanzarExcepcionConCodigo("El tipo de cuenta interna debe ser un valor numérico positivo");
         }
 
         // Validar campos opcionales numéricos
@@ -118,7 +115,7 @@ class CuentaInternaService
 
         // Validar fecha si está presente
         if (isset($data['fecha']) && !$this->esFormatoFechaValido($data['fecha'])) {
-            throw new \InvalidArgumentException("El formato de fecha proporcionado no es válido");
+            $this->lanzarExcepcionConCodigo("El formato de fecha proporcionado no es válido");
         }
     }
 

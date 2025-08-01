@@ -8,10 +8,12 @@ use App\Models\Pago;
 use App\Traits\Loggable;
 use App\Constants\TipoImpuesto;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ErrorHandler;
 
 class DepositoService
 {
 
+     use ErrorHandler;
     use Loggable;
 
     private $pdfService;
@@ -58,7 +60,7 @@ class DepositoService
             $this->depositar($deposito->id, $datos);
         }
         if (!$deposito instanceof Deposito) {
-            throw new \Exception('Unexpected return type: Expected instance of App\Models\Deposito.');
+            $this->lanzarExcepcionConCodigo("Unexpected return type: Expected instance of App\Models\Deposito.");
         }
         return $deposito;
     }
@@ -128,7 +130,7 @@ class DepositoService
 
             // Verificar si ya está realizado
             if ($deposito->realizado) {
-                throw new \Exception('El depósito ya ha sido realizado.');
+                $this->lanzarExcepcionConCodigo("El depósito ya ha sido realizado.");
             }
 
             // Actualizar datos del depósito
@@ -192,8 +194,7 @@ class DepositoService
             $estadoData['tipo_documento'] = $deposito->tipo_documento;
             $inversionService->cambiarEstado($deposito->id_inversion, $estadoData);
         } catch (\Exception $e) {
-            DB::rollBack();
-            throw new \Exception('Error al actualizar el estado de la inversión: ' . $e->getMessage());
+            $this->manejarError($e);
         }
     }
 
@@ -245,8 +246,7 @@ class DepositoService
                 $idCuenta
             ));
         } catch (\Exception $e) {
-            $this->logError('Error al generar impuestos: ' . $e->getMessage());
-            throw new \Exception('Error al generar impuestos: ' . $e->getMessage(), 0, $e);
+            $this->manejarError($e);
         }
     }
 
@@ -277,7 +277,7 @@ class DepositoService
         $this->log("Buscando depósito con ID: {$id}");
         $deposito = Deposito::find($id);
         if (!$deposito) {
-            throw new \Exception('Depósito no encontrado');
+            $this->lanzarExcepcionConCodigo("Depósito no encontrado");
         }
         return $deposito;
     }
@@ -328,19 +328,19 @@ class DepositoService
     {
         // Validar que exista el monto y sea válido
         if (!isset($datos['monto'])) {
-            throw new \InvalidArgumentException("El monto es requerido para crear un depósito");
+            $this->lanzarExcepcionConCodigo("El monto es requerido para crear un depósito");
         }
 
         if (!is_numeric($datos['monto']) || $datos['monto'] <= 0) {
-            throw new \InvalidArgumentException("El monto debe ser un valor numérico mayor a cero");
+            $this->lanzarExcepcionConCodigo("El monto debe ser un valor numérico mayor a cero");
         }
 
         // Validar que exista al menos una relación (inversión o pago)
         if (!isset($datos['id_inversion']) && !isset($datos['id_pago'])) {
-            throw new \InvalidArgumentException("El depósito debe estar asociado a una inversión o un pago");
+            $this->lanzarExcepcionConCodigo("El depósito debe estar asociado a una inversión o un pago");
         }
         if (!isset($datos['motivo']) && empty($datos['motivo'])) {
-            throw new \InvalidArgumentException("El motivo es requerido");
+            $this->lanzarExcepcionConCodigo("El motivo es requerido");
         }
     }
 

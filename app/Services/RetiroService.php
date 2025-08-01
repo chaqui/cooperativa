@@ -6,10 +6,11 @@ use App\Constants\EstadoPrestamo;
 use App\Models\Retiro;
 use App\Traits\Loggable;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ErrorHandler;
 
 class RetiroService
 {
-
+ use ErrorHandler;
     use Loggable;
     private CuentaInternaService $cuentaInternaService;
 
@@ -106,7 +107,7 @@ class RetiroService
             // Verificar si ya está realizado
             if ($retiro->realizado) {
                 $this->logError("Intento de realizar un retiro ya procesado #$id");
-                throw new \Exception('El retiro ya ha sido realizado.');
+                $this->lanzarExcepcionConCodigo("El retiro ya ha sido realizado.");
             }
 
             // Actualizar datos del retiro
@@ -166,8 +167,7 @@ class RetiroService
             $prestamoService->cambiarEstado($retiro->id_prestamo, $estadoData);
             $this->log("Estado de préstamo actualizado correctamente");
         } catch (\Exception $e) {
-            $this->logError("Error al actualizar estado del préstamo: " . $e->getMessage());
-            throw new \Exception("El retiro se procesó, pero hubo un error al actualizar el préstamo: " . $e->getMessage());
+            $this->manejarError($e);
         }
     }
 
@@ -220,7 +220,7 @@ class RetiroService
         // Validar que el ID sea válido
         if (empty($id) || !is_numeric($id) || $id <= 0) {
             $this->logError("ID de retiro inválido: {$id}");
-            throw new \InvalidArgumentException("El ID del retiro debe ser un valor numérico positivo");
+            $this->lanzarExcepcionConCodigo("El ID del retiro debe ser un valor numérico positivo");
         }
         try {
             $this->log("Buscando retiro con ID: {$id}");
@@ -297,27 +297,27 @@ class RetiroService
     {
         // Validar monto
         if (!isset($data['monto'])) {
-            throw new \InvalidArgumentException("El monto es requerido para crear un retiro");
+            $this->lanzarExcepcionConCodigo("El monto es requerido para crear un retiro");
         }
 
         if (!is_numeric($data['monto']) || $data['monto'] <= 0) {
-            throw new \InvalidArgumentException("El monto debe ser un valor numérico mayor a cero");
+            $this->lanzarExcepcionConCodigo("El monto debe ser un valor numérico mayor a cero");
         }
 
         // Validar tipo de cuenta interna
         if (!isset($data['id_cuenta'])) {
-            throw new \InvalidArgumentException("El tipo de cuenta interna es requerido");
+            $this->lanzarExcepcionConCodigo("El tipo de cuenta interna es requerido");
         }
 
         if ($data['id_prestamo'] != null && !isset($data['motivo']) && empty($data['motivo'])) {
-            throw new \InvalidArgumentException("El motivo es requerido para crear un retiro");
+            $this->lanzarExcepcionConCodigo("El motivo es requerido para crear un retiro");
         }
 
         try {
             $cuenta = $this->tipoCuentaInternaService->getById($data['id_cuenta']);
 
             if (!$cuenta) {
-                throw new \InvalidArgumentException("El tipo de cuenta interna especificado no existe");
+                $this->lanzarExcepcionConCodigo("El tipo de cuenta interna especificado no existe");
             }
         } catch (\Throwable $e) {
             throw new \InvalidArgumentException("Error al verificar el tipo de cuenta: " . $e->getMessage());

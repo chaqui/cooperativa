@@ -12,11 +12,13 @@ use App\Traits\Loggable;
 use DateTime;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ErrorHandler;
 
 class ImpuestoTransaccionService
 {
     use Loggable;
 
+     use ErrorHandler;
     private TipoImpuestoService $tipoImpuestoService;
     private DeclaracionImpuestoService $declaracionImpuestoService;
 
@@ -41,7 +43,7 @@ class ImpuestoTransaccionService
             // Obtener el tipo de impuesto
             $tipoImpuesto = $this->tipoImpuestoService->getTipoImpustoByNombre($data['tipo_impuesto']);
             if (!$tipoImpuesto) {
-                throw new \Exception('El tipo de impuesto no existe');
+                $this->lanzarExcepcionConCodigo("El tipo de impuesto no existe");
             }
 
             $this->log("Tipo de impuesto encontrado: " . $tipoImpuesto->nombre);
@@ -86,14 +88,8 @@ class ImpuestoTransaccionService
             DB::commit();
 
             return $transaccion;
-        } catch (Exception $e) {
-            // Revertir la transacción en caso de error
-            DB::rollBack();
-
-            // Registrar el error
-            $this->logError("Error al crear la transacción de impuesto: " . $e->getMessage());
-
-            throw new \Exception('Error al crear la transacción de impuesto: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            $this->manejarError($e);
         }
     }
 
@@ -123,20 +119,20 @@ class ImpuestoTransaccionService
     private function validate($data)
     {
         if (!isset($data['tipo_impuesto'])) {
-            throw new Exception('El tipo de impuesto es requerido');
+            $this->lanzarExcepcionConCodigo("El tipo de impuesto es requerido");
         }
         if ($data['monto_transaccion'] <= 0.001) {
-            throw new Exception('El monto de la transacción debe ser mayor a cero');
+            $this->lanzarExcepcionConCodigo("El monto de la transacción debe ser mayor a cero");
         }
 
         if (!isset($data['fecha_transaccion'])) {
-            throw new Exception('La fecha de la transacción es requerida');
+            $this->lanzarExcepcionConCodigo("La fecha de la transacción es requerida");
         }
         if (!isset($data['descripcion'])) {
-            throw new Exception('La descripción de la transacción es requerida');
+            $this->lanzarExcepcionConCodigo("La descripción de la transacción es requerida");
         }
         if (!isset($data['id_cuenta'])) {
-            throw new Exception('El id de la cuenta es requerido');
+            $this->lanzarExcepcionConCodigo("El id de la cuenta es requerido");
         }
     }
 
@@ -147,7 +143,7 @@ class ImpuestoTransaccionService
         $data = $this->generarDataDeclaracionImpuesto($tipoImpuesto, $fechaTransaccion);
         $declaracionImpuesto = $this->declaracionImpuestoService->createDeclaracionImpuesto($data);
         if (!$declaracionImpuesto) {
-            throw new \Exception('Error al crear la declaración de impuesto');
+            $this->lanzarExcepcionConCodigo("Error al crear la declaración de impuesto");
         }
         return $declaracionImpuesto;
     }
@@ -208,8 +204,7 @@ class ImpuestoTransaccionService
             // Generar la fecha final
             return new DateTime("{$anio}-{$mes}-{$diaAjustado}");
         } catch (\Exception $e) {
-            $this->logError("Error al generar la fecha: " . $e->getMessage());
-            throw new \Exception("Error al generar la fecha: " . $e->getMessage());
+            $this->manejarError($e);
         }
     }
 
@@ -228,8 +223,7 @@ class ImpuestoTransaccionService
             // Generar la fecha inicial
             return new DateTime("{$anio}-{$mesInicial}-{$diaAjustado}");
         } catch (\Exception $e) {
-            $this->logError("Error al crear la primera fecha: " . $e->getMessage());
-            throw new \Exception("Error al crear la primera fecha: " . $e->getMessage());
+            $this->manejarError($e);
         }
     }
 
@@ -275,11 +269,11 @@ class ImpuestoTransaccionService
 
             default:
                 // Manejo de error si el plazo no es válido
-                throw new \Exception("El plazo del tipo de impuesto no es válido.");
+                $this->lanzarExcepcionConCodigo("El plazo del tipo de impuesto no es válido.");
         }
 
         // Si no se encuentra un caso válido, lanzar una excepción
-        throw new \Exception("No se pudo determinar el mes según el tipo de impuesto.");
+        $this->lanzarExcepcionConCodigo("No se pudo determinar el mes según el tipo de impuesto.");
     }
 
     private function generarFechaFin($tipoImpuesto, $fechaInicio): DateTime

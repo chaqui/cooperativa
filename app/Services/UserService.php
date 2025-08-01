@@ -6,10 +6,12 @@ use App\Models\User;
 use App\Traits\Loggable;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Traits\ErrorHandler;
 
 class UserService
 {
 
+    use ErrorHandler;
     use Loggable;
 
     public function createUser($data)
@@ -46,8 +48,8 @@ class UserService
 
     public function generateToken(User $user)
     {
-        if(!$user->active) {
-            throw new \Exception('User is not active');
+        if (!$user->active) {
+            $this->lanzarExcepcionConCodigo("User is not active");
         }
         $this->log('Generating token for user: ' . $user->email);
         return JWTAuth::fromUser($user);
