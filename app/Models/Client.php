@@ -105,10 +105,10 @@ class Client extends Model
         $client->codigo = $data['codigo'];
         if ($data['estado_civil'] == '18') {
             $client->conyuge = $data['conyuge'];
-            $client->cargas_familiares = $data['cargas_familiares'];
-            $client->integrantes_nucleo_familiar = $data['integrantes_nucleo_familiar'];
-            $client->estabilidad_domiciliaria = $data['estabilidad_domiciliaria'];
-            $client->tipo_vivienda = $data['tipo_vivienda'];
+            $client->cargas_familiares = $data['cargas_familiares'] ?? null;
+            $client->integrantes_nucleo_familiar = $data['integrantes_nucleo_familiar'] ?? null;
+            $client->estabilidad_domiciliaria = $data['estabilidad_domiciliaria'] ?? null;
+            $client->tipo_vivienda = $data['tipo_vivienda'] ?? null;
         }
         $client->etado_cliente  = 1;
         return $client;
