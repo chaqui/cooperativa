@@ -31,31 +31,78 @@ class CuotaHipotecaService extends CuotaService
      * @return Prestamo_Hipotecario Préstamo con la cuota calculada y pagos generados
      * @throws \Exception Si ocurre un error durante el cálculo o generación de cuotas
      */
+    /**
+     * Calcula las cuotas para un préstamo hipotecario y genera los pagos correspondientes
+     *
+     * @param Prestamo_Hipotecario $prestamoHipotecario Préstamo a procesar
+     * @param int $cuotaPagada Número de cuotas ya pagadas
+     * @return Prestamo_Hipotecario Préstamo con la cuota calculada y pagos generados
+     * @throws \Exception Si ocurre un error durante el cálculo o generación de cuotas
+     */
     public function calcularCuotas(Prestamo_Hipotecario $prestamoHipotecario, $cuotaPagada = 0)
     {
-        // Calcular el plazo efectivo según el tipo (meses, años, etc.)
-        $plazoEfectivo = $this->calcularPlazo(
-            $prestamoHipotecario->plazo,
-            $prestamoHipotecario->tipo_plazo
-        );
-        $this->log("Plazo efectivo calculado: {$plazoEfectivo} meses");
+        try {
+            $this->log("=== INICIANDO CÁLCULO DE CUOTAS ===");
+            $this->log("Préstamo ID: {$prestamoHipotecario->id}, Monto: Q{$prestamoHipotecario->monto}");
+            $this->log("Interés: {$prestamoHipotecario->interes}%, Cuotas pagadas: {$cuotaPagada}");
 
-        // Calcular el valor de la cuota mensual
-        $cuotaMensual = $this->calcularCuota(
-            $prestamoHipotecario->monto,
-            $prestamoHipotecario->interes,
-            $plazoEfectivo
-        );
-        $this->log("Cuota mensual calculada: Q{$cuotaMensual}");
+            // Validar datos del préstamo
+            $this->validarDatosPrestamoCalculoCuotas($prestamoHipotecario);
 
-        // Actualizar la cuota del préstamo
-        $prestamoHipotecario->cuota = $cuotaMensual;
-        $prestamoHipotecario->save();
+            // Calcular el plazo efectivo según el tipo (meses, años, etc.)
+            $plazoEfectivo = $this->calcularPlazo(
+                $prestamoHipotecario->plazo,
+                $prestamoHipotecario->tipo_plazo
+            );
+            $this->log("Plazo efectivo calculado: {$plazoEfectivo} meses");
 
-        // Generar los pagos mensuales
-        $this->generarCuotas($prestamoHipotecario, $plazoEfectivo, $cuotaPagada);
-        $this->log("Pagos generados correctamente para {$plazoEfectivo} meses");
-        return $prestamoHipotecario;
+            // Calcular el valor de la cuota mensual
+            $cuotaMensual = $this->calcularCuota(
+                $prestamoHipotecario->monto,
+                $prestamoHipotecario->interes,
+                $plazoEfectivo
+            );
+            $this->log("Cuota mensual calculada: Q{$cuotaMensual}");
+
+            // Actualizar la cuota del préstamo
+            $prestamoHipotecario->cuota = $cuotaMensual;
+            $prestamoHipotecario->save();
+
+            // Generar los pagos mensuales
+            $this->generarCuotas($prestamoHipotecario, $plazoEfectivo, $cuotaPagada);
+            $this->log("=== CÁLCULO DE CUOTAS COMPLETADO ===");
+            $this->log("Pagos generados correctamente para {$plazoEfectivo} meses");
+
+            return $prestamoHipotecario;
+        } catch (\Exception $e) {
+            $this->manejarError($e, 'calcularCuotas');
+            return $prestamoHipotecario; // Esta línea nunca se ejecutará
+        }
+    }
+
+    /**
+     * Valida los datos del préstamo antes de calcular cuotas
+     *
+     * @param Prestamo_Hipotecario $prestamo
+     * @throws \Exception Si algún dato es inválido
+     */
+    private function validarDatosPrestamoCalculoCuotas(Prestamo_Hipotecario $prestamo): void
+    {
+        if (!$prestamo->id) {
+            $this->lanzarExcepcionConCodigo("El préstamo debe estar guardado antes de calcular cuotas");
+        }
+        if ($prestamo->monto <= 0) {
+            $this->lanzarExcepcionConCodigo("El monto del préstamo debe ser mayor a cero");
+        }
+        if ($prestamo->interes < 0) {
+            $this->lanzarExcepcionConCodigo("La tasa de interés no puede ser negativa");
+        }
+        if ($prestamo->plazo <= 0) {
+            $this->lanzarExcepcionConCodigo("El plazo del préstamo debe ser mayor a cero");
+        }
+        if (empty($prestamo->fecha_inicio)) {
+            $this->lanzarExcepcionConCodigo("La fecha de inicio del préstamo es requerida");
+        }
     }
 
 
@@ -117,6 +164,9 @@ class CuotaHipotecaService extends CuotaService
             $pago->save();
 
             $this->registrarDepositoYTransaccion($data, $pago, $detallesPago);
+
+            // Actualizar fecha final del préstamo después del pago
+            $this->actualizarFechaFinalPrestamo($pago->prestamo);
 
             DB::commit();
         } catch (\Exception $e) {
@@ -196,6 +246,9 @@ class CuotaHipotecaService extends CuotaService
                 $cuotaPagada
             );
         }
+
+        // Actualizar la fecha final del préstamo basándose en la última cuota generada
+        $this->actualizarFechaFinalPrestamo($prestamoHipotecario);
     }
 
     /**
@@ -285,10 +338,10 @@ class CuotaHipotecaService extends CuotaService
             $this->registrarPagoExistente($pago);
         }
 
-        // Registrar la fecha final del préstamo si es el último pago
+        // Nota: La fecha final del préstamo se actualiza en generarCuotas()
+        // para asegurar que siempre refleje la última cuota activa
         if ($pago->numero_pago_prestamo == $plazo) {
             $this->log("El pago {$pago->numero_pago_prestamo} es el último pago del préstamo");
-            $this->registrarFechaFinalPrestamo($prestamo, $pago);
         }
 
         $this->log("Pago generado con éxito: ID {$pago->id}, Capital: {$pago->capital}, Interés: {$pago->interes}, Saldo: {$pago->saldo}");
@@ -367,11 +420,52 @@ class CuotaHipotecaService extends CuotaService
     }
 
     /**
+     * Actualiza la fecha final del préstamo basándose en la última cuota activa
+     *
+     * @param Prestamo_Hipotecario $prestamo Préstamo a actualizar
+     * @return void
+     */
+    private function actualizarFechaFinalPrestamo(Prestamo_Hipotecario $prestamo)
+    {
+        try {
+            $this->log("Actualizando fecha final del préstamo #{$prestamo->id}");
+
+            // Buscar la última cuota (pago) activa del préstamo por fecha (no por número)
+            $ultimoPago = Pago::where('id_prestamo', $prestamo->id)
+                ->orderBy('fecha', 'desc')
+                ->orderBy('numero_pago_prestamo', 'desc') // En caso de empate de fechas
+                ->first();
+
+            if (!$ultimoPago) {
+                $this->log("No se encontraron pagos para el préstamo, no se actualiza fecha_fin");
+                return;
+            }
+
+            $this->log("Última cuota encontrada: #{$ultimoPago->numero_pago_prestamo} con fecha {$ultimoPago->fecha}");
+
+            // Actualizar la fecha final solo si es diferente
+            if ($prestamo->fecha_fin !== $ultimoPago->fecha) {
+                $fechaAnterior = $prestamo->fecha_fin ?? 'null';
+                $prestamo->fecha_fin = $ultimoPago->fecha;
+                $prestamo->save();
+
+                $this->log("Fecha final actualizada de {$fechaAnterior} a {$prestamo->fecha_fin}");
+            } else {
+                $this->log("Fecha final ya está correcta: {$prestamo->fecha_fin}");
+            }
+
+        } catch (\Exception $e) {
+            $this->manejarError($e, 'actualizarFechaFinalPrestamo');
+        }
+    }
+
+    /**
      *
      * Función para registrar la fecha final del préstamo
      * @param mixed $prestamo prestamo
      * @param mixed $pago ultimo pago
      * @return void
+     * @deprecated Use actualizarFechaFinalPrestamo() instead
      */
     private function registrarFechaFinalPrestamo($prestamo, $pago)
     {
@@ -689,10 +783,9 @@ class CuotaHipotecaService extends CuotaService
             $pagoProximo = $pagoSiguiente->pagoSiguiente();
             $this->eliminarPago($pagoProximo);
         }
-        if ($pagoSiguiente->numero_pago_prestamo == $plazo) {
-            $prestamoHipotecario->fecha_fin = $pagoSiguiente->fecha;
-            $prestamoHipotecario->save();
-        }
+
+        // Actualizar la fecha final del préstamo basándose en la última cuota activa
+        $this->actualizarFechaFinalPrestamo($prestamoHipotecario);
 
         return $descripcion;
     }
@@ -784,80 +877,318 @@ class CuotaHipotecaService extends CuotaService
     }
 
 
+    /**
+     * Verifica si una fecha es válida para iniciar pagos (días 1-5)
+     *
+     * @param string $fecha Fecha a validar
+     * @return bool True si la fecha es válida para pagos
+     * @throws \Exception Si la fecha es inválida
+     */
     private function esFechaValida($fecha)
     {
-        $dia = date('j', strtotime($fecha));
-        $this->log('El dia es ' . $dia);
-        return $dia >= 1 && $dia <= 5;
+        try {
+            if (empty($fecha)) {
+                $this->lanzarExcepcionConCodigo("La fecha no puede estar vacía para validación");
+            }
+
+            $timestamp = strtotime($fecha);
+            if ($timestamp === false) {
+                $this->lanzarExcepcionConCodigo("Formato de fecha inválido para validación: {$fecha}");
+            }
+
+            $dia = (int)date('j', $timestamp);
+            $this->log("Validando fecha {$fecha} - Día: {$dia}");
+
+            $esValida = $dia >= 1 && $dia <= 5;
+            $this->log($esValida ? "Fecha válida para pagos" : "Fecha NO válida para pagos (día debe estar entre 1-5)");
+
+            return $esValida;
+        } catch (\Exception $e) {
+            $this->manejarError($e, 'esFechaValida');
+            return false; // Esta línea nunca se ejecutará
+        }
     }
 
+    /**
+     * Calcula la cuota mensual usando la fórmula de amortización francesa
+     *
+     * @param float $monto Monto del préstamo
+     * @param float $interes Tasa de interés anual
+     * @param int $plazo Plazo en meses
+     * @return float Cuota mensual calculada
+     * @throws \Exception Si los parámetros son inválidos
+     */
     private function calcularCuota($monto, $interes, $plazo)
     {
-        $tasaInteresMensual = $this->calcularTaza($interes);
+        try {
+            $this->log("Calculando cuota: Monto=Q{$monto}, Interés={$interes}%, Plazo={$plazo} meses");
 
-        // Evitar división por cero o cálculos incorrectos
-        if ($tasaInteresMensual <= 0 || $plazo <= 0) {
-            $this->lanzarExcepcionConCodigo("La tasa de interés y el plazo deben ser mayores a cero");
+            // Validaciones básicas
+            if ($monto <= 0) {
+                $this->lanzarExcepcionConCodigo("El monto del préstamo debe ser mayor a cero");
+            }
+            if ($interes < 0) {
+                $this->lanzarExcepcionConCodigo("La tasa de interés no puede ser negativa");
+            }
+            if ($plazo <= 0) {
+                $this->lanzarExcepcionConCodigo("El plazo debe ser mayor a cero");
+            }
+
+            // Si no hay interés, la cuota es simplemente el monto dividido entre el plazo
+            if ($interes == 0) {
+                $cuota = round($monto / $plazo, 2);
+                $this->log("Cuota calculada sin interés: Q{$cuota}");
+                return $cuota;
+            }
+
+            $tasaInteresMensual = $this->calcularTaza($interes);
+            $this->log("Tasa de interés mensual: {$tasaInteresMensual}");
+
+            // Fórmula de amortización francesa: C = P * (r * (1 + r)^n) / ((1 + r)^n - 1)
+            $factorInteres = pow(1 + $tasaInteresMensual, $plazo);
+            $cuota = ($monto * $tasaInteresMensual * $factorInteres) / ($factorInteres - 1);
+
+            // Redondear a 2 decimales para evitar problemas de precisión
+            $cuota = round($cuota, 2);
+            $this->log("Cuota mensual calculada: Q{$cuota}");
+
+            return $cuota;
+        } catch (\Exception $e) {
+            $this->manejarError($e, 'calcularCuota');
+            return 0; // Esta línea nunca se ejecutará
         }
-
-        // Fórmula de amortización francesa: C = P * (r * (1 + r)^n) / ((1 + r)^n - 1)
-        $cuota = ($monto * $tasaInteresMensual) / (1 - pow(1 + $tasaInteresMensual, -$plazo));
-
-        // Redondear a 2 decimales para evitar problemas de precisión
-        return round($cuota, 2);
     }
 
-    private function calcularInteres($monto, $taza)
+    /**
+     * Calcula el interés basado en el monto y la tasa
+     *
+     * @param float $monto Monto sobre el cual calcular interés
+     * @param float $tasa Tasa de interés (decimal)
+     * @return float Interés calculado
+     * @throws \Exception Si los parámetros son inválidos
+     */
+    private function calcularInteres($monto, $tasa)
     {
-        return $monto * $taza;
+        try {
+            if ($monto < 0) {
+                $this->lanzarExcepcionConCodigo("El monto no puede ser negativo");
+            }
+            if ($tasa < 0) {
+                $this->lanzarExcepcionConCodigo("La tasa de interés no puede ser negativa");
+            }
+
+            $interes = $monto * $tasa;
+            $interes = round($interes, 2);
+
+            $this->log("Interés calculado: Monto=Q{$monto} × Tasa={$tasa} = Q{$interes}");
+            return $interes;
+        } catch (\Exception $e) {
+            $this->manejarError($e, 'calcularInteres');
+            return 0; // Esta línea nunca se ejecutará
+        }
     }
 
+    /**
+     * Calcula la tasa de interés diario para un período específico
+     *
+     * @param float $interes Tasa de interés mensual
+     * @param string $fecha Fecha de referencia
+     * @return float Tasa de interés diario ajustada
+     * @throws \Exception Si los parámetros son inválidos
+     */
     private function calcularInteresDiario($interes, $fecha)
     {
+        try {
+            $this->log("Calculando interés diario: Interés={$interes}%, Fecha={$fecha}");
 
-        $diasFaltantes = $this->calcularDiasFaltantes($fecha);
-        $diasDelMes = $this->obtenerDiasDelMes($fecha, 0);
-        $interes = $interes / $diasDelMes;
-        return  $this->calcularTaza($interes) * $diasFaltantes;
+            if ($interes < 0) {
+                $this->lanzarExcepcionConCodigo("El interés no puede ser negativo");
+            }
+            if (empty($fecha)) {
+                $this->lanzarExcepcionConCodigo("La fecha es requerida para cálculo de interés diario");
+            }
+
+            $diasFaltantes = $this->calcularDiasFaltantes($fecha);
+            $diasDelMes = $this->obtenerDiasDelMes($fecha, 0);
+
+            $this->log("Días faltantes: {$diasFaltantes}, Días del mes: {$diasDelMes}");
+
+            if ($diasDelMes <= 0) {
+                $this->lanzarExcepcionConCodigo("Los días del mes deben ser mayor a cero");
+            }
+
+            // Calcular tasa diaria
+            $tasaDiaria = ($interes / 100) / $diasDelMes; // Convertir porcentaje a decimal
+            $tasaInteresDiaria = $tasaDiaria * $diasFaltantes;
+
+            $this->log("Tasa de interés diario calculada: {$tasaInteresDiaria}");
+            return $tasaInteresDiaria;
+        } catch (\Exception $e) {
+            $this->manejarError($e, 'calcularInteresDiario');
+            return 0; // Esta línea nunca se ejecutará
+        }
     }
 
+    /**
+     * Calcula los días faltantes hasta el siguiente mes de pago
+     *
+     * @param string $fecha Fecha de referencia
+     * @return int Número de días faltantes
+     * @throws \Exception Si la fecha es inválida
+     */
     private function calcularDiasFaltantes($fecha)
     {
-        $this->log('La fecha es ' . $fecha);
-        $fechaActual = new \DateTime($fecha);
-        $fechaSiguiente = $this->obtenerFechaSiguienteMes($fecha);
-        $this->log('La fecha siguiente es ' . $fechaSiguiente);
-        $fechaSiguiente = new \DateTime($fechaSiguiente);
-        $diferencia = $fechaActual->diff($fechaSiguiente);
-        return $diferencia->format("%a") + 1;
+        try {
+            $this->log('Calculando días faltantes desde fecha: ' . $fecha);
+
+            if (empty($fecha)) {
+                $this->lanzarExcepcionConCodigo("La fecha no puede estar vacía");
+            }
+
+            $fechaActual = new \DateTime($fecha);
+            $fechaSiguiente = $this->obtenerFechaSiguienteMes($fecha);
+            $this->log('Fecha siguiente de pago: ' . $fechaSiguiente);
+
+            $fechaSiguienteObj = new \DateTime($fechaSiguiente);
+            $diferencia = $fechaActual->diff($fechaSiguienteObj);
+
+            $diasFaltantes = (int)$diferencia->format("%a") + 1;
+            $this->log("Días faltantes calculados: {$diasFaltantes}");
+
+            return $diasFaltantes;
+        } catch (\Exception $e) {
+            $this->manejarError($e, 'calcularDiasFaltantes');
+            return 0; // Esta línea nunca se ejecutará
+        }
     }
+    /**
+     * Obtiene la fecha del siguiente mes de pago (siempre día 5)
+     *
+     * @param string $fecha Fecha de referencia
+     * @param bool $nuevo Indica si es para generar un nuevo pago
+     * @return string Fecha del siguiente mes en formato Y-m-d
+     * @throws \Exception Si la fecha es inválida
+     */
     private function obtenerFechaSiguienteMes($fecha, $nuevo = false)
     {
-        $this->log('La fecha es ' . $fecha);
-        $dia = date('j', strtotime($fecha));
+        try {
+            $this->log('Calculando siguiente mes desde fecha: ' . $fecha);
 
-        if ($nuevo || $dia > 5) {
-            return date('Y-m-05', strtotime($fecha . ' + 1 month'));
+            if (empty($fecha)) {
+                $this->lanzarExcepcionConCodigo("La fecha no puede estar vacía");
+            }
+
+            $timestamp = strtotime($fecha);
+            if ($timestamp === false) {
+                $this->lanzarExcepcionConCodigo("Formato de fecha inválido: {$fecha}");
+            }
+
+            $dia = (int)date('j', $timestamp);
+            $this->log("Día extraído: {$dia}");
+
+            if ($nuevo || $dia > 5) {
+                $fechaSiguiente = date('Y-m-05', strtotime($fecha . ' + 1 month'));
+                $this->log("Fecha siguiente mes (nuevo pago): {$fechaSiguiente}");
+                return $fechaSiguiente;
+            }
+
+            $fechaActual = date('Y-m-05', $timestamp);
+            $this->log("Fecha del mes actual (día <= 5): {$fechaActual}");
+            return $fechaActual;
+        } catch (\Exception $e) {
+            $this->manejarError($e, 'obtenerFechaSiguienteMes');
+            return date('Y-m-05'); // Esta línea nunca se ejecutará
         }
-        $this->log('El dia es menor a 5 y no es para nuevo pago');
-        return date('Y-m-05', strtotime($fecha));
     }
 
+    /**
+     * Obtiene la fecha anterior de pago (día 5 del mes anterior o actual)
+     *
+     * @param string $fecha Fecha de referencia
+     * @return string Fecha anterior en formato Y-m-d
+     * @throws \Exception Si la fecha es inválida
+     */
     private function obtenerFechaAnterior($fecha)
     {
-        $dia = date('j', strtotime($fecha));
-        if ($dia <= 5) {
-            return date('Y-m-05', strtotime($fecha . ' - 1 month'));
+        try {
+            $this->log('Obteniendo fecha anterior desde: ' . $fecha);
+
+            if (empty($fecha)) {
+                $this->lanzarExcepcionConCodigo("La fecha no puede estar vacía");
+            }
+
+            $timestamp = strtotime($fecha);
+            if ($timestamp === false) {
+                $this->lanzarExcepcionConCodigo("Formato de fecha inválido: {$fecha}");
+            }
+
+            $dia = (int)date('j', $timestamp);
+            $this->log("Día de la fecha: {$dia}");
+
+            if ($dia <= 5) {
+                $fechaAnterior = date('Y-m-05', strtotime($fecha . ' - 1 month'));
+                $this->log("Fecha anterior (día <= 5): {$fechaAnterior}");
+                return $fechaAnterior;
+            }
+
+            $fechaActual = date('Y-m-05', $timestamp);
+            $this->log("Fecha del mes actual (día > 5): {$fechaActual}");
+            return $fechaActual;
+        } catch (\Exception $e) {
+            $this->manejarError($e, 'obtenerFechaAnterior');
+            return date('Y-m-05', strtotime('-1 month')); // Esta línea nunca se ejecutará
         }
-        return date('Y-m-05', strtotime($fecha));
     }
 
+    /**
+     * Obtiene los días acumulados desde la fecha anterior de pago hasta la fecha actual
+     *
+     * @param string $fecha Fecha actual de referencia
+     * @return int Número de días acumulados
+     * @throws \Exception Si la fecha es inválida
+     */
     private function obtenerDiasAcumulados($fecha)
     {
-        $this->log('La fecha es ' . $fecha);
-        $fechaAnterior = $this->obtenerFechaAnterior($fecha);
-        $this->log('La fecha anterior es ' . $fechaAnterior);
-        $diferencia = (new \DateTime($fechaAnterior))->diff(new \DateTime($fecha));
-        return $diferencia->format("%a");
+        try {
+            $this->log('Calculando días acumulados para fecha: ' . $fecha);
+
+            if (empty($fecha)) {
+                $this->lanzarExcepcionConCodigo("La fecha no puede estar vacía");
+            }
+
+            $fechaAnterior = $this->obtenerFechaAnterior($fecha);
+            $this->log('Fecha anterior de pago: ' . $fechaAnterior);
+
+            $fechaAnteriorObj = new \DateTime($fechaAnterior);
+            $fechaActualObj = new \DateTime($fecha);
+
+            $diferencia = $fechaAnteriorObj->diff($fechaActualObj);
+            $diasAcumulados = (int)$diferencia->format("%a");
+
+            $this->log("Días acumulados calculados: {$diasAcumulados}");
+            return $diasAcumulados;
+        } catch (\Exception $e) {
+            $this->manejarError($e, 'obtenerDiasAcumulados');
+            return 0; // Esta línea nunca se ejecutará
+        }
+    }
+
+    /**
+     * Método público para actualizar la fecha final de un préstamo
+     * Útil para ser llamado desde controladores o otros servicios
+     *
+     * @param int $prestamoId ID del préstamo hipotecario
+     * @return bool True si se actualizó correctamente
+     */
+    public function sincronizarFechaFinalPrestamo(int $prestamoId): bool
+    {
+        try {
+            $prestamo = Prestamo_Hipotecario::findOrFail($prestamoId);
+            $this->actualizarFechaFinalPrestamo($prestamo);
+            return true;
+        } catch (\Exception $e) {
+            $this->manejarError($e, 'sincronizarFechaFinalPrestamo');
+            return false;
+        }
     }
 }

@@ -183,10 +183,10 @@ class Client extends Model
     /**
      *
      * Get the beneficiarios associated with the client.
-     * @return HasMany<Beneficiario, Client>
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<Beneficiario>
      */
     public function beneficiarios()
     {
-        return $this->hasMany(Beneficiario::class, 'dpi_cliente');
+        return $this->hasMany(Beneficiario::class, 'dpi_cliente', 'dpi');
     }
 }

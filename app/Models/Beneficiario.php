@@ -17,7 +17,7 @@ class Beneficiario extends Model
 
     public function cliente()
     {
-        return $this->belongsTo(Client::class, 'dpi_cliente');
+        return $this->belongsTo(Client::class, 'dpi_cliente', 'dpi');
     }
 
 

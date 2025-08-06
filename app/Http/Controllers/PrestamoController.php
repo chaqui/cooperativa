@@ -48,13 +48,6 @@ class PrestamoController extends Controller
         return PrestamoResource::collection($this->prestamoService->all());
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -72,14 +65,6 @@ class PrestamoController extends Controller
     {
         $prestamo = $this->prestamoService->get($id);
         return new PrestamoResource($prestamo);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
     }
 
     /**

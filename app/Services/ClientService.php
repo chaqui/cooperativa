@@ -61,10 +61,10 @@ class ClientService extends CodigoService
 
             if (isset($data['beneficiarios']) && is_array($data['beneficiarios'])) {
                 $this->log('Procesando ' . count($data['beneficiarios']) . ' beneficiarios');
-                $totalPorcentaje = array_sum(array_column($data['beneficiarios'], 'porcentaje'));
-                if ($totalPorcentaje !== 100) {
-                    $this->lanzarExcepcionConCodigo("La suma de los porcentajes de los beneficiarios debe ser igual a 100.");
-                }
+
+                // Validar que los porcentajes sumen 100
+                $this->validateBeneficiarioPercentages($data['beneficiarios']);
+
                 $this->addBeneficiarios($client, $data['beneficiarios']);
             } else {
                 $this->log('No se proporcionaron beneficiarios');
@@ -97,11 +97,32 @@ class ClientService extends CodigoService
 
     private function addBeneficiarios($cliente, $beneficiarios)
     {
-        foreach ($beneficiarios as $beneficiario) {
-            $beneficiario['dpi_cliente'] = $cliente->dpi;
-            $beneficiarioModel = new Beneficiario($beneficiario);
-            $cliente->beneficiarios()->save($beneficiarioModel);
+        $this->log("Iniciando guardado de " . count($beneficiarios) . " beneficiarios para cliente DPI: " . $cliente->dpi);
+
+        foreach ($beneficiarios as $index => $beneficiario) {
+            try {
+                $this->log("Procesando beneficiario #" . ($index + 1) . ": " . ($beneficiario['nombre'] ?? 'Sin nombre'));
+
+                $beneficiario['dpi_cliente'] = $cliente->dpi;
+                $beneficiarioModel = new Beneficiario($beneficiario);
+
+                $this->log("Datos del beneficiario: " . json_encode($beneficiario));
+
+                $result = $cliente->beneficiarios()->save($beneficiarioModel);
+
+                $this->log("Beneficiario guardado exitosamente con ID: " . $result->id);
+
+            } catch (\Exception $e) {
+                $this->logError("Error al guardar beneficiario #" . ($index + 1) . ": " . $e->getMessage());
+                $this->logError("Stack trace: " . $e->getTraceAsString());
+                throw $e;
+            }
         }
+
+        // Verificar que se guardaron correctamente
+        $cliente->refresh();
+        $totalBeneficiarios = $cliente->beneficiarios->count();
+        $this->log("Verificación final: Cliente tiene {$totalBeneficiarios} beneficiarios en total");
     }
 
     /**
@@ -121,15 +142,21 @@ class ClientService extends CodigoService
             $client->save();
             $this->log('Cliente actualizado exitosamente id ' . $client->id);
 
-            // Validate and update references
+            // Handle references - update if provided, delete if not provided
             if (isset($data['referencias']) && is_array($data['referencias'])) {
                 $this->updateReferences($client, $data['referencias']);
+            } else {
+                // No references provided - delete all existing references
+                $this->deleteAllReferences($client);
             }
 
-            // Validate and update beneficiarios
+            // Handle beneficiarios - update if provided, delete if not provided
             if (isset($data['beneficiarios']) && is_array($data['beneficiarios'])) {
                 $this->validateBeneficiarioPercentages($data['beneficiarios']);
                 $this->updateBeneficiarios($client, $data['beneficiarios']);
+            } else {
+                // No beneficiarios provided - delete all existing beneficiarios
+                $this->deleteAllBeneficiarios($client);
             }
 
             DB::commit();
@@ -151,18 +178,35 @@ class ClientService extends CodigoService
     {
         $this->log('Procesando ' . count($referencias) . ' referencias');
 
+        // Primero eliminar todas las referencias existentes que no están en el array
+        $existingReferences = $client->references;
+        $referencesIds = array_column($referencias, 'id');
+        $referencesIds = array_filter($referencesIds, function($id) { return $id !== null; });
+
+        foreach ($existingReferences as $existingReference) {
+            if (!in_array($existingReference->id, $referencesIds)) {
+                $this->log("Eliminando referencia existente ID: {$existingReference->id} - {$existingReference->nombre}");
+                $existingReference->delete();
+            }
+        }
+
+        // Ahora procesar las referencias del array (crear nuevas o actualizar existentes)
         foreach ($referencias as $reference) {
             $reference['dpi_cliente'] = $client->dpi;
 
             if (isset($reference['id']) && $reference['id'] !== null) {
                 // Update existing reference
+                $this->log("Actualizando referencia existente ID: {$reference['id']}");
                 $this->referenceService->updateReference($reference['id'], $reference);
             } else {
                 // Create new reference
+                $this->log("Creando nueva referencia: {$reference['nombre']}");
                 $newReference = $this->referenceService->createReference($reference);
                 $client->references()->save($newReference);
             }
         }
+
+        $this->log("Referencias actualizadas exitosamente");
     }
 
     /**
@@ -175,21 +219,38 @@ class ClientService extends CodigoService
     {
         $this->log('Procesando ' . count($beneficiarios) . ' beneficiarios');
 
+        // Primero eliminar todos los beneficiarios existentes que no están en el array
+        $existingBeneficiarios = $client->beneficiarios;
+        $beneficiariosIds = array_column($beneficiarios, 'id');
+        $beneficiariosIds = array_filter($beneficiariosIds, function($id) { return $id !== null; });
+
+        foreach ($existingBeneficiarios as $existingBeneficiario) {
+            if (!in_array($existingBeneficiario->id, $beneficiariosIds)) {
+                $this->log("Eliminando beneficiario existente ID: {$existingBeneficiario->id} - {$existingBeneficiario->nombre}");
+                $existingBeneficiario->delete();
+            }
+        }
+
+        // Ahora procesar los beneficiarios del array (crear nuevos o actualizar existentes)
         foreach ($beneficiarios as $beneficiario) {
             $beneficiario['dpi_cliente'] = $client->dpi;
 
             if (isset($beneficiario['id']) && $beneficiario['id'] !== null) {
                 // Update existing beneficiario
+                $this->log("Actualizando beneficiario existente ID: {$beneficiario['id']}");
                 $beneficiarioModel = Beneficiario::find($beneficiario['id']);
                 if ($beneficiarioModel) {
                     $beneficiarioModel->update($beneficiario);
                 }
             } else {
                 // Create new beneficiario
+                $this->log("Creando nuevo beneficiario: {$beneficiario['nombre']}");
                 $beneficiarioModel = new Beneficiario($beneficiario);
                 $client->beneficiarios()->save($beneficiarioModel);
             }
         }
+
+        $this->log("Beneficiarios actualizados exitosamente");
     }
 
     /**
@@ -200,10 +261,52 @@ class ClientService extends CodigoService
      */
     private function validateBeneficiarioPercentages($beneficiarios)
     {
-        $totalPorcentaje = array_sum(array_column($beneficiarios, 'porcentaje'));
-        if ($totalPorcentaje !== 100) {
-            $this->lanzarExcepcionConCodigo("La suma de los porcentajes de los beneficiarios debe ser igual a 100.");
+        if (empty($beneficiarios)) {
+            $this->log("No hay beneficiarios para validar porcentajes");
+            return;
         }
+
+        $this->log("Validando porcentajes de " . count($beneficiarios) . " beneficiarios");
+
+        // Extraer porcentajes y validar que sean válidos
+        $porcentajes = [];
+        foreach ($beneficiarios as $index => $beneficiario) {
+            if (!isset($beneficiario['porcentaje'])) {
+                $this->lanzarExcepcionConCodigo("El beneficiario #" . ($index + 1) . " ({$beneficiario['nombre']}) no tiene porcentaje especificado.");
+            }
+
+            $porcentaje = $beneficiario['porcentaje'];
+
+            // Validar que sea numérico
+            if (!is_numeric($porcentaje)) {
+                $this->lanzarExcepcionConCodigo("El porcentaje del beneficiario #" . ($index + 1) . " ({$beneficiario['nombre']}) debe ser un número válido. Valor recibido: '{$porcentaje}'");
+            }
+
+            $porcentaje = (float) $porcentaje;
+
+            // Validar que esté en rango válido
+            if ($porcentaje < 0 || $porcentaje > 100) {
+                $this->lanzarExcepcionConCodigo("El porcentaje del beneficiario #" . ($index + 1) . " ({$beneficiario['nombre']}) debe estar entre 0 y 100. Valor recibido: {$porcentaje}%");
+            }
+
+            $porcentajes[] = $porcentaje;
+            $this->log("Beneficiario #" . ($index + 1) . " ({$beneficiario['nombre']}): {$porcentaje}%");
+        }
+
+        // Calcular suma total
+        $totalPorcentaje = array_sum($porcentajes);
+        $this->log("Suma total de porcentajes: {$totalPorcentaje}%");
+
+        // Validar que sume exactamente 100 (con tolerancia para decimales)
+        if (abs($totalPorcentaje - 100) > 0.01) {
+            $detalles = implode(', ', array_map(function($beneficiario, $porcentaje) {
+                return "{$beneficiario['nombre']}: {$porcentaje}%";
+            }, $beneficiarios, $porcentajes));
+
+            $this->lanzarExcepcionConCodigo("La suma de los porcentajes de los beneficiarios debe ser igual a 100%. Suma actual: {$totalPorcentaje}%. Detalle: [{$detalles}]");
+        }
+
+        $this->log("Validación de porcentajes exitosa: suma total = {$totalPorcentaje}%");
     }
 
     /**
@@ -343,6 +446,10 @@ class ClientService extends CodigoService
     public function getDataForPDF($id)
     {
         $client = $this->getClient($id);
+
+        // Cargar relaciones necesarias para el PDF
+        $client->load(['references', 'beneficiarios']);
+
         return $this->getDataByClient($client);
     }
 
@@ -406,10 +513,68 @@ class ClientService extends CodigoService
                 $client->referenciasFamiliares = [];
             }
 
+            // Log de beneficiarios disponibles
+            if ($client->beneficiarios && $client->beneficiarios->isNotEmpty()) {
+                $this->log("El cliente tiene " . $client->beneficiarios->count() . " beneficiarios");
+                foreach ($client->beneficiarios as $beneficiario) {
+                    $this->log("  - {$beneficiario->nombre} ({$beneficiario->parentezco}) - {$beneficiario->porcentaje}%");
+                }
+            } else {
+                $this->log("El cliente no tiene beneficiarios");
+            }
+
             $this->log("Datos del cliente enriquecidos correctamente");
             return $client;
         } catch (\Exception $e) {
             $this->manejarError($e);
+        }
+    }
+
+    /**
+     * Delete all references for a client
+     * @param Client $client
+     * @return void
+     */
+    private function deleteAllReferences($client)
+    {
+        $existingReferences = $client->references;
+        $countReferences = $existingReferences->count();
+
+        if ($countReferences > 0) {
+            $this->log("Eliminando {$countReferences} referencias existentes del cliente");
+
+            foreach ($existingReferences as $reference) {
+                $this->log("Eliminando referencia ID: {$reference->id} - {$reference->nombre}");
+                $reference->delete();
+            }
+
+            $this->log("Todas las referencias han sido eliminadas exitosamente");
+        } else {
+            $this->log("El cliente no tiene referencias para eliminar");
+        }
+    }
+
+    /**
+     * Delete all beneficiarios for a client
+     * @param Client $client
+     * @return void
+     */
+    private function deleteAllBeneficiarios($client)
+    {
+        $existingBeneficiarios = $client->beneficiarios;
+        $countBeneficiarios = $existingBeneficiarios->count();
+
+        if ($countBeneficiarios > 0) {
+            $this->log("Eliminando {$countBeneficiarios} beneficiarios existentes del cliente");
+
+            foreach ($existingBeneficiarios as $beneficiario) {
+                $this->log("Eliminando beneficiario ID: {$beneficiario->id} - {$beneficiario->nombre}");
+                $beneficiario->delete();
+            }
+
+            $this->log("Todos los beneficiarios han sido eliminados exitosamente");
+        } else {
+            $this->log("El cliente no tiene beneficiarios para eliminar");
         }
     }
 }

@@ -25,6 +25,23 @@
 
         return false;
     }
+
+    function hasBeneficiarios($beneficiarios)
+    {
+        if (empty($beneficiarios)) {
+            return false;
+        }
+
+        if (is_array($beneficiarios)) {
+            return count($beneficiarios) > 0;
+        }
+
+        if (is_object($beneficiarios) && method_exists($beneficiarios, 'count')) {
+            return $beneficiarios->count() > 0;
+        }
+
+        return false;
+    }
 @endphp
 <!DOCTYPE html>
 <html>
@@ -279,6 +296,25 @@
             @endif
         </table>
     @endif
+
+    @if (hasBeneficiarios($client->beneficiarios))
+        <h3>Beneficiarios</h3>
+        <table class="content">
+            <tr>
+                <th>Nombre</th>
+                <th>Parentesco</th>
+                <th>Porcentaje (%)</th>
+            </tr>
+            @foreach ($client->beneficiarios as $beneficiario)
+                <tr>
+                    <td>{{ is_array($beneficiario) ? $beneficiario['nombre'] ?? '' : ($beneficiario->nombre ?? '') }}</td>
+                    <td>{{ is_array($beneficiario) ? $beneficiario['parentezco'] ?? '' : ($beneficiario->parentezco ?? '') }}</td>
+                    <td style="text-align: center;">{{ is_array($beneficiario) ? $beneficiario['porcentaje'] ?? '' : ($beneficiario->porcentaje ?? '') }}%</td>
+                </tr>
+            @endforeach
+        </table>
+    @endif
+
     @if ($client->tipoCliente != '390' && hasReferences($client->referenciasLaborales))
         <h3>Referencias Laborales</h3>
         <table class="content">

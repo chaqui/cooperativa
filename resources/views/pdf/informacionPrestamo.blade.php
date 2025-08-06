@@ -8,7 +8,7 @@
         <tr>
             <th>Monto Total</th>
             <td>Q. {{ number_format($prestamo->monto, 2) }}</td>
-            <th>Interés</th>
+            <th>Interés (Mensual)</th>
             <td>{{ $prestamo->interes }}%</td>
         </tr>
         <tr>

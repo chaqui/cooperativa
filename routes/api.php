@@ -139,9 +139,9 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('prestamos', action: [PrestamoController::class, 'index']);
     Route::get('prestamos/excel', [PrestamoController::class, 'downloadExcelPrestamo']);
+    Route::get('prestamos/retiros', [PrestamoController::class, 'getRetirosPendientes']);
     Route::post('prestamos', [PrestamoController::class, 'store']);
     Route::get('prestamos/{id}', [PrestamoController::class, 'show']);
-    Route::get('prestamos/retiros', [PrestamoController::class, 'getRetirosPendientes']);
     Route::put('prestamos/{id}', [PrestamoController::class, 'update']);
     Route::delete('prestamos/{id}', [PrestamoController::class, 'destroy']);
     Route::put('prestamos/inactivar/{id}', [PrestamoController::class, 'inactivar']);
