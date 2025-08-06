@@ -27,12 +27,12 @@ class Pago extends Model
 
     public function capitalFaltante()
     {
-        return max(0, $this->capital - $this->capital_pagado);
+        return round(max(0, $this->capital - $this->capital_pagado), 2);
     }
 
     public function penalizacionFaltante()
     {
-        return max(0, $this->penalizacion - $this->recargo);
+        return round(max(0, $this->penalizacion - $this->recargo), 2);
     }
 
     public function interesFaltante()
@@ -49,16 +49,16 @@ class Pago extends Model
             $interesCalculado = $this->interes * ($diasTranscuridos / $diasMesAnterior);
         }
 
-        return max(0, $interesCalculado - $this->interes_pagado);
+        return round(max(0, $interesCalculado - $this->interes_pagado), 2);
     }
 
 
 
     public function saldoFaltante()
     {
-        $interesFaltante = max(0, $this->interes - $this->interes_pagado);
+        $interesFaltante = round(max(0, $this->interes - $this->interes_pagado), 2);
 
-        return $interesFaltante + $this->capitalFaltante() + $this->penalizacionFaltante();
+        return round($interesFaltante + $this->capitalFaltante() + $this->penalizacionFaltante(), 2);
     }
 
     public function saldoPagado()

@@ -123,46 +123,78 @@ class Prestamo_Hipotecario extends Model
     public function saldoPendiente()
     {
         $pagos = $this->getCuotasPendientes();
-        $monto = 0;
+        $monto = 0.0;
         foreach ($pagos as $pago) {
-            $monto += $pago->saldoFaltante();
+            $saldoFaltante = $pago->saldoFaltante();
+            $monto += $saldoFaltante;
         }
-        return $monto;
+        // Aplicar redondeo robusto
+        $resultado = round($monto, 2);
+        $diferencia = abs($resultado - round($resultado));
+        if ($diferencia < 0.01 && $diferencia > 0.004) {
+            $resultado = round($resultado);
+        }
+        return $resultado;
     }
+
     public function saldoPendienteConInteresAlDia()
     {
-        return $this->saldoPendienteCapital() + $this->saldoPendienteIntereses() + $this->saldoPendientePenalizacion();
+        return round($this->saldoPendienteCapital() + $this->saldoPendienteIntereses() + $this->saldoPendientePenalizacion(), 2);
     }
 
     public function saldoPendienteIntereses()
     {
         $pagos = $this->getCuotasPendientes();
-        $monto = 0;
+        $monto = 0.0;
         foreach ($pagos as $pago) {
             if ($pago->fecha < now()) {
-                $monto += $pago->interesFaltante();
+                $interesFaltante = $pago->interesFaltante();
+                $monto += $interesFaltante;
             }
         }
-        return $monto;
+        // Aplicar redondeo robusto
+        $resultado = round($monto, 2);
+        $diferencia = abs($resultado - round($resultado));
+        if ($diferencia < 0.01 && $diferencia > 0.004) {
+            $resultado = round($resultado);
+        }
+        return $resultado;
     }
 
     public function saldoPendienteCapital()
     {
         $pagos = $this->getCuotasPendientes();
-        $monto = 0;
+        $monto = 0.0; // Inicializar como float
         foreach ($pagos as $pago) {
-            $monto += $pago->capitalFaltante();
+            $capitalFaltante = $pago->capitalFaltante();
+            $monto += $capitalFaltante;
         }
-        return $monto;
+        // Aplicar redondeo final más robusto
+        $resultado = round($monto, 2);
+
+        // Si el resultado está muy cerca de un número entero, ajustarlo
+        $diferencia = abs($resultado - round($resultado));
+        if ($diferencia < 0.01 && $diferencia > 0.004) {
+            $resultado = round($resultado);
+        }
+
+        return $resultado;
     }
     public function saldoPendientePenalizacion()
     {
         $pagos = $this->getCuotasPendientes();
-        $monto = 0;
+        $monto = 0.0;
         foreach ($pagos as $pago) {
-            $monto += $pago->penalizacionFaltante();
+            $penalizacionFaltante = $pago->penalizacionFaltante();
+            $monto += $penalizacionFaltante;
         }
-        return $monto;
+        // Aplicar redondeo robusto
+        $resultado = round($monto, 2);
+        $diferencia = abs($resultado - round($resultado));
+        if ($diferencia < 0.01 && $diferencia > 0.004) {
+            $resultado = round($resultado);
+        }
+        return $resultado;
     }
 
     public function capitalPagado()
