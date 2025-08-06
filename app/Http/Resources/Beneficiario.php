@@ -18,7 +18,8 @@ class Beneficiario extends JsonResource
             'id' => $this->id,
             'nombre' => $this->nombre,
             'parentezco' => $this->parentezco,
-            'porcentaje' => $this->porcentaje
+            'porcentaje' => $this->porcentaje,
+            'fecha_nacimiento' => $this->fecha_nacimiento, // Nuevo campo para fecha de nacimiento
         ];
     }
 }

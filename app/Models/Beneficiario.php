@@ -11,7 +11,8 @@ class Beneficiario extends Model
         'nombre',
         'parentezco',
         'porcentaje',
-        'dpi_cliente' // Nuevo campo para DPI del cliente
+        'dpi_cliente',
+        'fecha_nacimiento', // Nuevo campo para fecha de nacimiento
     ];
 
 
