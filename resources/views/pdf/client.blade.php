@@ -383,7 +383,7 @@
             <tr>
                 <td>{{ is_array($reference) ? $reference['nombre'] ?? '' : ($reference->nombre ?? '') }}</td>
                 <td>{{ is_array($reference) ? $reference['telefono'] ?? '' : ($reference->telefono ?? '') }}</td>
-                <td>{{ is_array($reference) ? $reference['relacion'] ?? '' : ($reference->relacion ?? '') }}</td>
+                <td>{{ is_array($reference) ? $reference['afinidad'] ?? '' : ($reference->afinidad ?? '') }}</td>
             </tr>
         @endforeach
     </table>
