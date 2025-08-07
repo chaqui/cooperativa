@@ -344,6 +344,7 @@
             <tr>
                 <th>Nombre</th>
                 <th>Telefono</th>
+                 <th>Relación</th>
             </tr>
             @foreach ($client->referenciasComerciales as $reference)
                 <tr>
