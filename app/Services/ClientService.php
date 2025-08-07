@@ -40,8 +40,11 @@ class ClientService extends CodigoService
      */
     public function createClient($data)
     {
-        DB::beginTransaction();
+
+        $this->validar($data); // Validación temprana completa
         try {
+
+            DB::beginTransaction();
             // Generar código único para el cliente
             $data['codigo'] = $this->createCode();
             $this->log('Código generado para cliente ' . $data['codigo']);
@@ -62,9 +65,6 @@ class ClientService extends CodigoService
             if (isset($data['beneficiarios']) && is_array($data['beneficiarios'])) {
                 $this->log('Procesando ' . count($data['beneficiarios']) . ' beneficiarios');
 
-                // Validar que los porcentajes sumen 100
-                $this->validateBeneficiarioPercentages($data['beneficiarios']);
-
                 $this->addBeneficiarios($client, $data['beneficiarios']);
             } else {
                 $this->log('No se proporcionaron beneficiarios');
@@ -76,7 +76,149 @@ class ClientService extends CodigoService
             return $client;
         } catch (\Exception $e) {
             $this->manejarError($e);
+            DB::rollback();
+            throw $e; // Re-lanzar la excepción para que sea capturada en las pruebas
         }
+    }
+
+
+    /**
+     * VALIDACIÓN TEMPRANA: Valida todos los datos antes de generar código
+     */
+    private function validar($data)
+    {
+        $this->log('Iniciando validación temprana completa');
+
+
+        // 1. Validar referencias si se proporcionan
+        if (isset($data['referencias']) && is_array($data['referencias'])) {
+            $this->validateReferencesData($data['referencias']);
+        }
+
+        // 2. Validar beneficiarios si se proporcionan
+        if (isset($data['beneficiarios']) && is_array($data['beneficiarios'])) {
+            $this->validateBeneficiariosData($data['beneficiarios']);
+        }
+
+        // 3. Intentar crear objeto Client sin guardarlo (validación adicional)
+        $this->validateClientCreation($data);
+
+        $this->log('✅ Validación temprana completada exitosamente');
+    }
+
+    /**
+     * Validar datos de referencias
+     */
+    private function validateReferencesData($referencias)
+    {
+        $this->log('Validando ' . count($referencias) . ' referencias');
+
+        foreach ($referencias as $index => $referencia) {
+            if (empty($referencia['nombre'])) {
+                $this->lanzarExcepcionConCodigo("La referencia #" . ($index + 1) . " debe tener nombre");
+            }
+
+            if (empty($referencia['telefono'])) {
+                $this->lanzarExcepcionConCodigo("La referencia #" . ($index + 1) . " ({$referencia['nombre']}) debe tener teléfono");
+            }
+
+            // Validar tipo de referencia
+            $tiposValidos = ['personal', 'laboral', 'comercial', 'familiar'];
+            if (isset($referencia['tipo']) && !in_array($referencia['tipo'], $tiposValidos)) {
+                $this->lanzarExcepcionConCodigo("Tipo de referencia inválido para {$referencia['nombre']}: {$referencia['tipo']}");
+            }
+        }
+
+        $this->log('Referencias válidas');
+    }
+
+    /**
+     * Validar datos de beneficiarios
+     */
+    private function validateBeneficiariosData($beneficiarios)
+    {
+        $this->log('Validando ' . count($beneficiarios) . ' beneficiarios');
+
+        // Usar la validación existente pero de forma temprana
+        $this->validateBeneficiarioPercentages($beneficiarios);
+
+        foreach ($beneficiarios as $index => $beneficiario) {
+            if (empty($beneficiario['nombre'])) {
+                $this->lanzarExcepcionConCodigo("El beneficiario #" . ($index + 1) . " debe tener nombre");
+            }
+
+            if (empty($beneficiario['parentezco'])) {
+                $this->lanzarExcepcionConCodigo("El beneficiario #" . ($index + 1) . " ({$beneficiario['nombre']}) debe tener parentesco");
+            }
+        }
+
+        $this->log('Beneficiarios válidos');
+    }
+
+    /**
+     * Validar que se puede crear el objeto Client (sin guardarlo)
+     */
+    private function validateClientCreation($data)
+    {
+        $this->log('Validando creación de objeto Cliente');
+
+        try {
+            // Intentar crear el objeto sin código (para validación)
+            $datosValidacion = $data;
+            unset($datosValidacion['codigo']); // Remover código para validación
+
+            $clientValidacion = Client::generateCliente($datosValidacion);
+
+            // Si llegamos aquí, el objeto se puede crear exitosamente
+            $this->log('Objeto Cliente puede crearse exitosamente');
+        } catch (\Exception $e) {
+            $this->lanzarExcepcionConCodigo("Error en validación de creación de cliente: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Reutilizar método existente de validación de porcentajes
+     */
+    private function validateBeneficiarioPercentages($beneficiarios)
+    {
+        if (empty($beneficiarios)) {
+            return;
+        }
+
+        $this->log("Validando porcentajes de " . count($beneficiarios) . " beneficiarios");
+
+        $porcentajes = [];
+        foreach ($beneficiarios as $index => $beneficiario) {
+            if (!isset($beneficiario['porcentaje'])) {
+                $this->lanzarExcepcionConCodigo("El beneficiario #" . ($index + 1) . " ({$beneficiario['nombre']}) no tiene porcentaje especificado.");
+            }
+
+            $porcentaje = $beneficiario['porcentaje'];
+
+            if (!is_numeric($porcentaje)) {
+                $this->lanzarExcepcionConCodigo("El porcentaje del beneficiario #" . ($index + 1) . " ({$beneficiario['nombre']}) debe ser un número válido. Valor recibido: '{$porcentaje}'");
+            }
+
+            $porcentaje = (float) $porcentaje;
+
+            if ($porcentaje < 0 || $porcentaje > 100) {
+                $this->lanzarExcepcionConCodigo("El porcentaje del beneficiario #" . ($index + 1) . " ({$beneficiario['nombre']}) debe estar entre 0 y 100. Valor recibido: {$porcentaje}%");
+            }
+
+            $porcentajes[] = $porcentaje;
+        }
+
+        $totalPorcentaje = array_sum($porcentajes);
+
+        if (abs($totalPorcentaje - 100) > 0.01) {
+            $detalles = implode(', ', array_map(function ($beneficiario, $porcentaje) {
+                return "{$beneficiario['nombre']}: {$porcentaje}%";
+            }, $beneficiarios, $porcentajes));
+
+            $this->lanzarExcepcionConCodigo("La suma de los porcentajes de los beneficiarios debe ser igual a 100%. Suma actual: {$totalPorcentaje}%. Detalle: [{$detalles}]");
+        }
+
+        $this->log("Validación de porcentajes exitosa: suma total = {$totalPorcentaje}%");
     }
 
     /**
@@ -111,7 +253,6 @@ class ClientService extends CodigoService
                 $result = $cliente->beneficiarios()->save($beneficiarioModel);
 
                 $this->log("Beneficiario guardado exitosamente con ID: " . $result->id);
-
             } catch (\Exception $e) {
                 $this->logError("Error al guardar beneficiario #" . ($index + 1) . ": " . $e->getMessage());
                 $this->logError("Stack trace: " . $e->getTraceAsString());
@@ -165,6 +306,8 @@ class ClientService extends CodigoService
             return $client;
         } catch (\Exception $e) {
             $this->manejarError($e);
+            DB::rollback();
+            throw $e;
         }
     }
 
@@ -181,7 +324,9 @@ class ClientService extends CodigoService
         // Primero eliminar todas las referencias existentes que no están en el array
         $existingReferences = $client->references;
         $referencesIds = array_column($referencias, 'id');
-        $referencesIds = array_filter($referencesIds, function($id) { return $id !== null; });
+        $referencesIds = array_filter($referencesIds, function ($id) {
+            return $id !== null;
+        });
 
         foreach ($existingReferences as $existingReference) {
             if (!in_array($existingReference->id, $referencesIds)) {
@@ -222,7 +367,9 @@ class ClientService extends CodigoService
         // Primero eliminar todos los beneficiarios existentes que no están en el array
         $existingBeneficiarios = $client->beneficiarios;
         $beneficiariosIds = array_column($beneficiarios, 'id');
-        $beneficiariosIds = array_filter($beneficiariosIds, function($id) { return $id !== null; });
+        $beneficiariosIds = array_filter($beneficiariosIds, function ($id) {
+            return $id !== null;
+        });
 
         foreach ($existingBeneficiarios as $existingBeneficiario) {
             if (!in_array($existingBeneficiario->id, $beneficiariosIds)) {
@@ -253,61 +400,6 @@ class ClientService extends CodigoService
         $this->log("Beneficiarios actualizados exitosamente");
     }
 
-    /**
-     * Validate that beneficiario percentages sum to 100
-     * @param array $beneficiarios
-     * @return void
-     * @throws \Exception
-     */
-    private function validateBeneficiarioPercentages($beneficiarios)
-    {
-        if (empty($beneficiarios)) {
-            $this->log("No hay beneficiarios para validar porcentajes");
-            return;
-        }
-
-        $this->log("Validando porcentajes de " . count($beneficiarios) . " beneficiarios");
-
-        // Extraer porcentajes y validar que sean válidos
-        $porcentajes = [];
-        foreach ($beneficiarios as $index => $beneficiario) {
-            if (!isset($beneficiario['porcentaje'])) {
-                $this->lanzarExcepcionConCodigo("El beneficiario #" . ($index + 1) . " ({$beneficiario['nombre']}) no tiene porcentaje especificado.");
-            }
-
-            $porcentaje = $beneficiario['porcentaje'];
-
-            // Validar que sea numérico
-            if (!is_numeric($porcentaje)) {
-                $this->lanzarExcepcionConCodigo("El porcentaje del beneficiario #" . ($index + 1) . " ({$beneficiario['nombre']}) debe ser un número válido. Valor recibido: '{$porcentaje}'");
-            }
-
-            $porcentaje = (float) $porcentaje;
-
-            // Validar que esté en rango válido
-            if ($porcentaje < 0 || $porcentaje > 100) {
-                $this->lanzarExcepcionConCodigo("El porcentaje del beneficiario #" . ($index + 1) . " ({$beneficiario['nombre']}) debe estar entre 0 y 100. Valor recibido: {$porcentaje}%");
-            }
-
-            $porcentajes[] = $porcentaje;
-            $this->log("Beneficiario #" . ($index + 1) . " ({$beneficiario['nombre']}): {$porcentaje}%");
-        }
-
-        // Calcular suma total
-        $totalPorcentaje = array_sum($porcentajes);
-        $this->log("Suma total de porcentajes: {$totalPorcentaje}%");
-
-        // Validar que sume exactamente 100 (con tolerancia para decimales)
-        if (abs($totalPorcentaje - 100) > 0.01) {
-            $detalles = implode(', ', array_map(function($beneficiario, $porcentaje) {
-                return "{$beneficiario['nombre']}: {$porcentaje}%";
-            }, $beneficiarios, $porcentajes));
-
-            $this->lanzarExcepcionConCodigo("La suma de los porcentajes de los beneficiarios debe ser igual a 100%. Suma actual: {$totalPorcentaje}%. Detalle: [{$detalles}]");
-        }
-
-        $this->log("Validación de porcentajes exitosa: suma total = {$totalPorcentaje}%");
-    }
 
     /**
      *
