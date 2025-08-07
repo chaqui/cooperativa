@@ -310,7 +310,12 @@
                 <tr>
                     <td>{{ is_array($beneficiario) ? $beneficiario['nombre'] ?? '' : ($beneficiario->nombre ?? '') }}</td>
                     <td>{{ is_array($beneficiario) ? $beneficiario['parentezco'] ?? '' : ($beneficiario->parentezco ?? '') }}</td>
-                    <td>{{ is_array($beneficiario) ? $beneficiario['fecha_nacimiento'] ?? '' : ($beneficiario->fecha_nacimiento ?? '') }}</td>
+                    <td>
+                        @php
+                            $fecha = is_array($beneficiario) ? ($beneficiario['fecha_nacimiento'] ?? null) : ($beneficiario->fecha_nacimiento ?? null);
+                        @endphp
+                        {{ $fecha ? \Carbon\Carbon::parse($fecha)->translatedFormat('d \d\e F \d\e Y') : '' }}
+                    </td></td>
                     <td style="text-align: center;">{{ is_array($beneficiario) ? $beneficiario['porcentaje'] ?? '' : ($beneficiario->porcentaje ?? '') }}%</td>
                 </tr>
             @endforeach
@@ -344,7 +349,7 @@
                 <tr>
                     <td>{{ is_array($reference) ? $reference['nombre'] ?? '' : ($reference->nombre ?? '') }}</td>
                     <td>{{ is_array($reference) ? $reference['telefono'] ?? '' : ($reference->telefono ?? '') }}</td>
-                    <td>{{ is_array($reference) ? $reference['relacion'] ?? '' : ($reference->relacion ?? '') }}</td>
+                    <td>{{ is_array($reference) ? $reference['afinidad'] ?? '' : ($reference->afinidad ?? '') }}</td>
                 </tr>
             @endforeach
         </table>
@@ -361,7 +366,7 @@
             <tr>
                 <td>{{ is_array($reference) ? $reference['nombre'] ?? '' : ($reference->nombre ?? '') }}</td>
                 <td>{{ is_array($reference) ? $reference['telefono'] ?? '' : ($reference->telefono ?? '') }}</td>
-                <td>{{ is_array($reference) ? $reference['relacion'] ?? '' : ($reference->relacion ?? '') }}</td>
+                <td>{{ is_array($reference) ? $reference['afinidad'] ?? '' : ($reference->afinidad ?? '') }}</td>
             </tr>
         @endforeach
     </table>
