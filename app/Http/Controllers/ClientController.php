@@ -134,6 +134,12 @@ class ClientController extends Controller
         return PropiedadResource::collection($propiedades);
     }
 
+    public function getPropiedadSinPrestamo(string $id)
+    {
+        $propiedades = $this->clientService->getPropiedadesSinPrestamo($id);
+        return PropiedadResource::collection($propiedades);
+    }
+
     public function prestamos(string $id)
     {
         $prestamos = $this->clientService->getPrestamos($id);

@@ -38,6 +38,7 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::put('clients/inactivar/{id}', [ClientController::class, 'inactivar']);
     Route::post('clients/{id}/fotografia', [ClientController::class, 'uploadFoto']);
     Route::get('clients/{id}/propiedades', [ClientController::class, 'propiedades']);
+    Route::get('clients/{id}/propiedades-sin-prestamo', [ClientController::class, 'getPropiedadSinPrestamo']);
     Route::get('clients/{id}/prestamos', [ClientController::class, 'prestamos']);
 });
 

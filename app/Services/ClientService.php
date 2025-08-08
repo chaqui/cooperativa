@@ -487,6 +487,21 @@ class ClientService extends CodigoService
     }
 
     /**
+     * Get the properties of a client that are not related to any loan
+     * @param mixed $id The id of the client
+     * @return \Illuminate\Support\Collection
+     */
+    public function getPropiedadesSinPrestamo($id)
+    {
+        $client = $this->getClient($id);
+        // Assuming 'propiedades' is a relation and 'prestamos' is a relation on propiedad
+        return $client->propiedades->filter(function ($propiedad) {
+            // If the propiedad does not have any related prestamos
+            return $propiedad->prestamos()->count() === 0;
+        })->values();
+    }
+
+    /**
      * Get the loans of a client
      * @param mixed $id The id of the client
      * @return mixed
