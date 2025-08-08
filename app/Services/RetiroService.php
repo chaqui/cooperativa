@@ -43,6 +43,7 @@ class RetiroService
             DB::commit();
             return $retiro;
         } catch (\InvalidArgumentException $e) {
+
             // Para excepciones de validación, no necesitamos rollback pues no se inició transacción
             if (DB::transactionLevel() > 0) {
                 DB::rollBack();
@@ -260,9 +261,7 @@ class RetiroService
                 'tipo_cuenta_interna_id' => $data['id_cuenta']
             ]));
 
-            throw new \InvalidArgumentException(
-                "El monto a retirar (Q.{$data['monto']}) excede el saldo disponible (Q.{$saldo})."
-            );
+             $this->lanzarExcepcionConCodigo("El monto a retirar (Q.{$data['monto']}) excede el saldo disponible (Q.{$saldo}).");
         }
 
         // Preparar datos para el retiro
