@@ -14,4 +14,9 @@ class Propiedad extends Model
         return $this->belongsTo(Client::class, 'dpi_cliente');
     }
 
+    public function prestamos()
+    {
+        return $this->hasMany(Prestamo_Hipotecario::class, 'propiedad_id');
+    }
+
 }
