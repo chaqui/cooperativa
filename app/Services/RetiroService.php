@@ -253,10 +253,12 @@ class RetiroService
         $cuenta = $this->tipoCuentaInternaService->getById($data['id_cuenta']);
         $saldo = $cuenta->saldo();
 
-        $saldoSalida = $data['monto_total'] ?? $data['monto'];
+        // El monto a validar debe ser el monto neto que se va a retirar, no el monto total
+        $saldoSalida = $data['monto'];
         if ($saldo < $saldoSalida) {
             $this->logError("Saldo insuficiente para retiro: " . json_encode([
                 'monto_solicitado' => $data['monto'],
+                'monto_total_prestamo' => $data['monto_total'] ?? 'N/A',
                 'saldo_disponible' => $saldo,
                 'tipo_cuenta_interna_id' => $data['id_cuenta']
             ]));

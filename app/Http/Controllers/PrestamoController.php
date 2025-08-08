@@ -85,8 +85,30 @@ class PrestamoController extends Controller
 
     public function cambiarEstado(EstadoRequest $request, string $id)
     {
-        $this->estadosPrestamoService->cambiarEstado($id, $request->all());
-        return response()->json(['message' => 'Estado cambiado correctamente'], 200);
+        try {
+            $this->estadosPrestamoService->cambiarEstado($id, $request->all());
+            return response()->json(['message' => 'Estado cambiado correctamente'], 200);
+        } catch (\Exception $e) {
+            // Verificar si es una excepción de negocio basada en el mensaje
+            $mensaje = $e->getMessage();
+
+            // Si el mensaje contiene códigos de error del sistema, es una excepción de negocio
+            if (preg_match('/\[RET-\d{8}-\d{4}-\w+\]/', $mensaje)) {
+                // Extraer solo el mensaje sin el código
+                $mensajeLimpio = preg_replace('/\[RET-\d{8}-\d{4}-\w+\]\s*/', '', $mensaje);
+
+                return response()->json([
+                    'error' => 'Error de validación',
+                    'message' => $mensajeLimpio
+                ], 400);
+            }
+
+            // Para otros errores, mantener el comportamiento original
+            return response()->json([
+                'error' => 'Error interno del servidor',
+                'message' => $mensaje
+            ], 500);
+        }
     }
 
     public function prestamosByEstado(string $estado)
