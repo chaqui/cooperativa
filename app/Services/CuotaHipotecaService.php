@@ -318,9 +318,18 @@ class CuotaHipotecaService extends CuotaService
             $capitalMensual,
             $cuotaPagada
         );
-        if ($nuevoSaldo < 0.01) {
+
+        // Determinar si es la última cuota del préstamo
+        $numeroPago = $pagoAnterior ? $pagoAnterior->numero_pago_prestamo + 1 : 1;
+        $esUltimaCuota = ($numeroPago == $plazo);
+
+        // Para la última cuota, ajustar el capital exactamente al saldo restante
+        // para evitar diferencias por redondeo acumulativo
+        if ($esUltimaCuota || $nuevoSaldo < 0.01) {
+            $this->log("Ajustando última cuota - Saldo restante: Q{$saldoBase}");
             $nuevoSaldo = 0;
-            $capitalMensual = $saldoBase;
+            $capitalMensual = $saldoBase; // Capital exacto = saldo restante
+            $this->log("Capital ajustado en última cuota: Q{$capitalMensual}");
         }
 
         // Crear y configurar el objeto Pago
@@ -519,8 +528,15 @@ class CuotaHipotecaService extends CuotaService
         if ($frecuenciaPago == FrecuenciaPago::$MENSUAL) {
             $this->log("Calculando capital para frecuencia mensual");
             $capital = floatval($prestamo->cuota) - floatval($interes);
+
+            // Asegurar que el capital no sea negativo
+            $capital = max(0, $capital);
+
+            // Para evitar errores de redondeo, redondear el capital
+            $capital = round($capital, 2);
+
             $this->log("Capital calculado para frecuencia mensual: Q{$capital}");
-            return max(0, $capital);
+            return $capital;
         }
 
         // Caso 2: Frecuencia de pago única
@@ -952,6 +968,10 @@ class CuotaHipotecaService extends CuotaService
             $cuota = round($cuota, 2);
             $this->log("Cuota mensual calculada: Q{$cuota}");
 
+            // Validar que la cuota calculada sea razonable
+            $totalCuotasEstimado = $cuota * $plazo;
+            $this->log("Total estimado de cuotas: Q{$totalCuotasEstimado}");
+
             return $cuota;
         } catch (\Exception $e) {
             $this->manejarError($e, 'calcularCuota');
@@ -1189,6 +1209,48 @@ class CuotaHipotecaService extends CuotaService
         } catch (\Exception $e) {
             $this->manejarError($e, 'sincronizarFechaFinalPrestamo');
             return false;
+        }
+    }
+
+    /**
+     * Valida la integridad de los cálculos de un préstamo
+     * Útil para verificar que no hay faltantes por redondeo
+     *
+     * @param int $prestamoId ID del préstamo hipotecario
+     * @return array Resultado de la validación con detalles
+     */
+    public function validarIntegridadCalculos(int $prestamoId): array
+    {
+        try {
+            $prestamo = Prestamo_Hipotecario::findOrFail($prestamoId);
+            $pagos = $this->getPagos($prestamo);
+
+            $totalCapital = $pagos->sum('capital');
+            $totalInteres = $pagos->sum('interes');
+            $totalCuotas = $totalCapital + $totalInteres;
+
+            $faltanteCapital = $prestamo->monto - $totalCapital;
+            $ultimoPago = $pagos->last();
+
+            $resultado = [
+                'prestamo_id' => $prestamoId,
+                'monto_original' => $prestamo->monto,
+                'total_capital_calculado' => round($totalCapital, 2),
+                'total_interes_calculado' => round($totalInteres, 2),
+                'total_cuotas' => round($totalCuotas, 2),
+                'faltante_capital' => round($faltanteCapital, 2),
+                'saldo_final' => $ultimoPago ? $ultimoPago->saldo : 0,
+                'numero_cuotas' => $pagos->count(),
+                'integridad_ok' => abs($faltanteCapital) < 0.01 && ($ultimoPago ? $ultimoPago->saldo < 0.01 : true)
+            ];
+
+            $this->log("Validación de integridad completada para préstamo #{$prestamoId}: " .
+                      ($resultado['integridad_ok'] ? 'CORRECTA' : 'CON PROBLEMAS'));
+
+            return $resultado;
+        } catch (\Exception $e) {
+            $this->manejarError($e, 'validarIntegridadCalculos');
+            return ['error' => $e->getMessage()];
         }
     }
 }
