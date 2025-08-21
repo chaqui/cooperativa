@@ -109,6 +109,7 @@ class Client extends Model
         $client->estabilidad_domiciliaria = $data['estabilidad_domiciliaria'] ?? null;
         $client->tipo_vivienda = $data['tipo_vivienda'] ?? null;
         $client->etado_cliente  = 1;
+        $client->nacionalidad = $data['nacionalidad'] ?? null;
         return $client;
     }
 
