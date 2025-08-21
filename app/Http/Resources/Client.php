@@ -55,7 +55,8 @@ class Client extends JsonResource
             'integrantes_nucleo_familiar' => $this->integrantes_nucleo_familiar,
             'tipo_vivienda' => $this->tipo_vivienda,
             'estabilidad_domiciliaria' => $this->estabilidad_domiciliaria,
-            'razon_otros_ingresos' => $this->razon_otros_ingresos
+            'razon_otros_ingresos' => $this->razon_otros_ingresos,
+            'nacionalidad' => $this->nacionalidad,
         ];
     }
 
