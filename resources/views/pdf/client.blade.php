@@ -1,11 +1,11 @@
 @php
     use Carbon\Carbon;
     Carbon::setLocale('es');
-    
+
     // Configurar el porcentaje de escala (por defecto 100%)
     $scale = isset($scalePercentage) ? $scalePercentage : 100;
     $scaleFactor = $scale / 100;
-    
+
     // Calcular tamaños dinámicos basados en la escala
     $baseFontSize = 12;
     $fontSize = round($baseFontSize * $scaleFactor, 1);
@@ -15,7 +15,7 @@
     $margin = round(15 * $scaleFactor);
     $smallPadding = round(5 * $scaleFactor);
     $topMargin = round(50 * $scaleFactor);
-    
+
     function base64Image($path)
     {
         $fullPath = storage_path("app/public/" . $path);
@@ -199,6 +199,14 @@
             @if($client->telefono)
                 <td><strong>Telefono:</strong></td>
                 <td colspan="2">{{ $client->telefono }}</td>
+            @endif
+            @if(!$client->correo)
+                <td></td>
+                <td colspan="2"></td>
+            @endif
+            @if(!$client->telefono)
+                <td></td>
+                <td colspan="2"></td>
             @endif
         </tr>
         @if($client->direccion)
