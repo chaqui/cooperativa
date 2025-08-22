@@ -536,15 +536,18 @@ class ClientService extends CodigoService
     }
 
     /**
-     * Get the PDF of a client
+     * Generate a PDF for a client
      * @param mixed $id The id of the client
-     * @return void
+     * @param int $scalePercentage The scale percentage for font and elements (default 100)
+     * @return string The PDF content
      */
-    public function generatePdf($id)
+    public function generatePdf($id, $scalePercentage = 100)
     {
         $client = $this->getDataForPDF($id);
         $this->log($client);
-        $html = view('pdf.client', data: compact('client'))->render();
+
+        // Pasar el porcentaje de escala a la vista
+        $html = view('pdf.client', compact('client', 'scalePercentage'))->render();
 
         $pdf = $this->pdfService->generatePdf($html);
         return $pdf;

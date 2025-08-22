@@ -165,12 +165,17 @@ class ClientController extends Controller
         return response()->json(["data" => ["path" => $path]], 200);
     }
 
-    public function generateClientPdf($id)
+    public function generateClientPdf($id, Request $request)
     {
+        // Obtener el porcentaje de escala del request, por defecto 100%
+        $scalePercentage = $request->input('scale', 100);
 
-        $pdf = $this->clientService->generatePdf($id);
-        $this->log('Generando PDF del cliente con id: ' . $id);
-        return response($pdf, 200)->header('Content-Type', 'application/pdf');
+        // Validar que el porcentaje esté en un rango razonable
+        $scalePercentage = max(50, min(200, $scalePercentage)); // Entre 50% y 200%
+
+        $pdf = $this->clientService->generatePdf($id, $scalePercentage);
+        $this->log('Generando PDF del cliente con id: ' . $id . ' con escala: ' . $scalePercentage . '%');
+        return response($pdf, 200, ['Content-Type' => 'application/pdf']);
     }
 
     public function getBeneficiarios(string $id)

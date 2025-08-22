@@ -1,6 +1,21 @@
 @php
     use Carbon\Carbon;
     Carbon::setLocale('es');
+    
+    // Configurar el porcentaje de escala (por defecto 100%)
+    $scale = isset($scalePercentage) ? $scalePercentage : 100;
+    $scaleFactor = $scale / 100;
+    
+    // Calcular tamaños dinámicos basados en la escala
+    $baseFontSize = 12;
+    $fontSize = round($baseFontSize * $scaleFactor, 1);
+    $logoWidth = round(100 * $scaleFactor);
+    $photoWidth = round(150 * $scaleFactor);
+    $padding = round(10 * $scaleFactor);
+    $margin = round(15 * $scaleFactor);
+    $smallPadding = round(5 * $scaleFactor);
+    $topMargin = round(50 * $scaleFactor);
+    
     function base64Image($path)
     {
         $fullPath = storage_path("app/public/" . $path);
@@ -49,49 +64,101 @@
 <head>
     <title>Client PDF</title>
     <style>
-        /* Agrega tus estilos aquí */
+        /* Estilos dinámicos basados en el porcentaje de escala: {{ $scale }}% */
         body {
             font-family: Arial, sans-serif;
-            font-size: 12px;
+            font-size: {{ $fontSize }}px;
+            line-height: {{ round(1.4 * $scaleFactor, 2) }};
         }
 
         .header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: {{ $margin }}px;
+        }
+
+        .header h1 {
+            font-size: {{ round(18 * $scaleFactor, 1) }}px;
+            margin: {{ round(10 * $scaleFactor) }}px 0;
+        }
+
+        .header h2 {
+            font-size: {{ round(16 * $scaleFactor, 1) }}px;
+            margin: {{ round(8 * $scaleFactor) }}px 0;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: {{ round(10 * $scaleFactor) }}px;
         }
 
         th,
         td {
-            padding: 10px;
+            padding: {{ $padding }}px;
             text-align: left;
+            font-size: {{ $fontSize }}px;
+        }
+
+        th {
+            font-size: {{ round(14 * $scaleFactor, 1) }}px;
+            font-weight: bold;
         }
 
         .content {
-            margin: 5px;
-            border: 1px solid black;
-            padding: 5px;
+            margin: {{ $smallPadding }}px;
+            border: {{ round(1 * $scaleFactor) }}px solid black;
+            padding: {{ $smallPadding }}px;
         }
 
         .logo {
-            width: 100px;
+            width: {{ $logoWidth }}px;
             height: auto;
+            margin-bottom: {{ round(10 * $scaleFactor) }}px;
         }
 
         .signature {
             text-align: center;
-            margin-top: 50px;
+            margin-top: {{ $topMargin }}px;
+            font-size: {{ round(12 * $scaleFactor, 1) }}px;
         }
 
         .client-photo {
-            width: 150px;
+            width: {{ $photoWidth }}px;
             height: auto;
-            margin-right: 10px;
+            margin-right: {{ round(10 * $scaleFactor) }}px;
             vertical-align: middle;
+        }
+
+        /* Ajustes específicos para elementos de texto */
+        strong {
+            font-weight: bold;
+            font-size: {{ round($fontSize * 1.05, 1) }}px;
+        }
+
+        /* Espaciado entre secciones */
+        .section-spacing {
+            margin-bottom: {{ round(15 * $scaleFactor) }}px;
+        }
+
+        /* Títulos de secciones */
+        h3 {
+            font-size: {{ round(16 * $scaleFactor, 1) }}px;
+            margin: {{ round(20 * $scaleFactor) }}px 0 {{ round(10 * $scaleFactor) }}px 0;
+            font-weight: bold;
+        }
+
+        /* Tabla de referencias y beneficiarios */
+        .references-table th,
+        .beneficiarios-table th {
+            background-color: #f5f5f5;
+            padding: {{ round(8 * $scaleFactor) }}px;
+            font-size: {{ round(11 * $scaleFactor, 1) }}px;
+        }
+
+        .references-table td,
+        .beneficiarios-table td {
+            padding: {{ round(6 * $scaleFactor) }}px;
+            font-size: {{ round(10 * $scaleFactor, 1) }}px;
         }
     </style>
 </head>
@@ -299,7 +366,7 @@
 
     @if (hasBeneficiarios($client->beneficiarios))
         <h3>Beneficiarios</h3>
-        <table class="content">
+        <table class="content beneficiarios-table">
             <tr>
                 <th>Nombre</th>
                 <th>Parentesco</th>
@@ -324,7 +391,7 @@
 
     @if ($client->tipoCliente != '390' && hasReferences($client->referenciasLaborales))
         <h3>Referencias Laborales</h3>
-        <table class="content">
+        <table class="content references-table">
             <tr>
                 <th>Nombre</th>
                 <th>Telefono</th>
@@ -340,7 +407,7 @@
         </table>
     @elseif (hasReferences($client->referenciasComerciales))
         <h3>Referencias Comerciales</h3>
-        <table class="content">
+        <table class="content references-table">
             <tr>
                 <th>Nombre</th>
                 <th>Telefono</th>
@@ -357,7 +424,7 @@
     @endif
     @if (hasReferences($client->referenciasPersonales))
     <h3>Referencias Personales</h3>
-    <table class="content">
+    <table class="content references-table">
         <tr>
             <th>Nombre</th>
             <th>Telefono</th>
@@ -374,7 +441,7 @@
     @endif
     @if (hasReferences($client->referenciasFamiliares))
     <h3>Referencias Familiares</h3>
-    <table class="content">
+    <table class="content references-table">
         <tr>
             <th>Nombre</th>
             <th>Telefono</th>
