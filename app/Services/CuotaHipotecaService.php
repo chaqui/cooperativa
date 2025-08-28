@@ -145,6 +145,7 @@ class CuotaHipotecaService extends CuotaService
                 'interesGanado' => 0,
                 'capitalGanado' => 0,
                 'descripcion' => '',
+                'penalizacion' => 0
             ];
 
             $montoRestante = $this->procesarPenalizacion($pago, $montoRestante, $detallesPago);
@@ -185,6 +186,7 @@ class CuotaHipotecaService extends CuotaService
             'interesGanado' => 0,
             'capitalGanado' => 0,
             'descripcion' => '',
+            'penalizacion' => 0
         ];
         $montoRestante = $this->procesarPenalizacion($pago, $montoRestante, $detallesPago);
         $montoRestante = $this->procesarIntereses($pago, $montoRestante, $detallesPago, $pago->fecha);
@@ -667,6 +669,7 @@ class CuotaHipotecaService extends CuotaService
         $detallesPago['interesGanado'] += $montoPenalizacion;
         $detallesPago['descripcion'] .= "Se abonó por penalización la cantidad de Q.{$montoPenalizacion}; ";
 
+        $detallesPago['penalizacion'] += $montoPenalizacion;
         return $montoDisponible - $montoPenalizacion;
     }
 
@@ -887,7 +890,9 @@ class CuotaHipotecaService extends CuotaService
             'imagen' => $data['imagen'] ?? null,
             'capital' => $detallesPago['capitalGanado'],
             'interes' => $detallesPago['interesGanado'],
+            'penalizacion' => $detallesPago['penalizacion'],
             'motivo' => $descripcion,
+            'saldo' => $pago->nuevo_saldo,
             'id_cuenta' => $data['id_cuenta'],
         ]);
     }

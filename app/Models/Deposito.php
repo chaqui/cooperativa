@@ -19,6 +19,10 @@ class Deposito extends Model
         'tipo_cuenta_interna_id',
         'motivo',
         'path_pdf',
+        'saldo',
+        'capital_pagado',
+        'interes_pagado',
+        'penalizacion_pagada',
     ];
 
     public static function crear($datos)
@@ -60,6 +64,10 @@ class Deposito extends Model
         $this->numero_documento = $data['numero_documento'];
         $this->tipo_cuenta_interna_id = $data['id_cuenta'];
         $this->imagen = $data['imagen'] ?? $this->imagen;
+        $this->saldo = $data['saldo'] ?? 0;
+        $this->capital_pagado = $data['capital'] ?? 0;
+        $this->interes_pagado = $data['interes'] ?? 0;
+        $this->penalizacion_pagada = $data['penalizacion'] ?? 0;
     }
 
     public function inversion()
