@@ -15,6 +15,8 @@ use App\Services\ClientService;
 use App\Services\PropiedadService;
 use App\Services\CatologoService;
 use App\Services\UserService;
+use App\Services\SimpleExcelService;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Exception;
 use App\Traits\ErrorHandler;
 
@@ -63,10 +65,13 @@ class PrestamoService extends CodigoService
      * @return Prestamo_Hipotecario Instancia del préstamo creado
      * @throws \Exception Si ocurre un error durante el proceso
      */
-    public function create(array $data)
+    public function create($request)
     {
+        $data = $request->all();
+
 
         $this->validarFrecuenciaPago($data);
+        $this->validarExcel($data, $request);
         DB::beginTransaction();
 
         try {
@@ -77,7 +82,6 @@ class PrestamoService extends CodigoService
             }
 
             // Validar propiedad
-
             $this->propiedadService->getPropiedad($data['propiedad_id']);
 
             // Generar código único para el préstamo
@@ -93,7 +97,7 @@ class PrestamoService extends CodigoService
             // Cambiar el estado del préstamo a "CREADO" o si es existente hacer pasar todos los estados necesarios
             if ($prestamo->existente) {
                 $this->log("Procesando préstamo existente: {$prestamo->codigo}");
-                $this->prestamoExistenteService->procesarPrestamoExistente($prestamo, $data);
+                $this->prestamoExistenteService->procesarPrestamoExistente($prestamo, $data, $request->file('file'));
             } else {
                 $this->log("Estableciendo estado inicial para el préstamo: {$prestamo->codigo}");
                 $dataEstado = [
@@ -114,6 +118,13 @@ class PrestamoService extends CodigoService
             $this->manejarError($e, 'create prestamo');
             // Esta línea nunca se alcanzará porque manejarError siempre lanza excepción
             $this->lanzarExcepcionConCodigo("Error inesperado en create");
+        }
+    }
+
+    private function validarExcel($data, $request)
+    {
+        if ($data['existente'] && !$request->hasFile('file')) {
+            $this->lanzarExcepcionConCodigo("El archivo Excel de depósitos es requerido");
         }
     }
 

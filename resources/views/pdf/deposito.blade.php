@@ -1,12 +1,15 @@
 @php
     use Carbon\Carbon;
     Carbon::setLocale('es');
-    function base64Image($path)
-    {
-        $fullPath = storage_path("app/public/" . $path);
-        $type = pathinfo($fullPath, PATHINFO_EXTENSION);
-        $data = file_get_contents($fullPath);
-        return 'data:image/' . $type . ';base64,' . base64_encode($data);
+
+    if (!function_exists('base64Image')) {
+        function base64Image($path)
+        {
+            $fullPath = storage_path("app/public/" . $path);
+            $type = pathinfo($fullPath, PATHINFO_EXTENSION);
+            $data = file_get_contents($fullPath);
+            return 'data:image/' . $type . ';base64,' . base64_encode($data);
+        }
     }
 @endphp
 <!DOCTYPE html>

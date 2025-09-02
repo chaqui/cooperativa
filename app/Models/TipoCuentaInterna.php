@@ -16,7 +16,8 @@ class TipoCuentaInterna extends Model
         'tipo_cuenta',
         'numero_cuenta',
         'saldo_inicial',
-        'monto_bloqueado'
+        'monto_bloqueado',
+        'visible'
     ];
 
     public function cuentaInternas()

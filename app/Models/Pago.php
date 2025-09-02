@@ -132,7 +132,7 @@ class Pago extends Model
      * @param Pago|null $pagoAnterior
      * @return Pago
      */
-    public static function generarPago($prestamo, $interesMensual, $capitalMensual, $nuevoSaldo, $cuotaPagada, $fecha, $pagoAnterior): Pago
+    public static function generarPago($prestamo, $interesMensual, $capitalMensual, $nuevoSaldo,  $fecha, $pagoAnterior): Pago
     {
 
         return self::inicializarPago(

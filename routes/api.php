@@ -25,6 +25,7 @@ use App\Http\Controllers\DeclaracionController;
 use App\Http\Controllers\ImpuestoController;
 use App\Http\Controllers\OrientacionController;
 use App\Http\Controllers\ExcelController;
+use App\Http\Controllers\ExcelTemplateController;
 use App\Http\Resources\Rol;
 
 $rolesEdicion = implode('|', [Roles::$ADMIN, Roles::$ASESOR]);
@@ -168,6 +169,7 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
 //depositos
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::post('depositos', [DepositoController::class, 'crearDepositoyDepositar']);
+    Route::get('depositos/excel', [ExcelTemplateController::class, 'downloadDepositTemplate']);
     Route::put('depositos/{id}', [DepositoController::class, 'depositar']);
     Route::get('depositos/{id}/pdf', [DepositoController::class, 'getPDF']);
 });

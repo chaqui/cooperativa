@@ -41,7 +41,7 @@ class PrestamoDesembolsado extends EstadoBasePrestamo
         $prestamo->fecha_inicio = $data['fecha'] ?? now();
         parent::cambiarEstado($prestamo, $data);
 
-        $cuotaPagada =  $data['numero_cuota_pagada'] ?? 0;
+        $cuotaPagada = 0;
         $this->log("Las cuotas pagadas son: {$cuotaPagada}");
         $this->cuotaHipotecariaService->calcularCuotas($prestamo, $cuotaPagada);
 

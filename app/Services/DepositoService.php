@@ -142,7 +142,7 @@ class DepositoService
             // Registrar la transacción en la cuenta interna
             $cuentaInternaService = app(CuentaInternaService::class);
 
-            if (isset($data['interes']) && $data['interes'] > 0.001) {
+            if (!$data['existente'] && isset($data['interes']) && $data['interes'] > 0.001) {
                 $this->generarImpuestos($deposito->pago, $data['interes'], $deposito->tipo_cuenta_interna_id);
             }
 

@@ -22,7 +22,18 @@ class TipoCuentaInternaService
 
     public function getAll()
     {
-        return TipoCuentaInterna::all();
+        return TipoCuentaInterna::where('visible', true)->get();
+    }
+
+    public function getCuentaParaDepositosAnteriores()
+    {
+
+        $tipoCuenta = TipoCuentaInterna::where('visible', false)->first();
+        if (!$tipoCuenta) {
+            $this->lanzarExcepcionConCodigo("No se encontró una cuenta interna para depósitos anteriores. Por favor, cree una cuenta con 'visible' en false.");
+        }
+
+        return $tipoCuenta;
     }
 
     public function getById($id)

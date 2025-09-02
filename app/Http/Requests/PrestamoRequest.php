@@ -4,11 +4,13 @@ namespace App\Http\Requests;
 
 use App\Constants\Roles;
 use App\Traits\Authorizable;
+use App\Traits\Loggable;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PrestamoRequest extends FormRequest
 {
     use Authorizable;
+    use Loggable;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -26,6 +28,7 @@ class PrestamoRequest extends FormRequest
     {
 
         $validacionesBasicas = $this->validacionesBasicas();
+        $this->log("Input existente: " . json_encode($this->input("existente")));
         if ($this->input("existente")) {
             $validacionesBasicas = array_merge($validacionesBasicas, $this->validacionesSiExiste());
         }
@@ -36,9 +39,7 @@ class PrestamoRequest extends FormRequest
     {
         return [
             'fecha_creacion' => 'required|string',
-            'saldo' => 'required|numeric',
             'fecha_autorizacion' => 'required|string',
-            'numero_cuota_pagada' => 'required|numeric',
             'fecha_desembolso' => 'required|string',
             'gastos_formalidad' => 'required|numeric',
             'gastos_administrativos' => 'required|numeric',
@@ -59,7 +60,6 @@ class PrestamoRequest extends FormRequest
             'dpi_cliente' => 'required|string',
             'propiedad_id' => 'required|numeric',
             'frecuencia_pago' => 'required|string',
-            'existente' => 'required|boolean',
         ];
     }
 }

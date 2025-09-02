@@ -54,7 +54,7 @@ class PrestamoController extends Controller
      */
     public function store(PrestamoRequest $request)
     {
-        $prestamo = $this->prestamoService->create($request->all());
+        $prestamo = $this->prestamoService->create($request);
         return new PrestamoResource($prestamo);
     }
 
