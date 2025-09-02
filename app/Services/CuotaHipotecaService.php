@@ -195,7 +195,7 @@ class CuotaHipotecaService extends CuotaService
             'penalizacion' => 0
         ];
         $this->log("Registrando deposito existente para el pago {$pago->id}");
-        $montoRestante = $this->procesarPenalizacion($pago, $montoRestante, $detallesPago);
+        $montoRestante = $this->procesarPenalizacionExistente($pago, $montoRestante, $detallesPago, $deposito['fecha_documento']);
         $montoRestante = $this->procesarIntereses($pago, $montoRestante, $detallesPago, $pago->fecha);
         $montoRestante = $this->procesarCapital($pago, $montoRestante, $detallesPago);
         $pago->monto_pagado += $montoOriginal;
@@ -671,6 +671,48 @@ class CuotaHipotecaService extends CuotaService
         return $montoDisponible - $montoPenalizacion;
     }
 
+
+    /**
+     * Procesa la penalización existente para un pago existente
+     * @param mixed $pago informacion del pago
+     * @param mixed $montoDisponible monto disponible para el pago
+     * @param mixed $detallesPago detalles del pago
+     * @param mixed $fechaDeposito fecha del depósito
+     */
+    private function procesarPenalizacionExistente($pago, $montoDisponible, &$detallesPago, $fechaDeposito)
+    {
+        $pago->penalizacion = $this->calcularPenalizacion($pago, $fechaDeposito);
+        $this->log("Procesando penalización: {$pago->penalizacion}");
+        return $this->procesarPenalizacion($pago, $montoDisponible, $detallesPago);
+    }
+
+    /**
+     * Calcula la penalización para un pago hipotecario en función de la fecha de depósito.
+     *
+     * @param Pago $pago Pago a evaluar
+     * @param string $fechaDeposito Fecha del depósito
+     * @return float Penalización calculada
+     */
+    private function calcularPenalizacion($pago, $fechaDeposito)
+    {
+        // Ejemplo de lógica: penalización si el depósito es posterior a la fecha de pago
+        // Puedes ajustar la lógica según las reglas de negocio
+        $penalizacion = 0.0;
+        $this->log("Calculando penalización para la fecha: {$pago->fecha}");
+        $this->log("Fecha de depósito: {$fechaDeposito}");
+        if (!empty($pago->fecha) && !empty($fechaDeposito)) {
+            // La fecha de pago es el día 10 del mes de $pago->fecha
+            $fechaPago = new \DateTime(date('Y-m-10', strtotime($pago->fecha)));
+
+            $this->log("Fecha de pago establecida: " . $fechaPago->format('Y-m-d'));
+            $fechaDepositoObj = new \DateTime($fechaDeposito);
+            if ($fechaDepositoObj > $fechaPago) {
+                // Penalización: 5% del capital si el pago es tardío
+                $penalizacion = round($pago->capital * 0.05, 2);
+            }
+        }
+        return $penalizacion;
+    }
 
     /**
      * Procesa el pago de intereses
