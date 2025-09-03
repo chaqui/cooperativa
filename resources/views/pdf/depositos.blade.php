@@ -94,7 +94,7 @@
             <tbody>
                 @foreach ($depositos as $deposito)
                     <tr>
-                        <td></td>{{ \Carbon\Carbon::parse($deposito["fecha"])->translatedFormat('d \d\e F \d\e Y') }}</td>
+                        <td>{{ \Carbon\Carbon::parse($deposito["fecha"])->translatedFormat('d \d\e F \d\e Y') }}</td>
                         <td>Q. {{ number_format($deposito["monto"], 2) }}</td>
                         <td>Q. {{ number_format($deposito["interes_pagado"], 2) }}</td>
                         <td>Q. {{ number_format($deposito["capital_pagado"], 2) }}</td>

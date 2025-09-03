@@ -56,6 +56,10 @@ class PrestamoExistenService
                 $this->log("El saldo del préstamo {$prestamo->codigo} es negativo después de registrar el depósito");
             }
         }
+
+        // Verificar y ajustar amortizaciones después de procesar todos los depósitos existentes
+        $this->log("Verificando integridad de amortizaciones después de procesar depósitos existentes");
+        $this->cuotaHipotecaService->verificarYAjustarAmortizaciones($prestamo);
     }
 
     private function prestamoCreado($prestamo, $data)

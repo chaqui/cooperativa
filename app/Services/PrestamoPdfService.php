@@ -202,7 +202,6 @@ class PrestamoPdfService extends PrestamoService
         $prestamo = $this->get($id);
 
         $depositos = $prestamo->depositos();
-        $this->log('Datos de depósitos: ' . json_encode($depositos));
         $this->enriquecerDatosPrestamo($prestamo);
         // Renderizar la vista HTML
         $html = view('pdf.depositos', [

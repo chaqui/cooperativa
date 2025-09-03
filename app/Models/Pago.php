@@ -27,7 +27,7 @@ class Pago extends Model
 
     public function capitalFaltante()
     {
-        return round(max(0, $this->capital - $this->capital_pagado), 2);
+        return round($this->capital - $this->capital_pagado, 2);
     }
 
     public function penalizacionFaltante()

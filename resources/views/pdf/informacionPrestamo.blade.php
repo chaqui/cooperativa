@@ -14,7 +14,8 @@
         <tr>
             <th>Cliente</th>
             <td>{{$prestamo->codigoCliente}}</td>
-            <td colspan="2">{{ $prestamo->nombreCliente}}</td>
+            <th>Nombre</th>
+            <td>{{ $prestamo->nombreCliente}}</td>
         </tr>
         <tr>
             <th>Fecha de Inicio</th>

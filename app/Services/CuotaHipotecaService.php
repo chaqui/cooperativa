@@ -74,6 +74,10 @@ class CuotaHipotecaService extends CuotaService
 
             // Generar los pagos mensuales
             $this->generarCuotas($prestamoHipotecario, $plazoEfectivo);
+
+            // Verificar y ajustar amortizaciones para garantizar exactitud
+            $this->verificarYAjustarAmortizaciones($prestamoHipotecario);
+
             $this->log("=== CÁLCULO DE CUOTAS COMPLETADO ===");
             $this->log("Pagos generados correctamente para {$plazoEfectivo} meses");
 
@@ -163,6 +167,10 @@ class CuotaHipotecaService extends CuotaService
             if ($pago->capital_pagado > 0) {
                 $pago->nuevo_saldo = $pago->saldo + $pago->capital - $pago->capital_pagado;
                 $this->actualizarSiguentesPago($pago,  $pago->nuevo_saldo);
+
+                // Verificar y ajustar amortizaciones después de actualizar pagos siguientes
+                $this->log("Verificando integridad de amortizaciones después de actualizar pagos siguientes");
+                $this->verificarYAjustarAmortizaciones($pago->prestamo);
             }
             $pago->fecha_pago = $data['fecha_documento'];
             $pago->save();
@@ -198,20 +206,24 @@ class CuotaHipotecaService extends CuotaService
         $montoRestante = $this->procesarIntereses($pago, $montoRestante, $detallesPago, $pago->fecha);
         $montoRestante = $this->procesarCapital($pago, $montoRestante, $detallesPago);
         $pago->monto_pagado += $montoOriginal;
-        $pago->fecha_pago = $pago->fecha;
 
+        // Calcular correctamente el nuevo saldo después del pago real
         if ($pago->capital_pagado > 0) {
+            // El saldo original antes del pago era: saldo_después + capital_programado
+            // El nuevo saldo es: saldo_original - capital_efectivamente_pagado
             $pago->nuevo_saldo = $pago->saldo + $pago->capital - $pago->capital_pagado;
             $this->log("El nuevo saldo del pago {$pago->numero_pago_prestamo} es {$pago->nuevo_saldo}");
-            $this->actualizarSiguentesPago($pago,  $pago->nuevo_saldo);
+            $this->actualizarSiguentesPago($pago, $pago->nuevo_saldo);
         }
 
         if ($pago->capitalFaltante() <= 0) {
             $pago->realizado = true;
             $this->log("El pago {$pago->numero_pago_prestamo} ha sido completado");
         }
+
         $pago->fecha_pago = $deposito['fecha_documento'];
         $pago->save();
+
         $data = [
             'monto' => $montoOriginal,
             'tipo_documento' => $deposito['tipo_documento'],
@@ -225,9 +237,6 @@ class CuotaHipotecaService extends CuotaService
         // Actualizar fecha final del préstamo después del pago
         $this->actualizarFechaFinalPrestamo($prestamo);
 
-
-        $pago->save();
-        $pago->refresh();
         return $pago->nuevo_saldo;
     }
 
@@ -284,6 +293,11 @@ class CuotaHipotecaService extends CuotaService
             );
             $this->log("Cuota #{$numeroCuota} generada con ID: {$pagoAnterior->id}");
         }
+
+        // Calcular y mostrar la amortización total
+        $pagosGenerados = Pago::where('id_prestamo', $prestamoHipotecario->id)->get();
+        $amortizacionTotal = $pagosGenerados->sum('capital');
+        $this->log("Amortización total calculada: Q{$amortizacionTotal}");
 
         // Actualizar la fecha final del préstamo basándose en la última cuota generada
         $this->actualizarFechaFinalPrestamo($prestamoHipotecario);
@@ -1303,6 +1317,90 @@ class CuotaHipotecaService extends CuotaService
         } catch (\Exception $e) {
             $this->manejarError($e, 'validarIntegridadCalculos');
             return ['error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Verifica y ajusta las amortizaciones para garantizar que sumen exactamente el monto del préstamo
+     * Corrige errores de redondeo acumulativo ajustando la última cuota
+     *
+     * @param Prestamo_Hipotecario $prestamo Préstamo a verificar
+     * @return bool True si se realizaron ajustes
+     */
+    public function verificarYAjustarAmortizaciones(Prestamo_Hipotecario $prestamo): bool
+    {
+        try {
+            $this->log("🔍 Verificación final de amortizaciones para préstamo #{$prestamo->id}");
+
+            // Obtener todos los pagos del préstamo ordenados por número
+            $pagos = Pago::where('id_prestamo', $prestamo->id)
+                ->orderBy('numero_pago_prestamo')
+                ->get();
+
+            if ($pagos->isEmpty()) {
+                $this->log("❌ No hay pagos para verificar");
+                return false;
+            }
+
+            // Calcular suma total de amortizaciones (capital)
+            $sumaAmortizaciones = $pagos->sum('capital');
+            $diferencia = $prestamo->monto - $sumaAmortizaciones;
+            $umbral = 0.005; // Umbral más estricto para detección de diferencias
+
+            $this->log("💰 Monto original: Q{$prestamo->monto}");
+            $this->log("📊 Suma de amortizaciones: Q{$sumaAmortizaciones}");
+            $this->log("⚖️ Diferencia: Q{$diferencia}");
+
+            // Si la diferencia es menor al umbral, consideramos que está correcto
+            if (abs($diferencia) < $umbral) {
+                $this->log("✅ Las amortizaciones están correctas (diferencia < Q{$umbral})");
+                return false;
+            }
+
+            // Hay diferencia significativa, necesitamos corregir
+            $this->log("⚠️ AJUSTANDO ÚLTIMA CUOTA - Diferencia detectada: Q{$diferencia}");
+
+            // Obtener la última cuota
+            $ultimaCuota = $pagos->last();
+            if (!$ultimaCuota) {
+                $this->log("❌ No se encontró la última cuota");
+                return false;
+            }
+
+            $capitalAnterior = $ultimaCuota->capital;
+
+            // Ajustar el capital de la última cuota
+            $ultimaCuota->capital = round($ultimaCuota->capital + $diferencia, 2);
+
+            // Asegurar que el saldo de la última cuota sea 0
+            $ultimaCuota->saldo = 0;
+
+            // Guardar cambios
+            $ultimaCuota->save();
+
+            $this->log("🔧 Capital de última cuota ajustado: Q{$capitalAnterior} → Q{$ultimaCuota->capital}");
+
+            // Verificar que la corrección funcionó
+            $ultimaCuota->refresh();
+            $nuevaSuma = Pago::where('id_prestamo', $prestamo->id)->sum('capital');
+            $nuevaDiferencia = $prestamo->monto - $nuevaSuma;
+
+            $this->log("🔍 Verificación post-ajuste:");
+            $this->log("📊 Nueva suma de amortizaciones: Q{$nuevaSuma}");
+            $this->log("⚖️ Nueva diferencia: Q{$nuevaDiferencia}");
+
+            if (abs($nuevaDiferencia) < 0.01) {
+                $this->log("✅ Suma de amortizaciones corregida exitosamente");
+                return true;
+            } else {
+                $this->log("❌ El ajuste no corrigió completamente la diferencia");
+                return false;
+            }
+
+        } catch (\Exception $e) {
+            $this->logError("Error en verificarYAjustarAmortizaciones: " . $e->getMessage());
+            $this->manejarError($e, 'verificarYAjustarAmortizaciones');
+            return false;
         }
     }
 }

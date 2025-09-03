@@ -163,22 +163,8 @@ class Prestamo_Hipotecario extends Model
 
     public function saldoPendienteCapital()
     {
-        $pagos = $this->getCuotasPendientes();
-        $monto = 0.0; // Inicializar como float
-        foreach ($pagos as $pago) {
-            $capitalFaltante = $pago->capitalFaltante();
-            $monto += $capitalFaltante;
-        }
-        // Aplicar redondeo final más robusto
-        $resultado = round($monto, 2);
-
-        // Si el resultado está muy cerca de un número entero, ajustarlo
-        $diferencia = abs($resultado - round($resultado));
-        if ($diferencia < 0.01 && $diferencia > 0.004) {
-            $resultado = round($resultado);
-        }
-
-        return $resultado;
+        // El saldo pendiente de capital es el monto original menos el capital pagado
+        return round($this->monto - $this->capitalPagado(), 2);
     }
     public function saldoPendientePenalizacion()
     {
