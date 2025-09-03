@@ -160,9 +160,8 @@ class CuotaHipotecaService extends CuotaService
             $pago->monto_pagado += $montoOriginal;
 
             // Verificar si el pago está completo
-            if ($pago->capitalFaltante() <= 0) {
-
-                $pago->nuevo_saldo = $pago->saldo - ($pago->capital_pagado - $pago->capital);
+            if ($pago->capital_pagado > 0) {
+                $pago->nuevo_saldo = $pago->saldo + $pago->capital - $pago->capital_pagado;
                 $this->actualizarSiguentesPago($pago,  $pago->nuevo_saldo);
             }
             $pago->fecha_pago = $data['fecha_documento'];
@@ -201,11 +200,15 @@ class CuotaHipotecaService extends CuotaService
         $pago->monto_pagado += $montoOriginal;
         $pago->fecha_pago = $pago->fecha;
 
+        if ($pago->capital_pagado > 0) {
+            $pago->nuevo_saldo = $pago->saldo + $pago->capital - $pago->capital_pagado;
+            $this->log("El nuevo saldo del pago {$pago->numero_pago_prestamo} es {$pago->nuevo_saldo}");
+            $this->actualizarSiguentesPago($pago,  $pago->nuevo_saldo);
+        }
+
         if ($pago->capitalFaltante() <= 0) {
             $pago->realizado = true;
             $this->log("El pago {$pago->numero_pago_prestamo} ha sido completado");
-            $pago->nuevo_saldo = $pago->saldo - ($pago->capital_pagado - $pago->capital);
-            $this->actualizarSiguentesPago($pago,  $pago->nuevo_saldo);
         }
         $pago->fecha_pago = $deposito['fecha_documento'];
         $pago->save();
@@ -227,6 +230,8 @@ class CuotaHipotecaService extends CuotaService
         $pago->refresh();
         return $pago->nuevo_saldo;
     }
+
+
 
     private function validarPago($data)
     {
@@ -932,9 +937,10 @@ class CuotaHipotecaService extends CuotaService
             'interes' => $detallesPago['interesGanado'],
             'penalizacion' => $detallesPago['penalizacion'],
             'motivo' => $descripcion,
-            'saldo' => $pago->nuevo_saldo,
+            'saldo' => $pago->nuevo_saldo > 0 ? $pago->nuevo_saldo : $pago->saldo,
             'id_cuenta' => $data['id_cuenta'],
-            'existente' => $data['existente']
+            'existente' => $data['existente'],
+            'fecha' => $data['fecha_documento'] ?? now()
         ]);
     }
 

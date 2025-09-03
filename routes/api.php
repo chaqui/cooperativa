@@ -154,6 +154,7 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('prestamos/{id}/estado-cuenta/pdf', [PrestamoController::class, 'generarEstadoCuenta']);
     Route::get('prestamos/{id}/pagos', [PrestamoController::class, 'pagos']);
     Route::post('prestamos/{id}/pagos', [PrestamoController::class, 'pagarCuota']);
+    Route::get('prestamos/{id}/depositos/pdf', [PrestamoController::class, 'generarEstadoCuentaDepositos']);
 });
 
 //estados

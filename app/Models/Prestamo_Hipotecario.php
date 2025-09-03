@@ -238,4 +238,15 @@ class Prestamo_Hipotecario extends Model
         }
         return false;
     }
+
+    public function depositos()
+    {
+        $pagos = $this->pagos()->get();
+        $this->log("El préstamo {$this->codigo} tiene " . count($pagos) . " pagos asociados.");
+        $depositos = [];
+        foreach ($pagos as $pago) {
+            $depositos = array_merge($depositos, $pago->depositos->toArray());
+        }
+        return $depositos;
+    }
 }

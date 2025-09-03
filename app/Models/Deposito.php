@@ -23,6 +23,7 @@ class Deposito extends Model
         'capital_pagado',
         'interes_pagado',
         'penalizacion_pagada',
+        'fecha'
     ];
 
     public static function crear($datos)
@@ -68,6 +69,7 @@ class Deposito extends Model
         $this->capital_pagado = $data['capital'] ?? 0;
         $this->interes_pagado = $data['interes'] ?? 0;
         $this->penalizacion_pagada = $data['penalizacion'] ?? 0;
+        $this->fecha = $data['fecha'] ?? now();
     }
 
     public function inversion()

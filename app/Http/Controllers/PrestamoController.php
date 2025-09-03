@@ -144,6 +144,12 @@ class PrestamoController extends Controller
         return response($pdf, 200)->header('Content-Type', 'application/pdf');
     }
 
+    public function generarEstadoCuentaDepositos(string $id)
+    {
+        $pdf = $this->prestamoPdfService->generarPdfDepositos($id);
+        return response($pdf, 200)->header('Content-Type', 'application/pdf');
+    }
+
     public function getEstadoCuenta(string $id)
     {
         $prestamo = $this->prestamoService->get($id);
@@ -173,7 +179,6 @@ class PrestamoController extends Controller
 
             return response($excelData['content'])
                 ->withHeaders($excelData['headers']);
-
         } catch (\Exception $e) {
             $this->log('Error al generar el archivo Excel: ' . $e->getMessage());
             return response()->json([
@@ -181,5 +186,4 @@ class PrestamoController extends Controller
             ], 500);
         }
     }
-
 }

@@ -195,4 +195,23 @@ class PrestamoPdfService extends PrestamoService
     {
         return $this->generarEstadoCuentaPdf($id, $inicial, Orientacion::LANDSCAPE);
     }
+
+
+    public function generarPdfDepositos($id)
+    {
+        $prestamo = $this->get($id);
+
+        $depositos = $prestamo->depositos();
+        $this->log('Datos de depósitos: ' . json_encode($depositos));
+        $this->enriquecerDatosPrestamo($prestamo);
+        // Renderizar la vista HTML
+        $html = view('pdf.depositos', [
+            'prestamo' => $prestamo,
+            'depositos' => $depositos,
+        ])->render();
+        $pdf = $this->pdfService->generatePdf($html);
+
+        $this->log("PDF de depósitos generado con éxito para el préstamo: {$prestamo->codigo}");
+        return $pdf;
+    }
 }
