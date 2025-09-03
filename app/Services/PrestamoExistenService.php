@@ -52,7 +52,7 @@ class PrestamoExistenService
 
         foreach ($depositos as $deposito) {
             $saldo = $this->cuotaHipotecaService->registrarPagoExistente($prestamo, $deposito);
-            if($saldo < 0) {
+            if ($saldo < 0) {
                 $this->log("El saldo del préstamo {$prestamo->codigo} es negativo después de registrar el depósito");
             }
         }
@@ -124,6 +124,7 @@ class PrestamoExistenService
 
             $depositos = [];
             $errores = [];
+            $this->log("Leyendo filas del archivo Excel, total filas: {$highestRow}");
 
             // Leer desde la fila 2 (saltando encabezados)
             for ($row = 2; $row <= $highestRow; $row++) {
@@ -131,14 +132,22 @@ class PrestamoExistenService
                 $monto = $worksheet->getCell("B{$row}")->getCalculatedValue();
                 $tipoDocumento = $worksheet->getCell("C{$row}")->getCalculatedValue();
                 $numeroDocumento = $worksheet->getCell("D{$row}")->getCalculatedValue();
+                $penalizacion = $worksheet->getCell("E{$row}")->getCalculatedValue();
 
                 // Saltar filas vacías
-                if (empty($fechaDeposito) && empty($monto) && empty($tipoDocumento) && empty($numeroDocumento)) {
+                if (empty($fechaDeposito) && empty($monto) && empty($tipoDocumento) && empty($numeroDocumento) && empty($penalizacion)) {
                     continue;
                 }
+                $this->log("Procesando fila {$row}: Fecha={$fechaDeposito}, Monto={$monto}, TipoDoc={$tipoDocumento}, NumDoc={$numeroDocumento}, Penalización={$penalizacion}");
 
                 // Validar que todos los campos estén presentes
-                if (empty($fechaDeposito) || empty($monto) || empty($tipoDocumento) || empty($numeroDocumento)) {
+                if (
+                    empty($fechaDeposito) ||
+                    $monto === '' || // Verifica si monto está vacío (cadena vacía)
+                    empty($tipoDocumento) ||
+                    empty($numeroDocumento) ||
+                    $penalizacion === '' // Verifica si penalizacion está vacío (cadena vacía)
+                ) {
                     $errores[] = "Fila {$row}: Todos los campos son requeridos";
                     continue;
                 }
@@ -177,12 +186,19 @@ class PrestamoExistenService
                     continue;
                 }
 
+                // Validar penalización
+                if (!is_numeric($penalizacion) || $penalizacion < 0) {
+                    $errores[] = "Fila {$row}: La penalización debe ser un número mayor o igual a 0";
+                    continue;
+                }
+
                 // Agregar depósito válido
                 $depositos[] = [
                     'fecha_documento' => $fechaDeposito,
                     'monto' => (float) $monto,
                     'tipo_documento' => $tipoDocumento,
                     'numero_documento' => $numeroDocumento,
+                    'penalizacion' => (float) $penalizacion,
                     'fila_excel' => $row
                 ];
             }

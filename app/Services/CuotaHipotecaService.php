@@ -195,7 +195,7 @@ class CuotaHipotecaService extends CuotaService
             'penalizacion' => 0
         ];
         $this->log("Registrando deposito existente para el pago {$pago->id}");
-        $montoRestante = $this->procesarPenalizacionExistente($pago, $montoRestante, $detallesPago, $deposito['fecha_documento']);
+        $montoRestante = $this->procesarPenalizacionExistente($pago, $montoRestante, $detallesPago, $deposito['penalizacion']);
         $montoRestante = $this->procesarIntereses($pago, $montoRestante, $detallesPago, $pago->fecha);
         $montoRestante = $this->procesarCapital($pago, $montoRestante, $detallesPago);
         $pago->monto_pagado += $montoOriginal;
@@ -677,11 +677,11 @@ class CuotaHipotecaService extends CuotaService
      * @param mixed $pago informacion del pago
      * @param mixed $montoDisponible monto disponible para el pago
      * @param mixed $detallesPago detalles del pago
-     * @param mixed $fechaDeposito fecha del depósito
+     * @param mixed $penalizacion información de la penalización
      */
-    private function procesarPenalizacionExistente($pago, $montoDisponible, &$detallesPago, $fechaDeposito)
+    private function procesarPenalizacionExistente($pago, $montoDisponible, &$detallesPago, $penalizacion)
     {
-        $pago->penalizacion = $this->calcularPenalizacion($pago, $fechaDeposito);
+        $pago->penalizacion = $penalizacion;
         $this->log("Procesando penalización: {$pago->penalizacion}");
         return $this->procesarPenalizacion($pago, $montoDisponible, $detallesPago);
     }

@@ -27,7 +27,8 @@ class ExcelTemplateService
             'A1' => 'Fecha de Depósito',
             'B1' => 'Monto',
             'C1' => 'Tipo de Documento',
-            'D1' => 'Número de Documento'
+            'D1' => 'Número de Documento',
+            'E1' => 'Penalización'
         ];
 
         // Establecer encabezados
@@ -36,7 +37,7 @@ class ExcelTemplateService
         }
 
         // Aplicar estilos a los encabezados
-        $headerRange = 'A1:D1';
+        $headerRange = 'A1:E1';
         $sheet->getStyle($headerRange)->applyFromArray([
             'font' => [
                 'bold' => true,
@@ -64,12 +65,13 @@ class ExcelTemplateService
         $sheet->getColumnDimension('B')->setWidth(15); // Monto
         $sheet->getColumnDimension('C')->setWidth(20); // Tipo documento
         $sheet->getColumnDimension('D')->setWidth(25); // Número documento
+        $sheet->getColumnDimension('E')->setWidth(15); // Penalización
 
         // Agregar filas de ejemplo con formato
         $exampleData = [
-            ['02/02/2024', '1500.00', 'CHEQUE', '1234567890101'],
-            ['03/03/2024', '2000.50', 'DEPOSITO', 'A12345678'],
-            ['04/04/2024', '750.25', 'TRANSFERENCIA', 'LIC123456789']
+            ['11/02/2024', '1500.00', 'CHEQUE', '1234567890101', '0.00'],
+            ['03/03/2024', '2000.50', 'DEPOSITO', 'A12345678', '50.00'],
+            ['04/04/2024', '750.25', 'TRANSFERENCIA', 'LIC123456789', '25.50']
         ];
 
         $row = 2;
@@ -77,7 +79,7 @@ class ExcelTemplateService
             $sheet->fromArray($data, null, "A{$row}");
 
             // Aplicar formato a las filas de ejemplo
-            $sheet->getStyle("A{$row}:D{$row}")->applyFromArray([
+            $sheet->getStyle("A{$row}:E{$row}")->applyFromArray([
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
@@ -96,6 +98,10 @@ class ExcelTemplateService
 
             // Formato específico para monto
             $sheet->getStyle("B{$row}")->getNumberFormat()
+                ->setFormatCode('#,##0.00');
+
+            // Formato específico para penalización
+            $sheet->getStyle("E{$row}")->getNumberFormat()
                 ->setFormatCode('#,##0.00');
 
             $row++;
@@ -154,6 +160,15 @@ class ExcelTemplateService
         $validation->setShowErrorMessage(true);
         $validation->setErrorTitle('Tipo de documento inválido');
         $validation->setError('Seleccione un tipo de documento válido');
+
+        // Validación para penalización (columna E)
+        $validation = $sheet->getCell('E2')->getDataValidation();
+        $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
+        $validation->setOperator(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::OPERATOR_GREATERTHANOREQUAL);
+        $validation->setFormula1('0');
+        $validation->setShowErrorMessage(true);
+        $validation->setErrorTitle('Penalización inválida');
+        $validation->setError('La penalización debe ser 0 o mayor');
     }
 
     /**
@@ -168,7 +183,7 @@ class ExcelTemplateService
             'INSTRUCCIONES PARA USO DE LA PLANTILLA',
             '',
             '1. FECHA DE DEPÓSITO:',
-            '   - Formato: YYYY-MM-DD (Ejemplo: 2024-08-27)',
+            '   - Formato: DD/MM/YYYY (Ejemplo: 27/08/2024)',
             '   - Rango válido: 2020-01-01 a 2030-12-31',
             '',
             '2. MONTO:',
@@ -183,6 +198,11 @@ class ExcelTemplateService
             '4. NÚMERO DE DOCUMENTO:',
             '   - Texto alfanumérico',
             '   - Sin espacios ni caracteres especiales',
+            '',
+            '5. PENALIZACIÓN:',
+            '   - Solo números decimales',
+            '   - Debe ser 0 o mayor',
+            '   - Ejemplo: 25.50 o 0.00',
             '',
             'NOTAS IMPORTANTES:',
             '- No modificar los encabezados de las columnas',
