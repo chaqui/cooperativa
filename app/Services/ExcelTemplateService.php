@@ -68,10 +68,11 @@ class ExcelTemplateService
         $sheet->getColumnDimension('E')->setWidth(15); // Penalización
 
         // Agregar filas de ejemplo con formato
+                // Datos de ejemplo
         $exampleData = [
-            ['11/02/2024', '1500.00', 'CHEQUE', '1234567890101', '0.00'],
-            ['03/03/2024', '2000.50', 'DEPOSITO', 'A12345678', '50.00'],
-            ['04/04/2024', '750.25', 'TRANSFERENCIA', 'LIC123456789', '25.50']
+            ['27/08/2024', 1500.50, 'CHEQUE', 'CHQ001', 0.00],
+            ['28/08/2024', 2000.00, 'DEPOSITO', 'DEP002', 25.00],
+            ['29/08/2024', 750.75, 'TRANSFERENCIA', 'TRANS003', 0.00],
         ];
 
         $row = 2;
@@ -92,9 +93,9 @@ class ExcelTemplateService
                 ]
             ]);
 
-            // Formato específico para fecha
+            // Formato específico para fecha (permitir formato dd/mm/yyyy)
             $sheet->getStyle("A{$row}")->getNumberFormat()
-                ->setFormatCode('yyyy-mm-dd');
+                ->setFormatCode('dd/mm/yyyy');
 
             // Formato específico para monto
             $sheet->getStyle("B{$row}")->getNumberFormat()
@@ -133,15 +134,13 @@ class ExcelTemplateService
      */
     private function addDataValidations($sheet)
     {
-        // Validación para fecha (columna A)
+        // Validación para fecha (columna A) - formato dd/mm/yyyy
         $validation = $sheet->getCell('A2')->getDataValidation();
-        $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DATE);
-        $validation->setOperator(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::OPERATOR_BETWEEN);
-        $validation->setFormula1('2020-01-01');
-        $validation->setFormula2('2030-12-31');
+        $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_CUSTOM);
+        $validation->setFormula1('AND(LEN(A2)=10,ISNUMBER(DATEVALUE(A2)),DATEVALUE(A2)>=DATE(2020,1,1),DATEVALUE(A2)<=DATE(2030,12,31))');
         $validation->setShowErrorMessage(true);
         $validation->setErrorTitle('Fecha inválida');
-        $validation->setError('Por favor ingrese una fecha válida entre 2020-01-01 y 2030-12-31');
+        $validation->setError('Por favor ingrese una fecha válida en formato DD/MM/YYYY entre 01/01/2020 y 31/12/2030');
 
         // Validación para monto (columna B)
         $validation = $sheet->getCell('B2')->getDataValidation();
@@ -155,11 +154,11 @@ class ExcelTemplateService
         // Validación para tipo de documento (columna C)
         $validation = $sheet->getCell('C2')->getDataValidation();
         $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-        $validation->setFormula1('"DPI,PASAPORTE,LICENCIA,CEDULA"');
+        $validation->setFormula1('"CHEQUE,DEPOSITO,TRANSFERENCIA"');
         $validation->setShowDropDown(true);
         $validation->setShowErrorMessage(true);
         $validation->setErrorTitle('Tipo de documento inválido');
-        $validation->setError('Seleccione un tipo de documento válido');
+        $validation->setError('Seleccione un tipo de documento válido: CHEQUE, DEPOSITO o TRANSFERENCIA');
 
         // Validación para penalización (columna E)
         $validation = $sheet->getCell('E2')->getDataValidation();
@@ -184,7 +183,7 @@ class ExcelTemplateService
             '',
             '1. FECHA DE DEPÓSITO:',
             '   - Formato: DD/MM/YYYY (Ejemplo: 27/08/2024)',
-            '   - Rango válido: 2020-01-01 a 2030-12-31',
+            '   - Rango válido: 01/01/2020 a 31/12/2030',
             '',
             '2. MONTO:',
             '   - Solo números decimales',
@@ -192,7 +191,7 @@ class ExcelTemplateService
             '   - Ejemplo: 1500.50',
             '',
             '3. TIPO DE DOCUMENTO:',
-            '   - Opciones válidas: DPI, PASAPORTE, LICENCIA, CEDULA',
+            '   - Opciones válidas: CHEQUE, DEPOSITO, TRANSFERENCIA',
             '   - Usar exactamente una de estas opciones',
             '',
             '4. NÚMERO DE DOCUMENTO:',
