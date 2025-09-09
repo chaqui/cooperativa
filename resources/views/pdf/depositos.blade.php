@@ -92,7 +92,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($depositos as $deposito)
+                @foreach ($depositos->sortBy('fecha') as $deposito)
                     <tr>
                         <td>{{ \Carbon\Carbon::parse($deposito["fecha"])->translatedFormat('d \d\e F \d\e Y') }}</td>
                         <td>Q. {{ number_format($deposito["monto"], 2) }}</td>
