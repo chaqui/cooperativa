@@ -70,9 +70,9 @@ class ExcelTemplateService
         // Agregar filas de ejemplo con formato
                 // Datos de ejemplo
         $exampleData = [
-            ['27/08/2024', 1500.50, 'CHEQUE', 'CHQ001', 0.00],
-            ['28/08/2024', 2000.00, 'DEPOSITO', 'DEP002', 25.00],
-            ['29/08/2024', 750.75, 'TRANSFERENCIA', 'TRANS003', 0.00],
+            ['27/08/2025', 1500.50, 'CHEQUE', 'CHQ001', 0.00],
+            ['28/08/2025', 2000.00, 'DEPOSITO', 'DEP002', 25.00],
+            ['29/08/2025', 750.75, 'TRANSFERENCIA', 'TRANS003', 0.00],
         ];
 
         $row = 2;
@@ -134,13 +134,14 @@ class ExcelTemplateService
      */
     private function addDataValidations($sheet)
     {
-        // Validación para fecha (columna A) - formato dd/mm/yyyy
+        // Validación para fecha (columna A) - solo verificar que no esté en blanco
         $validation = $sheet->getCell('A2')->getDataValidation();
         $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_CUSTOM);
-        $validation->setFormula1('AND(LEN(A2)=10,ISNUMBER(DATEVALUE(A2)),DATEVALUE(A2)>=DATE(2020,1,1),DATEVALUE(A2)<=DATE(2030,12,31))');
+        $validation->setFormula1('LEN(A2)>0');
+        $validation->setAllowBlank(false);
         $validation->setShowErrorMessage(true);
-        $validation->setErrorTitle('Fecha inválida');
-        $validation->setError('Por favor ingrese una fecha válida en formato DD/MM/YYYY entre 01/01/2020 y 31/12/2030');
+        $validation->setErrorTitle('Campo requerido');
+        $validation->setError('El campo fecha es obligatorio');
 
         // Validación para monto (columna B)
         $validation = $sheet->getCell('B2')->getDataValidation();
@@ -182,8 +183,8 @@ class ExcelTemplateService
             'INSTRUCCIONES PARA USO DE LA PLANTILLA',
             '',
             '1. FECHA DE DEPÓSITO:',
-            '   - Formato: DD/MM/YYYY (Ejemplo: 27/08/2024)',
-            '   - Rango válido: 01/01/2020 a 31/12/2030',
+            '   - Formato: DD/MM/YYYY (Ejemplo: 27/08/2025)',
+            '   - Solo se valida el formato, sin restricciones de rango',
             '',
             '2. MONTO:',
             '   - Solo números decimales',
