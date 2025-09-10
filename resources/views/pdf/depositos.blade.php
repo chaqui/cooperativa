@@ -11,6 +11,11 @@
             return 'data:image/' . $type . ';base64,' . base64_encode($data);
         }
     }
+
+    // Ordenar depósitos por fecha
+    usort($depositos, function($a, $b) {
+        return strtotime($a['fecha']) - strtotime($b['fecha']);
+    });
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -92,7 +97,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($depositos->sortBy('fecha') as $deposito)
+                @foreach ($depositos as $deposito)
                     <tr>
                         <td>{{ \Carbon\Carbon::parse($deposito["fecha"])->translatedFormat('d \d\e F \d\e Y') }}</td>
                         <td>Q. {{ number_format($deposito["monto"], 2) }}</td>
