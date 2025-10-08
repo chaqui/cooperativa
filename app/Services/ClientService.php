@@ -100,8 +100,6 @@ class ClientService extends CodigoService
             $this->validateBeneficiariosData($data['beneficiarios']);
         }
 
-        // 3. Intentar crear objeto Client sin guardarlo (validación adicional)
-        $this->validateClientCreation($data);
 
         $this->log('✅ Validación temprana completada exitosamente');
     }
@@ -155,26 +153,7 @@ class ClientService extends CodigoService
         $this->log('Beneficiarios válidos');
     }
 
-    /**
-     * Validar que se puede crear el objeto Client (sin guardarlo)
-     */
-    private function validateClientCreation($data)
-    {
-        $this->log('Validando creación de objeto Cliente');
 
-        try {
-            // Intentar crear el objeto sin código (para validación)
-            $datosValidacion = $data;
-            unset($datosValidacion['codigo']); // Remover código para validación
-
-            $clientValidacion = Client::generateCliente($datosValidacion);
-
-            // Si llegamos aquí, el objeto se puede crear exitosamente
-            $this->log('Objeto Cliente puede crearse exitosamente');
-        } catch (\Exception $e) {
-            $this->lanzarExcepcionConCodigo("Error en validación de creación de cliente: " . $e->getMessage());
-        }
-    }
 
     /**
      * Reutilizar método existente de validación de porcentajes
