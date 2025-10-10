@@ -35,6 +35,7 @@ class Prestamo_Hipotecario extends Model
         'monto_liquido',
         'existente',
         'saldo_existente',
+        'fecha_fin_nueva',
     ];
 
     public function cliente()
@@ -105,7 +106,7 @@ class Prestamo_Hipotecario extends Model
 
     public function cuotaActiva()
     {
-        return $this->pagos()->where('realizado', 0)->orderBy('fecha', 'asc')->first();
+        return $this->pagos()->where('realizado', 0)->orderBy('numero_pago_prestamo', 'asc')->first();
     }
 
     public function frecuenciaPago()

@@ -8,6 +8,7 @@ use App\Services\ArchivoService;
 use App\Services\CuotaHipotecaService;
 use App\Services\RetiroService;
 use App\Traits\Loggable;
+use App\Services\BitacoraInteresService;
 
 class ControladorEstado
 {
@@ -21,14 +22,18 @@ class ControladorEstado
 
     private RetiroService $retiroService;
 
+    private BitacoraInteresService $bitacoraInteresService;
+
     public function __construct(
         CuotaHipotecaService $cuotaHipotecariaService,
         ArchivoService $archivoService,
-        RetiroService $retiroService
+        RetiroService $retiroService,
+        BitacoraInteresService $bitacoraInteresService
     ) {
         $this->cuotaHipotecariaService = $cuotaHipotecariaService;
         $this->archivoService = $archivoService;
         $this->retiroService = $retiroService;
+        $this->bitacoraInteresService = $bitacoraInteresService;
     }
 
     public  function cambiarEstado(Prestamo_Hipotecario $prestamo, $data)
@@ -78,7 +83,7 @@ class ControladorEstado
             ],
             EstadoPrestamo::$DESEMBOLZADO => [
                 'clase' => PrestamoDesembolsado::class,
-                'dependencias' => [$this->cuotaHipotecariaService, $this->archivoService]
+                'dependencias' => [$this->cuotaHipotecariaService, $this->archivoService, $this->bitacoraInteresService]
             ],
             EstadoPrestamo::$FINALIZADO => [
                 'clase' => PrestamoFinalizado::class,

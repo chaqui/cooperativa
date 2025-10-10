@@ -9,6 +9,7 @@ use App\Traits\ErrorHandler;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 
+
 class PrestamoExistenService
 {
     use ErrorHandler;
@@ -19,15 +20,18 @@ class PrestamoExistenService
     protected $excelService;
 
     protected $cuotaHipotecaService;
+    private BitacoraInteresService $bitacoraInteresService;
 
     public function __construct(
         ControladorEstado $controladorEstado,
         SimpleExcelService $excelService,
-        CuotaHipotecaService $cuotaHipotecaService
+        CuotaHipotecaService $cuotaHipotecaService,
+        BitacoraInteresService $bitacoraInteresService
     ) {
         $this->controladorEstado = $controladorEstado;
         $this->excelService = $excelService;
         $this->cuotaHipotecaService = $cuotaHipotecaService;
+        $this->bitacoraInteresService = $bitacoraInteresService;
     }
 
     public function procesarPrestamoExistente($prestamo, $data, $excelFile)
@@ -35,6 +39,7 @@ class PrestamoExistenService
         $this->prestamoCreado($prestamo, $data);
         $this->prestamoAutorizado($prestamo, $data);
         $this->desembolsarPrestamo($prestamo, $data);
+
 
         // Verificar si viene un archivo Excel en los datos
         if ($excelFile) {
@@ -52,9 +57,11 @@ class PrestamoExistenService
 
         foreach ($depositos as $deposito) {
             $saldo = $this->cuotaHipotecaService->registrarPagoExistente($prestamo, $deposito);
+            $this->log("Depósito procesado: Monto Q{$deposito['monto']}, Nuevo saldo del préstamo: Q{$saldo}");
             if ($saldo < 0) {
-                $this->log("El saldo del préstamo {$prestamo->codigo} es negativo después de registrar el depósito");
+                throw new \Exception("El saldo del préstamo no debe ser negativo después de registrar un depósito");
             }
+
         }
 
         // Verificar y ajustar amortizaciones después de procesar todos los depósitos existentes
@@ -101,6 +108,7 @@ class PrestamoExistenService
             'tipo_documento' => $data['tipo_documento']
         ];
         $this->controladorEstado->cambiarEstado($prestamo, $dataDesembolso);
+        $this->bitacoraInteresService->registrarHistoricoSaldo($prestamo, $prestamo->monto, $data['fecha_desembolso']);
     }
 
 

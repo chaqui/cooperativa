@@ -49,7 +49,7 @@ class DepositoService
 
     private function procesarCreacionDeposito($datos, $procesarInmediatamente = false)
     {
-        $this->log("Creando depósito con datos: " . json_encode($datos));
+
         $deposito = Deposito::crear($datos);
 
         // Guardar el depósito
@@ -124,7 +124,6 @@ class DepositoService
     {
         DB::beginTransaction();
         try {
-            $this->log("Procesando depósito con ID: {$id} y datos: " . json_encode($data));
             // Obtener el depósito
             $deposito = $this->getDeposito($id);
 
@@ -296,7 +295,7 @@ class DepositoService
         $this->log("Iniciando generación de PDF para depósito #{$deposito->id}");
 
         $prestamo = $deposito->pago ? $deposito->pago->prestamo : null;
-        $this->log("Obteniendo datos del depósito: " . json_encode($deposito));
+
 
         // Calculate loan information only if there's an associated loan
         $montoPendiente = 0;

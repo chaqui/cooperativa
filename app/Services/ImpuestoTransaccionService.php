@@ -188,7 +188,7 @@ class ImpuestoTransaccionService
         return $fechaConvertida;
     }
 
-    private function generarFecha($fechaBase, $mesesAdicionales, $dia): DateTime
+    private function generarFecha($fechaBase, $mesesAdicionales, $dia)
     {
         try {
             // Obtener la fecha del mes correspondiente
@@ -208,7 +208,7 @@ class ImpuestoTransaccionService
         }
     }
 
-    private function crearPrimeraFecha($tipoImpuesto, $fechaBase): DateTime
+    private function crearPrimeraFecha($tipoImpuesto, $fechaBase)
     {
         try {
             // Determinar el mes inicial según el tipo de impuesto
@@ -240,7 +240,7 @@ class ImpuestoTransaccionService
      * @return int Mes inicial del período fiscal
      * @throws \Exception Si el plazo del tipo de impuesto no es válido
      */
-    private function getMesSegunTipoImpuesto($tipoImpuesto, $fecha): int
+    private function getMesSegunTipoImpuesto($tipoImpuesto, $fecha)
     {
         // Obtener el mes de la fecha proporcionada
         $mes = (int) date('m', strtotime($fecha));

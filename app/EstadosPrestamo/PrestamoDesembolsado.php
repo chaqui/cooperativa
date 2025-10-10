@@ -11,6 +11,7 @@ use App\Services\CuotaHipotecaService;
 use App\Services\PrestamoPdfService;
 use App\Traits\Loggable;
 use Illuminate\Support\Facades\DB;
+use App\Services\BitacoraInteresService;
 
 class PrestamoDesembolsado extends EstadoBasePrestamo
 {
@@ -19,13 +20,16 @@ class PrestamoDesembolsado extends EstadoBasePrestamo
 
     private ArchivoService $archivoService;
 
+    private BitacoraInteresService $bitacoraInteresService;
+
     use Loggable;
 
 
-    public function __construct(CuotaHipotecaService $cuotaHipotecariaService, ArchivoService $archivoService)
+    public function __construct(CuotaHipotecaService $cuotaHipotecariaService, ArchivoService $archivoService, BitacoraInteresService $bitacoraInteresService)
     {
         $this->archivoService = $archivoService;
         $this->cuotaHipotecariaService = $cuotaHipotecariaService;
+        $this->bitacoraInteresService = $bitacoraInteresService;
         parent::__construct(EstadoPrestamo::$APROBADO, EstadoPrestamo::$DESEMBOLZADO);
     }
 
@@ -46,6 +50,7 @@ class PrestamoDesembolsado extends EstadoBasePrestamo
         $this->cuotaHipotecariaService->calcularCuotas($prestamo, $cuotaPagada);
 
         $this->generarYGuardarEstadoDeCuenta($prestamo);
+        $this->bitacoraInteresService->registrarHistoricoSaldo($prestamo, $prestamo->monto, $prestamo->fecha_inicio);
     }
 
     private function generarYGuardarEstadoDeCuenta($prestamo)
