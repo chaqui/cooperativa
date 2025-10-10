@@ -144,7 +144,11 @@ class PrestamoExistenService
                 $monto = $worksheet->getCell("B{$row}")->getCalculatedValue();
                 $tipoDocumento = $worksheet->getCell("C{$row}")->getCalculatedValue();
                 $numeroDocumento = $worksheet->getCell("D{$row}")->getCalculatedValue();
-                $penalizacion = $worksheet->getCell("E{$row}")->getCalculatedValue();
+                $penalizacionCell = $worksheet->getCell("E{$row}");
+                $penalizacion = $penalizacionCell ? $penalizacionCell->getCalculatedValue() : 0;
+                if ($penalizacion === null || $penalizacion === '') {
+                    $penalizacion = 0;
+                }
 
                 // Saltar filas vacías
                 if (empty($fechaDeposito) && empty($monto) && empty($tipoDocumento) && empty($numeroDocumento) && empty($penalizacion)) {
