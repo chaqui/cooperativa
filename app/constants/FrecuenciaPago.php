@@ -4,7 +4,7 @@ namespace App\Constants;
 
 class FrecuenciaPago
 {
-    public static $MENSUAL =  422;
+public static $MENSUAL =  422;
     public static $TRIMESTRAL =  423;
     public static $SEMESTRAL =  424;
 

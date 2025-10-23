@@ -154,7 +154,6 @@ class PrestamoExistenService
                 if (empty($fechaDeposito) && empty($monto) && empty($tipoDocumento) && empty($numeroDocumento) && empty($penalizacion)) {
                     continue;
                 }
-                $this->log("Procesando fila {$row}: Fecha={$fechaDeposito}, Monto={$monto}, TipoDoc={$tipoDocumento}, NumDoc={$numeroDocumento}, Penalización={$penalizacion}");
 
                 // Validar que todos los campos estén presentes
                 if (

@@ -70,8 +70,11 @@ class BitacoraInteresService
     {
         $diasTranscurridos = $fechaFin->diff($fechaInicio)->days;
         $diasDelMes = (int)$fechaInicio->format('t');
-        $interesPendiente = ($saldo * ($interesMensual / 100) / $diasDelMes) * $diasTranscurridos;
-        return $interesPendiente;
+        $anio = (int)$fechaInicio->format('Y');
+        $esBisiesto = ($anio % 4 === 0 && ($anio % 100 !== 0 || $anio % 400 === 0));
+        $diasDelAnio = $esBisiesto ? 366 : 365;
+        $interesDiario = $saldo * (($interesMensual * 12 / 100) / $diasDelAnio);
+        return $interesDiario * $diasTranscurridos;
     }
 
 
