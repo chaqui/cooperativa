@@ -1,15 +1,43 @@
-#!/bin/bash
-
-# Exit immediately if a command exits with a non-zero status
+#!/bin/sh
 set -e
 
+echo "Starting Laravel application initialization..."
+
+# Wait for database to be ready
+echo "Waiting for database connection..."
+sleep 5
+
+# Clear any existing caches
+echo "Clearing Laravel caches..."
+php artisan config:clear || true
+php artisan cache:clear || true
+php artisan route:clear || true
+php artisan view:clear || true
+
 # Run database migrations
+echo "Running database migrations..."
 php artisan migrate --force
 
-php artisan make:filament-user --name="chaqui" --email="josue.chaqui@gmail.com" --password="test123" --roleid="1"
+# Create Filament user (only if it doesn't exist)
+echo "Creating Filament user..."
+php artisan make:filament-user --name="chaqui" --email="josue.chaqui@gmail.com" --password="test123" --roleid="1" || echo "User already exists or failed to create"
 
 # Create the storage symbolic link
-php artisan storage:link
+echo "Creating storage link..."
+php artisan storage:link || echo "Storage link already exists"
 
-# Start PHP-FPM
-php-fpm
+# Cache configurations for production
+echo "Caching configurations..."
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+echo "Laravel application ready!"
+
+# Start PHP-FPM in background
+echo "Starting PHP-FPM..."
+php-fpm -D
+
+# Start Laravel artisan serve
+echo "Starting Laravel server on port 8000..."
+exec php artisan serve --host=0.0.0.0 --port=8000

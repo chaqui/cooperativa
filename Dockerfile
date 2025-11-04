@@ -49,14 +49,27 @@ RUN composer install --no-dev --optimize-autoloader
 # Dump autoload
 RUN composer dump-autoload
 
-# Copy entrypoint script
+# Create Laravel required directories and set permissions
+RUN mkdir -p /var/www/storage/logs \
+    && mkdir -p /var/www/storage/framework/cache \
+    && mkdir -p /var/www/storage/framework/sessions \
+    && mkdir -p /var/www/storage/framework/views \
+    && mkdir -p /var/www/bootstrap/cache \
+    && chown -R www-data:www-data /var/www/storage \
+    && chown -R www-data:www-data /var/www/bootstrap/cache \
+    && chmod -R 755 /var/www/storage \
+    && chmod -R 755 /var/www/bootstrap/cache
+
+# Copy entrypoint script with proper line endings
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
-# Make entrypoint script executable
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# Convert line endings and make executable (in case of Windows line endings)
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh \
+    && chmod +x /usr/local/bin/entrypoint.sh \
+    && ls -la /usr/local/bin/entrypoint.sh
 
 # Expose ports for PHP-FPM and the web server
 EXPOSE 9000 8000
 
 # Set entrypoint
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
