@@ -60,16 +60,47 @@ RUN mkdir -p /var/www/storage/logs \
     && chmod -R 755 /var/www/storage \
     && chmod -R 755 /var/www/bootstrap/cache
 
+# Debug: List files before copying
+RUN echo "Files in current directory:" && ls -la /var/www/
+
 # Copy entrypoint script with proper line endings
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# Debug: Verify the file was copied
+RUN echo "Checking if entrypoint was copied:" \
+    && ls -la /usr/local/bin/ \
+    && echo "Content of entrypoint.sh:" \
+    && head -5 /usr/local/bin/entrypoint.sh || echo "File not found!"
 
 # Convert line endings and make executable (in case of Windows line endings)
 RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh \
     && chmod +x /usr/local/bin/entrypoint.sh \
-    && ls -la /usr/local/bin/entrypoint.sh
+    && echo "Final verification:" \
+    && ls -la /usr/local/bin/entrypoint.sh \
+    && file /usr/local/bin/entrypoint.sh
 
 # Expose ports for PHP-FPM and the web server
 EXPOSE 9000 8000
 
-# Set entrypoint
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+# Alternative: Create entrypoint directly in Dockerfile if copy fails
+RUN echo '#!/bin/sh' > /usr/local/bin/backup-entrypoint.sh \
+    && echo 'set -e' >> /usr/local/bin/backup-entrypoint.sh \
+    && echo 'echo "Starting Laravel application..."' >> /usr/local/bin/backup-entrypoint.sh \
+    && echo 'sleep 5' >> /usr/local/bin/backup-entrypoint.sh \
+    && echo 'php artisan config:clear || true' >> /usr/local/bin/backup-entrypoint.sh \
+    && echo 'php artisan cache:clear || true' >> /usr/local/bin/backup-entrypoint.sh \
+    && echo 'php artisan migrate --force || echo "Migration failed"' >> /usr/local/bin/backup-entrypoint.sh \
+    && echo 'php artisan storage:link || echo "Storage link exists"' >> /usr/local/bin/backup-entrypoint.sh \
+    && echo 'php artisan config:cache' >> /usr/local/bin/backup-entrypoint.sh \
+    && echo 'php-fpm -D' >> /usr/local/bin/backup-entrypoint.sh \
+    && echo 'exec php artisan serve --host=0.0.0.0 --port=8000' >> /usr/local/bin/backup-entrypoint.sh \
+    && chmod +x /usr/local/bin/backup-entrypoint.sh
+
+# Use fallback if main entrypoint doesn't exist
+RUN if [ ! -f /usr/local/bin/entrypoint.sh ]; then \
+        echo "Main entrypoint not found, using backup" \
+        && cp /usr/local/bin/backup-entrypoint.sh /usr/local/bin/entrypoint.sh; \
+    fi
+
+# Set entrypoint - try both methods
+CMD ["/bin/sh", "-c", "if [ -f /usr/local/bin/entrypoint.sh ]; then /usr/local/bin/entrypoint.sh; else /usr/local/bin/backup-entrypoint.sh; fi"]
