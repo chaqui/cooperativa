@@ -4,25 +4,25 @@ FROM php:8.3-fpm-alpine
 # Set working directory
 WORKDIR /var/www
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install system dependencies for Alpine
+RUN apk update && apk add --no-cache \
     git \
     curl \
     libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libonig-dev \
-    libpq-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    oniguruma-dev \
+    postgresql-dev \
     zip \
     unzip \
     libzip-dev \
-    libicu-dev \
+    icu-dev \
     g++ \
+    make \
+    autoconf \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-configure intl \
     && docker-php-ext-install intl
-
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
 RUN docker-php-ext-install mbstring exif pcntl bcmath gd pdo_pgsql pdo_mysql zip calendar
@@ -33,7 +33,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Copy existing application directory contents
 COPY . /var/www
 
-RUN mv /var/www/app/constants /var/www/app/Constants
+# Move constants directory if it exists
+RUN if [ -d /var/www/app/constants ]; then mv /var/www/app/constants /var/www/app/Constants; fi
 
 # Adjust ownership and permissions
 RUN chown -R www-data:www-data /var/www
