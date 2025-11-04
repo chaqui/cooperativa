@@ -57,6 +57,7 @@ class DepositoService
 
         // Si está asociado a un pago, procesarlo automáticamente
         if ($procesarInmediatamente || $deposito->id_pago) {
+            $datos['existente'] = true;
             $this->depositar($deposito->id, $datos);
         }
         if (!$deposito instanceof Deposito) {
