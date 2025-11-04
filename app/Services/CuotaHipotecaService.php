@@ -154,7 +154,7 @@ class CuotaHipotecaService extends CuotaService
 
     /**
      * Calcula la penalización por retraso de forma estandarizada
-     * 
+     *
      * @param Pago $pago Cuota a evaluar
      * @param string $fechaPago Fecha del pago
      * @return float Monto de penalización
@@ -168,35 +168,40 @@ class CuotaHipotecaService extends CuotaService
 
         $fechaVencimiento = new \DateTime($pago->fecha_vencimiento);
         $fechaActualPago = new \DateTime($fechaPago);
-        
+
         // Si no hay retraso, no hay penalización
         if ($fechaActualPago <= $fechaVencimiento) {
             $this->log("✅ Pago a tiempo - No hay penalización");
             return 0;
         }
-        
+
         // Calcular días de retraso
         $diasRetraso = $fechaActualPago->diff($fechaVencimiento)->days;
         $this->log("📅 Días de retraso: {$diasRetraso}");
-        
+
         // Penalización estándar: 3% del valor de la cuota por mes de retraso
         $tasaPenalizacionMensual = 0.03; // 3% mensual
         $mesesRetraso = ceil($diasRetraso / 30); // Redondear hacia arriba
-        
+
         $penalizacion = $pago->valor_cuota * $tasaPenalizacionMensual * $mesesRetraso;
-        
+
         $this->log("💰 Cálculo de penalización:");
         $this->log("   - Valor cuota: Q{$pago->valor_cuota}");
         $this->log("   - Meses de retraso: {$mesesRetraso}");
         $this->log("   - Tasa penalización mensual: {$tasaPenalizacionMensual}%");
         $this->log("   - Penalización calculada: Q{$penalizacion}");
-        
+
         return round($penalizacion, 2);
     }
 
     public function registrarPagoExistente($prestamo, $deposito)
     {
         $pago = $prestamo->cuotaActiva();
+
+        if (!$pago) {
+            $this->lanzarExcepcionConCodigo("No se encontró una cuota activa para el préstamo #{$prestamo->id}");
+        }
+
         return $this->procesarPago($pago, $deposito, $prestamo, true);
     }
 
@@ -206,15 +211,15 @@ class CuotaHipotecaService extends CuotaService
         $montoOriginal = $deposito['monto'];
         $fechaPago = $deposito['fecha_documento'];
         $penalizacionUsuario = isset($deposito['penalizacion']) ? $deposito['penalizacion'] : null;
-        
+
         $this->log("Registrando depósito Q{$montoOriginal} - Pago #{$pago->numero_pago_prestamo}");
-        
+
         // NUEVA VALIDACIÓN: Verificar monto mínimo requerido (solo para pagos nuevos)
         if (!$existente) {
             $validacionMonto = $this->validarMontoMinimoRequerido($pago, $montoOriginal, $fechaPago, $penalizacionUsuario);
             $this->log("✅ Validación de monto completada - Excedente para capital: Q{$validacionMonto['excedente']}");
         }
-        
+
         $montoRestante = $montoOriginal;
         $detallesPago = [
             'interesGanado' => 0,
@@ -252,9 +257,15 @@ class CuotaHipotecaService extends CuotaService
             $this->log("Pago #{$pago->numero_pago_prestamo} completado");
         }
 
-        $fechaLimite = \Carbon\Carbon::parse($pago->fecha)->addDays(5);
-        if ($deposito['fecha_documento'] > $fechaLimite) {
-            $this->actualizarFechas($pago->pagoSiguiente(), $deposito['fecha_documento']);
+        // Verificar que la fecha del pago existe antes de procesarla
+        if ($pago->fecha) {
+            $fechaLimite = \Carbon\Carbon::parse($pago->fecha)->addDays(5);
+            if ($deposito['fecha_documento'] > $fechaLimite) {
+                $pagoSiguiente = $pago->pagoSiguiente();
+                if ($pagoSiguiente) {
+                    $this->actualizarFechas($pagoSiguiente, $deposito['fecha_documento']);
+                }
+            }
         }
 
         $pago->fecha_pago = $deposito['fecha_documento'];
@@ -335,6 +346,12 @@ class CuotaHipotecaService extends CuotaService
      */
     private function actualizarFechas($pago, $fechaDeposito)
     {
+        // Validar que el pago no sea null
+        if (!$pago) {
+            $this->log("⚠️ No se puede actualizar fechas: pago es null");
+            return;
+        }
+
         $diasDeposito = (new \DateTime($fechaDeposito))->format('d');
         if ($diasDeposito > 10) {
             $nuevaFecha = (new \DateTime($fechaDeposito))->modify('+1 month')->format('Y-m-d');
@@ -346,9 +363,11 @@ class CuotaHipotecaService extends CuotaService
         $this->log("Actualizando fechas del pago #{$pago->id} a {$nuevaFecha}");
         $pago->fecha = $nuevaFecha;
         $pago->save();
-        if ($pago->pagoSiguiente()) {
+
+        $pagoSiguiente = $pago->pagoSiguiente();
+        if ($pagoSiguiente) {
             $nuevaFecha = (new \DateTime($pago->fecha))->modify('+1 month')->format('Y-m-05');
-            $this->actualizarFechas($pago->pagoSiguiente(), $nuevaFecha);
+            $this->actualizarFechas($pagoSiguiente, $nuevaFecha);
         }
     }
 
@@ -391,7 +410,7 @@ class CuotaHipotecaService extends CuotaService
 
     /**
      * Valida que el monto del pago sea suficiente para cubrir intereses y penalizaciones
-     * 
+     *
      * @param Pago $pago Pago a validar
      * @param float $montoPago Monto del pago
      * @param string $fechaPago Fecha del pago
@@ -402,11 +421,11 @@ class CuotaHipotecaService extends CuotaService
     private function validarMontoMinimoRequerido($pago, $montoPago, $fechaPago, $penalizacionUsuario = null)
     {
         $this->log("🔍 Validando monto mínimo requerido para pago #{$pago->numero_pago_prestamo}");
-        
+
         // Calcular interés pendiente
         $respuestaInteres = $this->bitacoraInteresService->calcularInteresPendiente($pago, $fechaPago);
         $interesPendiente = $respuestaInteres['interes_pendiente'];
-        
+
         // Usar penalización del usuario si está disponible, sino calcular automáticamente
         if ($penalizacionUsuario !== null && $penalizacionUsuario >= 0) {
             $penalizacion = $penalizacionUsuario;
@@ -415,10 +434,10 @@ class CuotaHipotecaService extends CuotaService
             $penalizacion = $this->calcularPenalizacionPorRetraso($pago, $fechaPago);
             $this->log("🧮 Penalización calculada automáticamente: Q{$penalizacion}");
         }
-        
+
         // Calcular monto mínimo requerido
         $montoMinimoRequerido = $interesPendiente + $penalizacion;
-        
+
         $detallesValidacion = [
             'interes_pendiente' => round($interesPendiente, 2),
             'penalizacion' => round($penalizacion, 2),
@@ -428,12 +447,12 @@ class CuotaHipotecaService extends CuotaService
             'excedente' => round(max(0, $montoPago - $montoMinimoRequerido), 2),
             'es_suficiente' => $montoPago >= $montoMinimoRequerido
         ];
-        
+
         $this->log("💰 Interés pendiente: Q{$detallesValidacion['interes_pendiente']}");
         $this->log("⚠️ Penalización: Q{$detallesValidacion['penalizacion']}");
         $this->log("📋 Monto mínimo requerido: Q{$detallesValidacion['monto_minimo_requerido']}");
         $this->log("💵 Monto pagado: Q{$detallesValidacion['monto_pagado']}");
-        
+
         if (!$detallesValidacion['es_suficiente']) {
             $this->log("❌ PAGO INSUFICIENTE - Déficit: Q{$detallesValidacion['deficit']}");
             $this->lanzarExcepcionConCodigo(
@@ -442,7 +461,7 @@ class CuotaHipotecaService extends CuotaService
                 "(Interés: Q{$detallesValidacion['interes_pendiente']} + Penalización: Q{$detallesValidacion['penalizacion']})"
             );
         }
-        
+
         $this->log("✅ Pago suficiente - Excedente para capital: Q{$detallesValidacion['excedente']}");
         return $detallesValidacion;
     }
@@ -848,7 +867,7 @@ class CuotaHipotecaService extends CuotaService
 
     /**
      * Procesa la penalización usando el valor ingresado por el usuario o calculado automáticamente
-     * 
+     *
      * @param Pago $pago Cuota a procesar
      * @param float $montoDisponible Monto disponible para el pago
      * @param array $detallesPago Array de detalles del pago (por referencia)
@@ -867,7 +886,7 @@ class CuotaHipotecaService extends CuotaService
         if ($penalizacionUsuario !== null && $penalizacionUsuario >= 0) {
             $penalizacionTotal = $penalizacionUsuario;
             $this->log("💰 Usando penalización ingresada por usuario: Q{$penalizacionTotal}");
-            
+
             // Actualizar el pago con la penalización del usuario
             $pago->penalizacion = $penalizacionTotal;
         } else {
@@ -881,7 +900,7 @@ class CuotaHipotecaService extends CuotaService
                 $pago->penalizacion = $penalizacionTotal;
             }
         }
-        
+
         if ($penalizacionTotal <= 0) {
             $this->log("No hay penalización que procesar");
             return $montoDisponible;
@@ -889,7 +908,7 @@ class CuotaHipotecaService extends CuotaService
 
         // Verificar si ya se ha pagado parte de la penalización
         $penalizacionPendiente = $penalizacionTotal - $pago->recargo;
-        
+
         if ($penalizacionPendiente <= 0) {
             $this->log("Penalización ya pagada completamente");
             return $montoDisponible;
@@ -902,15 +921,15 @@ class CuotaHipotecaService extends CuotaService
         $origenPenalizacion = ($penalizacionUsuario !== null) ? "ingresada por usuario" : "calculada automáticamente";
         $detallesPago['descripcion'] .= "Se abonó por penalización ({$origenPenalizacion}) Q{$montoPenalizacion} de Q{$penalizacionTotal} total; ";
         $detallesPago['penalizacion'] += $montoPenalizacion;
-        
+
         $this->log("✅ Penalización procesada: Q{$montoPenalizacion} de Q{$penalizacionPendiente} pendiente");
-        
+
         return $montoDisponible - $montoPenalizacion;
     }
 
     /**
      * Procesa la penalización utilizando el cálculo estandarizado
-     * 
+     *
      * @param Pago $pago Cuota a procesar
      * @param float $montoDisponible Monto disponible para el pago
      * @param array $detallesPago Array de detalles del pago (por referencia)
@@ -926,7 +945,7 @@ class CuotaHipotecaService extends CuotaService
 
         // Calcular penalización estandarizada basada en retraso real
         $penalizacionCalculada = $this->calcularPenalizacionPorRetraso($pago, $fechaPago);
-        
+
         if ($penalizacionCalculada <= 0) {
             $this->log("No hay penalización por retraso");
             return $montoDisponible;
@@ -934,7 +953,7 @@ class CuotaHipotecaService extends CuotaService
 
         // Verificar si ya se ha pagado parte de la penalización
         $penalizacionPendiente = $penalizacionCalculada - $pago->recargo;
-        
+
         if ($penalizacionPendiente <= 0) {
             $this->log("Penalización ya pagada completamente");
             return $montoDisponible;
@@ -943,7 +962,7 @@ class CuotaHipotecaService extends CuotaService
         // Aplicar penalización con el monto disponible
         $montoPenalizacion = min($montoDisponible, $penalizacionPendiente);
         $pago->recargo += $montoPenalizacion;
-        
+
         // Actualizar penalización en el pago si es necesario
         if ($pago->penalizacion < $penalizacionCalculada) {
             $this->log("Actualizando penalización en pago de Q{$pago->penalizacion} a Q{$penalizacionCalculada}");
@@ -952,9 +971,9 @@ class CuotaHipotecaService extends CuotaService
 
         $detallesPago['descripcion'] .= "Se abonó por penalización estandarizada Q{$montoPenalizacion} (Calculada: Q{$penalizacionCalculada}); ";
         $detallesPago['penalizacion'] += $montoPenalizacion;
-        
+
         $this->log("✅ Penalización procesada: Q{$montoPenalizacion} de Q{$penalizacionPendiente} pendiente");
-        
+
         return $montoDisponible - $montoPenalizacion;
     }
 
