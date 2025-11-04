@@ -1,30 +1,29 @@
-# Use the official PHP image as the base image (Debian-based)
-FROM php:8.3-fpm
+# Use the official PHP image as the base image
+FROM php:8.3-fpm-alpine
 
 # Set working directory
 WORKDIR /var/www
 
-# Install system dependencies for Debian
-RUN apt-get update && apt-get install -y \
+# Install system dependencies for Alpine
+RUN apk update && apk add --no-cache \
     git \
     curl \
     libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libonig-dev \
-    libpq-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    oniguruma-dev \
+    postgresql-dev \
     zip \
     unzip \
     libzip-dev \
-    libicu-dev \
+    icu-dev \
     g++ \
     make \
     autoconf \
+    bash \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-configure intl \
-    && docker-php-ext-install intl \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && docker-php-ext-install intl
 
 # Install PHP extensions
 RUN docker-php-ext-install mbstring exif pcntl bcmath gd pdo_pgsql pdo_mysql zip calendar
@@ -59,36 +58,46 @@ RUN mkdir -p /var/www/storage/logs \
     && mkdir -p /var/www/storage/framework/views \
     && mkdir -p /var/www/bootstrap/cache
 
-# Create startup script directly in Dockerfile
-RUN echo '#!/bin/bash' > /usr/local/bin/start.sh \
-    && echo 'set -e' >> /usr/local/bin/start.sh \
-    && echo 'echo "Starting Laravel application initialization..."' >> /usr/local/bin/start.sh \
-    && echo 'echo "Waiting for database connection..."' >> /usr/local/bin/start.sh \
-    && echo 'sleep 5' >> /usr/local/bin/start.sh \
-    && echo 'echo "Clearing Laravel caches..."' >> /usr/local/bin/start.sh \
-    && echo 'php artisan config:clear || true' >> /usr/local/bin/start.sh \
-    && echo 'php artisan cache:clear || true' >> /usr/local/bin/start.sh \
-    && echo 'php artisan route:clear || true' >> /usr/local/bin/start.sh \
-    && echo 'php artisan view:clear || true' >> /usr/local/bin/start.sh \
-    && echo 'echo "Running database migrations..."' >> /usr/local/bin/start.sh \
-    && echo 'php artisan migrate --force || echo "Migration failed"' >> /usr/local/bin/start.sh \
-    && echo 'echo "Creating Filament user..."' >> /usr/local/bin/start.sh \
-    && echo 'php artisan make:filament-user --name="chaqui" --email="josue.chaqui@gmail.com" --password="test123" --roleid="1" || echo "User exists or creation failed"' >> /usr/local/bin/start.sh \
-    && echo 'echo "Creating storage link..."' >> /usr/local/bin/start.sh \
-    && echo 'php artisan storage:link || echo "Storage link exists"' >> /usr/local/bin/start.sh \
-    && echo 'echo "Caching configurations..."' >> /usr/local/bin/start.sh \
-    && echo 'php artisan config:cache' >> /usr/local/bin/start.sh \
-    && echo 'php artisan route:cache' >> /usr/local/bin/start.sh \
-    && echo 'php artisan view:cache' >> /usr/local/bin/start.sh \
-    && echo 'echo "Laravel application ready!"' >> /usr/local/bin/start.sh \
-    && echo 'echo "Starting PHP-FPM..."' >> /usr/local/bin/start.sh \
-    && echo 'php-fpm -D' >> /usr/local/bin/start.sh \
-    && echo 'echo "Starting Laravel server on port 8000..."' >> /usr/local/bin/start.sh \
-    && echo 'exec php artisan serve --host=0.0.0.0 --port=8000' >> /usr/local/bin/start.sh \
-    && chmod +x /usr/local/bin/start.sh
+# Create startup script using printf (more reliable than echo chains)
+RUN printf '#!/bin/sh\n\
+set -e\n\
+\n\
+echo "Starting Laravel application initialization..."\n\
+echo "Waiting for database connection..."\n\
+sleep 5\n\
+\n\
+echo "Clearing Laravel caches..."\n\
+php artisan config:clear || true\n\
+php artisan cache:clear || true\n\
+php artisan route:clear || true\n\
+php artisan view:clear || true\n\
+\n\
+echo "Running database migrations..."\n\
+php artisan migrate --force || echo "Migration failed"\n\
+\n\
+echo "Creating Filament user..."\n\
+php artisan make:filament-user --name="chaqui" --email="josue.chaqui@gmail.com" --password="test123" --roleid="1" || echo "User exists or creation failed"\n\
+\n\
+echo "Creating storage link..."\n\
+php artisan storage:link || echo "Storage link exists"\n\
+\n\
+echo "Caching configurations..."\n\
+php artisan config:cache\n\
+php artisan route:cache\n\
+php artisan view:cache\n\
+\n\
+echo "Laravel application ready!"\n\
+echo "Starting PHP-FPM..."\n\
+php-fpm -D\n\
+\n\
+echo "Starting Laravel server on port 8000..."\n\
+exec php artisan serve --host=0.0.0.0 --port=8000\n' > /usr/local/bin/start.sh \
+    && chmod +x /usr/local/bin/start.sh \
+    && ls -la /usr/local/bin/start.sh \
+    && head -5 /usr/local/bin/start.sh
 
 # Expose ports for PHP-FPM and the web server
 EXPOSE 9000 8000
 
-# Use the embedded script with bash
-CMD ["/bin/bash", "/usr/local/bin/start.sh"]
+# Use the embedded script with sh
+CMD ["/bin/sh", "/usr/local/bin/start.sh"]
