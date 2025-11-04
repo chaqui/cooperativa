@@ -20,7 +20,11 @@ php artisan migrate --force
 
 # Create Filament user (only if it doesn't exist)
 echo "Creating Filament user..."
-php artisan make:filament-user --name="chaqui" --email="josue.chaqui@gmail.com" --password="test123" --roleid="1" || echo "User already exists or failed to create"
+php artisan make:filament-user \
+    --name="${ADMIN_NAME:-chaqui}" \
+    --email="${ADMIN_EMAIL:-josue.chaqui@gmail.com}" \
+    --password="${ADMIN_PASSWORD:-test123}" \
+    --roleid="${ADMIN_ROLE:-1}" || echo "User already exists or failed to create"
 
 # Create the storage symbolic link
 echo "Creating storage link..."

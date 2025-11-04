@@ -37,8 +37,12 @@ COPY . /var/www
 RUN if [ -d /var/www/app/constants ]; then mv /var/www/app/constants /var/www/app/Constants; fi
 
 # Adjust ownership and permissions
-RUN chown -R www-data:www-data /var/www
-RUN chmod -R 775 /var/www
+RUN chown -R www-data:www-data /var/www \
+    && chmod -R 755 /var/www/storage \
+    && chmod -R 755 /var/www/bootstrap/cache \
+    && mkdir -p /var/www/storage/app/public/fotografias \
+    && chown -R www-data:www-data /var/www/storage/app/public/fotografias \
+    && chmod -R 775 /var/www/storage/app/public/fotografias
 
 # Configure Git to consider /var/www as a safe directory
 RUN git config --global --add safe.directory /var/www
@@ -49,14 +53,12 @@ RUN composer install --no-dev --optimize-autoloader
 # Dump autoload
 RUN composer dump-autoload
 
-# Copy entrypoint script
+# Copy the external entrypoint script
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-
-# Make entrypoint script executable
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Expose ports for PHP-FPM and the web server
 EXPOSE 9000 8000
 
-# Set entrypoint
-ENTRYPOINT ["entrypoint.sh"]
+# Set entrypoint with full path
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
