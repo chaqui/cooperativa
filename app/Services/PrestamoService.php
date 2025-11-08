@@ -230,4 +230,273 @@ class PrestamoService extends CodigoService
             throw $e;
         }
     }
+
+    /**
+     * Cancela un préstamo hipotecario
+     *
+     * @param int $id ID del préstamo
+     * @param string $motivo Motivo de la cancelación
+     * @return Prestamo_Hipotecario Préstamo cancelado
+     * @throws \Exception Si ocurre un error durante la cancelación
+     */
+    public function cancelarPrestamo(int $id, string $motivo): Prestamo_Hipotecario
+    {
+        DB::beginTransaction();
+        try {
+            // Obtener el préstamo
+            $prestamo = $this->get($id);
+
+            // Validar que el préstamo no esté ya cancelado
+            if ($prestamo->estaCancelado()) {
+                $this->lanzarExcepcionConCodigo(
+                    "El préstamo {$prestamo->codigo} ya está cancelado desde {$prestamo->getFechaCancelacionFormateada()}"
+                );
+            }
+
+            // Validar que el motivo no esté vacío
+            if (empty(trim($motivo))) {
+                $this->lanzarExcepcionConCodigo("El motivo de cancelación es requerido");
+            }
+
+            // Validar longitud del motivo
+            if (strlen($motivo) > 500) {
+                $this->lanzarExcepcionConCodigo("El motivo de cancelación no puede exceder 500 caracteres");
+            }
+
+            $this->log("Iniciando cancelación del préstamo {$prestamo->codigo}. Motivo: {$motivo}");
+
+            // Actualizar el préstamo con los datos de cancelación
+            $prestamo->motivo_cancelacion = $motivo;
+            $prestamo->fecha_cancelacion = now();
+
+            // Cambiar estado a cancelado (asumiendo que existe el estado 6 para cancelado)
+            // Si no existe, se puede mantener el estado actual
+            try {
+                $estadoCancelado = EstadoPrestamo::$CANCELADO ?? 6;
+                $prestamo->estado_id = $estadoCancelado;
+                $this->log("Estado del préstamo actualizado a cancelado (estado: {$estadoCancelado})");
+            } catch (\Exception $e) {
+                $this->log("No se pudo cambiar el estado, manteniendo estado actual: " . $e->getMessage());
+            }
+
+            // Guardar cambios
+            if (!$prestamo->save()) {
+                $this->lanzarExcepcionConCodigo("Error al guardar la cancelación del préstamo");
+            }
+
+            // Registrar en el historial de estados si existe la funcionalidad
+            try {
+                $this->controladorEstado->cambiarEstado($prestamo, $estadoCancelado ?? $prestamo->estado_id);
+            } catch (\Exception $e) {
+                $this->log("No se pudo registrar en historial de estados: " . $e->getMessage());
+            }
+
+            DB::commit();
+
+            $this->log("Préstamo {$prestamo->codigo} cancelado exitosamente");
+
+            return $prestamo;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->logError("Error al cancelar el préstamo ID {$id}: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Busca préstamos con filtros múltiples
+     *
+     * @param array $filtros Array con los filtros de búsqueda
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function buscarPrestamos(array $filtros = [])
+    {
+        try {
+            $query = Prestamo_Hipotecario::with(['cliente', 'estado', 'propiedad', 'asesor']);
+
+            // Filtro por DPI del cliente
+            if (!empty($filtros['dpi_cliente'])) {
+                $query->where('dpi_cliente', 'like', '%' . $filtros['dpi_cliente'] . '%');
+            }
+
+            // Filtro por ID del préstamo
+            if (!empty($filtros['id'])) {
+                $query->where('id', $filtros['id']);
+            }
+
+            // Filtro por código del préstamo
+            if (!empty($filtros['codigo'])) {
+                $query->where('codigo', 'like', '%' . $filtros['codigo'] . '%');
+            }
+
+            // Filtro por nombre del cliente
+            if (!empty($filtros['nombre_cliente'])) {
+                $query->whereHas('cliente', function ($q) use ($filtros) {
+                    $nombreCompleto = $filtros['nombre_cliente'];
+                    $q->where(function ($subQ) use ($nombreCompleto) {
+                        // Buscar en nombres y apellidos
+                        $subQ->where('primer_nombre', 'like', '%' . $nombreCompleto . '%')
+                             ->orWhere('segundo_nombre', 'like', '%' . $nombreCompleto . '%')
+                             ->orWhere('primer_apellido', 'like', '%' . $nombreCompleto . '%')
+                             ->orWhere('segundo_apellido', 'like', '%' . $nombreCompleto . '%')
+                             ->orWhere(DB::raw("CONCAT(primer_nombre, ' ', segundo_nombre, ' ', primer_apellido, ' ', segundo_apellido)"), 'like', '%' . $nombreCompleto . '%')
+                             ->orWhere(DB::raw("CONCAT(primer_nombre, ' ', primer_apellido)"), 'like', '%' . $nombreCompleto . '%');
+                    });
+                });
+            }
+
+            // Filtro por estado del préstamo
+            if (!empty($filtros['estado_id'])) {
+                $query->where('estado_id', $filtros['estado_id']);
+            }
+
+            // Filtro por rango de fechas de inicio
+            if (!empty($filtros['fecha_inicio_desde'])) {
+                $query->where('fecha_inicio', '>=', $filtros['fecha_inicio_desde']);
+            }
+
+            if (!empty($filtros['fecha_inicio_hasta'])) {
+                $query->where('fecha_inicio', '<=', $filtros['fecha_inicio_hasta']);
+            }
+
+            // Filtro por monto mínimo y máximo
+            if (!empty($filtros['monto_minimo'])) {
+                $query->where('monto', '>=', $filtros['monto_minimo']);
+            }
+
+            if (!empty($filtros['monto_maximo'])) {
+                $query->where('monto', '<=', $filtros['monto_maximo']);
+            }
+
+            // Filtro por asesor
+            if (!empty($filtros['id_usuario'])) {
+                $query->where('id_usuario', $filtros['id_usuario']);
+            }
+
+            // Filtro para préstamos cancelados o no cancelados
+            if (isset($filtros['cancelado'])) {
+                if ($filtros['cancelado'] === true || $filtros['cancelado'] === 'true' || $filtros['cancelado'] === '1') {
+                    $query->whereNotNull('fecha_cancelacion');
+                } else {
+                    $query->whereNull('fecha_cancelacion');
+                }
+            }
+
+            // Ordenamiento
+            $ordenPor = $filtros['orden_por'] ?? 'created_at';
+            $direccion = $filtros['direccion'] ?? 'desc';
+            $query->orderBy($ordenPor, $direccion);
+
+            // Paginación
+            $limite = $filtros['limite'] ?? 50;
+            if ($limite > 100) {
+                $limite = 100; // Máximo 100 registros por consulta
+            }
+
+            $resultado = $query->take($limite)->get();
+
+            $this->log("Búsqueda de préstamos completada. Filtros aplicados: " . json_encode($filtros) . ". Resultados: " . $resultado->count());
+
+            return $resultado;
+
+        } catch (\Exception $e) {
+            $this->logError("Error en búsqueda de préstamos: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Busca préstamos con paginación
+     *
+     * @param array $filtros Array con los filtros de búsqueda
+     * @param int $pagina Número de página
+     * @param int $porPagina Registros por página
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function buscarPrestamosPaginado(array $filtros = [], int $pagina = 1, int $porPagina = 15)
+    {
+        try {
+            $query = Prestamo_Hipotecario::with(['cliente', 'estado', 'propiedad', 'asesor']);
+
+            // Aplicar los mismos filtros que en buscarPrestamos
+            if (!empty($filtros['dpi_cliente'])) {
+                $query->where('dpi_cliente', 'like', '%' . $filtros['dpi_cliente'] . '%');
+            }
+
+            if (!empty($filtros['id'])) {
+                $query->where('id', $filtros['id']);
+            }
+
+            if (!empty($filtros['codigo'])) {
+                $query->where('codigo', 'like', '%' . $filtros['codigo'] . '%');
+            }
+
+            if (!empty($filtros['nombre_cliente'])) {
+                $query->whereHas('cliente', function ($q) use ($filtros) {
+                    $nombreCompleto = $filtros['nombre_cliente'];
+                    $q->where(function ($subQ) use ($nombreCompleto) {
+                        $subQ->where('primer_nombre', 'like', '%' . $nombreCompleto . '%')
+                             ->orWhere('segundo_nombre', 'like', '%' . $nombreCompleto . '%')
+                             ->orWhere('primer_apellido', 'like', '%' . $nombreCompleto . '%')
+                             ->orWhere('segundo_apellido', 'like', '%' . $nombreCompleto . '%')
+                             ->orWhere(DB::raw("CONCAT(primer_nombre, ' ', segundo_nombre, ' ', primer_apellido, ' ', segundo_apellido)"), 'like', '%' . $nombreCompleto . '%')
+                             ->orWhere(DB::raw("CONCAT(primer_nombre, ' ', primer_apellido)"), 'like', '%' . $nombreCompleto . '%');
+                    });
+                });
+            }
+
+            if (!empty($filtros['estado_id'])) {
+                $query->where('estado_id', $filtros['estado_id']);
+            }
+
+            if (!empty($filtros['fecha_inicio_desde'])) {
+                $query->where('fecha_inicio', '>=', $filtros['fecha_inicio_desde']);
+            }
+
+            if (!empty($filtros['fecha_inicio_hasta'])) {
+                $query->where('fecha_inicio', '<=', $filtros['fecha_inicio_hasta']);
+            }
+
+            if (!empty($filtros['monto_minimo'])) {
+                $query->where('monto', '>=', $filtros['monto_minimo']);
+            }
+
+            if (!empty($filtros['monto_maximo'])) {
+                $query->where('monto', '<=', $filtros['monto_maximo']);
+            }
+
+            if (!empty($filtros['id_usuario'])) {
+                $query->where('id_usuario', $filtros['id_usuario']);
+            }
+
+            if (isset($filtros['cancelado'])) {
+                if ($filtros['cancelado'] === true || $filtros['cancelado'] === 'true' || $filtros['cancelado'] === '1') {
+                    $query->whereNotNull('fecha_cancelacion');
+                } else {
+                    $query->whereNull('fecha_cancelacion');
+                }
+            }
+
+            // Ordenamiento
+            $ordenPor = $filtros['orden_por'] ?? 'created_at';
+            $direccion = $filtros['direccion'] ?? 'desc';
+            $query->orderBy($ordenPor, $direccion);
+
+            // Limitar registros por página
+            if ($porPagina > 100) {
+                $porPagina = 100;
+            }
+
+            $resultado = $query->paginate($porPagina, ['*'], 'page', $pagina);
+
+            $this->log("Búsqueda paginada de préstamos completada. Página: {$pagina}, Por página: {$porPagina}, Total: " . $resultado->total());
+
+            return $resultado;
+
+        } catch (\Exception $e) {
+            $this->logError("Error en búsqueda paginada de préstamos: " . $e->getMessage());
+            throw $e;
+        }
+    }
 }

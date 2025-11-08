@@ -36,6 +36,17 @@ class Prestamo_Hipotecario extends Model
         'existente',
         'saldo_existente',
         'fecha_fin_nueva',
+        'motivo_cancelacion',
+        'fecha_cancelacion',
+    ];
+
+    protected $dates = [
+        'fecha_inicio',
+        'fecha_fin',
+        'fecha_fin_nueva',
+        'fecha_cancelacion',
+        'created_at',
+        'updated_at'
     ];
 
     public function cliente()
@@ -235,5 +246,45 @@ class Prestamo_Hipotecario extends Model
             $depositos = array_merge($depositos, $pago->depositos->toArray());
         }
         return $depositos;
+    }
+
+    /**
+     * Verifica si el préstamo está cancelado
+     *
+     * @return bool
+     */
+    public function estaCancelado(): bool
+    {
+        return !empty($this->fecha_cancelacion);
+    }
+
+    /**
+     * Verifica si el préstamo puede ser cancelado
+     *
+     * @return bool
+     */
+    public function puedeSerCancelado(): bool
+    {
+        return !$this->estaCancelado();
+    }
+
+    /**
+     * Obtiene el motivo de cancelación si existe
+     *
+     * @return string|null
+     */
+    public function getMotivoCancelacion(): ?string
+    {
+        return $this->motivo_cancelacion;
+    }
+
+    /**
+     * Obtiene la fecha de cancelación formateada
+     *
+     * @return string|null
+     */
+    public function getFechaCancelacionFormateada(): ?string
+    {
+        return $this->fecha_cancelacion ? $this->fecha_cancelacion->format('Y-m-d H:i:s') : null;
     }
 }

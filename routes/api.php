@@ -140,6 +140,8 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
 //prestamos
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('prestamos', action: [PrestamoController::class, 'index']);
+    Route::get('prestamos/buscar', [PrestamoController::class, 'buscar']);
+    Route::get('prestamos/buscar-paginado', [PrestamoController::class, 'buscarPaginado']);
     Route::get('prestamos/excel', [PrestamoController::class, 'downloadExcelPrestamo']);
     Route::get('prestamos/retiros', [PrestamoController::class, 'getRetirosPendientes']);
     Route::post('prestamos', [PrestamoController::class, 'store']);
@@ -154,6 +156,7 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('prestamos/{id}/estado-cuenta/pdf', [PrestamoController::class, 'generarEstadoCuenta']);
     Route::get('prestamos/{id}/pagos', [PrestamoController::class, 'pagos']);
     Route::post('prestamos/{id}/pagos', [PrestamoController::class, 'pagarCuota']);
+    Route::post('prestamos/{id}/cancelar', [PrestamoController::class, 'cancelar']);
     Route::get('prestamos/{id}/depositos/pdf', [PrestamoController::class, 'generarEstadoCuentaDepositos']);
 });
 
@@ -165,6 +168,9 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
 //cuotas
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
     Route::get('cuotas-hoy', [CuotaController::class, 'obtenerCuotasParaPagarHoy']);
+    // Búsqueda de préstamos para roles de solo lectura
+    Route::get('prestamos/consultar', [PrestamoController::class, 'buscar']);
+    Route::get('prestamos/consultar-paginado', [PrestamoController::class, 'buscarPaginado']);
 });
 
 //depositos

@@ -206,7 +206,8 @@ class CuotaHipotecaService extends CuotaService
     }
 
 
-    private function procesarPago($pago, $deposito, $prestamo, $existente = false){
+    private function procesarPago($pago, $deposito, $prestamo, $existente = false)
+    {
 
         $montoOriginal = $deposito['monto'];
         $fechaPago = $deposito['fecha_documento'];
@@ -232,11 +233,12 @@ class CuotaHipotecaService extends CuotaService
         $saldoActual = $this->obtenerSaldoActualPago($pago);
 
         $montoRestante = $existente ? $this->procesarPenalizacionExistente($pago, $montoRestante, $detallesPago, $deposito['penalizacion'])
-        : $this->procesarPenalizacionUsuario($pago, $montoRestante, $detallesPago, $fechaPago, $penalizacionUsuario);
+            : $this->procesarPenalizacionUsuario($pago, $montoRestante, $detallesPago, $fechaPago, $penalizacionUsuario);
         $montoRestante = $this->procesarIntereses($pago, $montoRestante, $detallesPago, $deposito['fecha_documento']);
         $montoRestante = $this->procesarCapital($pago, $montoRestante, $detallesPago);
         $pago->monto_pagado += $montoOriginal;
-
+        $pago->fecha_pago = $deposito['fecha_documento'];
+        $pago->save();
         // Calcular correctamente el nuevo saldo después del pago real
         if ($detallesPago['capitalGanado'] > 0) {
             $nuevoSaldoCalculado = $saldoActual - $detallesPago['capitalGanado'];
@@ -249,14 +251,14 @@ class CuotaHipotecaService extends CuotaService
             $this->actualizarSiguentesPagoSiEsNecesario($pago, $nuevoSaldoCalculado);
 
             // Verificar y ajustar amortizaciones después de actualizar pagos siguientes
-            $this->verificarYAjustarAmortizaciones($prestamo);
         }
 
         if ($existente && $pago->capitalFaltante() <= 0) {
             $pago->realizado = true;
             $this->log("Pago #{$pago->numero_pago_prestamo} completado");
         }
-
+        $pago->save();
+         $this->verificarYAjustarAmortizaciones($prestamo);
         // Verificar que la fecha del pago existe antes de procesarla
         if ($pago->fecha) {
             $fechaLimite = \Carbon\Carbon::parse($pago->fecha)->addDays(5);
@@ -268,8 +270,7 @@ class CuotaHipotecaService extends CuotaService
             }
         }
 
-        $pago->fecha_pago = $deposito['fecha_documento'];
-        $pago->save();
+
 
         $data = [
             'monto' => $montoOriginal,
@@ -328,7 +329,10 @@ class CuotaHipotecaService extends CuotaService
                 // Si la diferencia es mayor a 0.01 (1 centavo), actualizar
                 if ($diferenciaSaldo > 0.01) {
                     $this->log("Actualizando pagos siguientes");
-                    $this->actualizarSiguentesPago($pago, $nuevoSaldo);
+                    $descripcionCambios = $this->actualizarSiguentePago($pago, $nuevoSaldo);
+                    if (!empty($descripcionCambios)) {
+                        $this->log("Cambios realizados: {$descripcionCambios}");
+                    }
                 }
             }
         } catch (\Exception $e) {
@@ -457,8 +461,8 @@ class CuotaHipotecaService extends CuotaService
             $this->log("❌ PAGO INSUFICIENTE - Déficit: Q{$detallesValidacion['deficit']}");
             $this->lanzarExcepcionConCodigo(
                 "El monto del pago (Q{$detallesValidacion['monto_pagado']}) es insuficiente. " .
-                "Monto mínimo requerido: Q{$detallesValidacion['monto_minimo_requerido']} " .
-                "(Interés: Q{$detallesValidacion['interes_pendiente']} + Penalización: Q{$detallesValidacion['penalizacion']})"
+                    "Monto mínimo requerido: Q{$detallesValidacion['monto_minimo_requerido']} " .
+                    "(Interés: Q{$detallesValidacion['interes_pendiente']} + Penalización: Q{$detallesValidacion['penalizacion']})"
             );
         }
 
@@ -1098,11 +1102,22 @@ class CuotaHipotecaService extends CuotaService
      *
      * @param Pago $pago Pago actual
      * @param float $nuevoSaldo Nuevo saldo del préstamo
+     * @param int $nivelRecursion Nivel de recursión para prevenir overflow (uso interno)
      * @return string Descripción de los cambios realizados
      */
-    private function actualizarSiguentesPago(Pago $pago, $nuevoSaldo): string
+    private function actualizarSiguentePago(Pago $pago, $nuevoSaldo, int $nivelRecursion = 0): string
     {
+
+        $this->log("Actualizando siguiente pago para el pago #{$pago->id} con nuevo saldo Q{$nuevoSaldo} (Nivel de recursión: {$nivelRecursion})");
         $descripcion = '';
+        $maxNivelesRecursion = 50;
+
+        // Protección contra recursión infinita
+        if ($nivelRecursion >= $maxNivelesRecursion) {
+            $this->log("Límite de recursión alcanzado en actualizarSiguentePago");
+            return $descripcion;
+        }
+
         $prestamoHipotecario = $pago->prestamo;
         $pagoSiguiente = $pago->pagoSiguiente();
 
@@ -1111,41 +1126,59 @@ class CuotaHipotecaService extends CuotaService
             return $descripcion;
         }
 
-        // Calcular el interés y el capital del siguiente pago
-        $plazo = $this->calcularPlazo(
-            $prestamoHipotecario->plazo,
-            $prestamoHipotecario->tipo_plazo
-        );
-        $pagoSiguiente->interes = $this->calcularInteres($nuevoSaldo, $this->calcularTaza($prestamoHipotecario->interes));
-        $capital = $this->calcularCapital($pagoSiguiente->interes, $prestamoHipotecario, $nuevoSaldo, $plazo, $pago);
-
-        // Ajustar el capital si el saldo restante es menor
-        if ($nuevoSaldo < $capital) {
-            $capital = $nuevoSaldo;
+        // Si el saldo es 0, eliminar el pago siguiente y todos los que siguen
+        if ($nuevoSaldo <= 0) {
+            $this->log("Saldo agotado, eliminando pagos desde #{$pagoSiguiente->id}");
+            $pagosEliminados = $this->eliminarPago($pagoSiguiente);
+            $descripcion .= "Se eliminaron {$pagosEliminados} pagos restantes debido a saldo agotado. ";
+            return $descripcion;
         }
 
-        $pagoSiguiente->capital = $capital;
-        $pagoSiguiente->saldo = $nuevoSaldo - $pagoSiguiente->capital;
+        // Recalcular interés basado en el nuevo saldo
+        $tasaInteresMensual = $this->calcularTaza($prestamoHipotecario->interes);
+        $nuevoInteres = $this->calcularInteres($nuevoSaldo, $tasaInteresMensual);
 
-        // Guardar los cambios en el siguiente pago
+        // Calcular nuevo capital y saldo
+        if ($nuevoSaldo < ($prestamoHipotecario->cuota - $nuevoInteres)) {
+            $this->log("Ajustando cuota para evitar saldo negativo en pago #{$pagoSiguiente->id}");
+            $nuevoCapital = $nuevoSaldo;
+        } else {
+            $nuevoCapital = max(0, $prestamoHipotecario->cuota - $nuevoInteres);
+        }
+        $saldoDespuesPago = max(0, $nuevoSaldo - $nuevoCapital);
+
+        // Si el saldo resultante sería negativo, ajustar
+        if ($saldoDespuesPago < 0) {
+            $nuevoCapital = $nuevoSaldo;
+            $saldoDespuesPago = 0;
+        }
+
+        // Actualizar el pago siguiente
+        $pagoSiguiente->interes = round($nuevoInteres, 2);
+        $pagoSiguiente->capital = round($nuevoCapital, 2);
+        $pagoSiguiente->saldo = round($saldoDespuesPago, 2);
         $pagoSiguiente->save();
 
-        $this->log("Pago siguiente actualizado: ID {$pagoSiguiente->id}, Capital: {$pagoSiguiente->capital}, Interés: {$pagoSiguiente->interes}, Saldo: {$pagoSiguiente->saldo}");
+        $descripcion .= "Pago #{$pagoSiguiente->id} actualizado; ";
+        $this->log("Pago #{$pagoSiguiente->id} actualizado - Capital: Q{$nuevoCapital}, Saldo: Q{$saldoDespuesPago}");
 
-        // Si el saldo del siguiente pago es mayor a cero, continuar con los pagos siguientes
-        if ($pagoSiguiente->saldo > 0) {
-            $descripcion = $descripcion . $this->actualizarSiguentesPago($pagoSiguiente, $pagoSiguiente->saldo);
-        } else {
-            // Si el saldo es cero, eliminar los pagos restantes
-            $pagoProximo = $pagoSiguiente->pagoSiguiente();
-            $this->eliminarPago($pagoProximo);
+        // Continuar con recursión si hay más saldo
+        if ($saldoDespuesPago > 0.01) {
+            $descripcionRecursiva = $this->actualizarSiguentePago(
+                $pagoSiguiente,
+                $saldoDespuesPago,
+                $nivelRecursion + 1
+            );
+            $descripcion .= $descripcionRecursiva;
+        } else if ($pagoSiguiente->pagoSiguiente()) {
+            $this->log("Saldo casi agotado, eliminando pagos restantes desde #{$pagoSiguiente->pagoSiguiente()->id}");
+            $this->eliminarPago($pagoSiguiente->pagoSiguiente());
         }
-
-        // Actualizar la fecha final del préstamo basándose en la última cuota activa
-        $this->actualizarFechaFinalPrestamo($prestamoHipotecario);
 
         return $descripcion;
     }
+
+
 
     /**
      * Elimina un pago y todos sus pagos siguientes de forma recursiva
@@ -1622,7 +1655,13 @@ class CuotaHipotecaService extends CuotaService
             }
 
             // Calcular suma total de amortizaciones (capital)
-            $sumaAmortizaciones = $pagos->sum('capital');
+            $sumaAmortizaciones = 0;
+            foreach ($pagos as $pago) {
+                $this->log("Revisando pago #{$pago->id}: Capital = Q{$pago->capital}, Capital pagado = Q{$pago->capital_pagado}");
+                $capitalASumar = $pago->capital_pagado > 0 ? $pago->capital_pagado : $pago->capital;
+                $this->log("Pago #{$pago->id}: Capital a sumar = Q{$capitalASumar}");
+                $sumaAmortizaciones += $capitalASumar;
+            }
             $diferencia = $prestamo->monto - $sumaAmortizaciones;
             $umbral = 0.005; // Umbral más estricto para detección de diferencias
 

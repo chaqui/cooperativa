@@ -166,6 +166,60 @@ class PrestamoController extends Controller
         return response()->json(['message' => 'Pago realizado correctamente'], 200);
     }
 
+    /**
+     * Cancela un préstamo hipotecario
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param string $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function cancelar(\Illuminate\Http\Request $request, string $id)
+    {
+        $this->log("Solicitud de cancelación para préstamo ID: {$id}");
+        try {
+            // Validar los datos de entrada
+            $request->validate([
+                'motivo' => 'required|string|max:500|min:10'
+            ], [
+                'motivo.required' => 'El motivo de cancelación es requerido',
+                'motivo.string' => 'El motivo debe ser una cadena de texto',
+                'motivo.max' => 'El motivo no puede exceder 500 caracteres',
+                'motivo.min' => 'El motivo debe tener al menos 10 caracteres'
+            ]);
+
+            $this->log("Solicitud de cancelación para préstamo ID: {$id}");
+
+            // Cancelar el préstamo
+            $prestamoCancelado = $this->prestamoService->cancelarPrestamo($id, $request->motivo);
+
+            $this->log("Préstamo {$prestamoCancelado->codigo} cancelado exitosamente");
+
+            return response()->json([
+                'message' => 'Préstamo cancelado exitosamente',
+                'data' => [
+                    'id' => $prestamoCancelado->id,
+                    'codigo' => $prestamoCancelado->codigo,
+                    'motivo_cancelacion' => $prestamoCancelado->motivo_cancelacion,
+                    'fecha_cancelacion' => $prestamoCancelado->getFechaCancelacionFormateada(),
+                    'estado_cancelado' => $prestamoCancelado->estaCancelado()
+                ]
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->log("Error de validación al cancelar préstamo: " . json_encode($e->errors()));
+            return response()->json([
+                'message' => 'Datos de entrada inválidos',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            $this->log("Error al cancelar préstamo ID {$id}: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Error al cancelar el préstamo: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 
 
     /**
@@ -183,6 +237,181 @@ class PrestamoController extends Controller
             $this->log('Error al generar el archivo Excel: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Error al generar el archivo Excel: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Busca préstamos con filtros múltiples
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function buscar(\Illuminate\Http\Request $request)
+    {
+        try {
+            $this->log("Iniciando búsqueda de préstamos con filtros: " . json_encode($request->all()));
+
+            // Obtener filtros de la request
+            $filtros = [];
+
+            if ($request->filled('dpi_cliente')) {
+                $filtros['dpi_cliente'] = $request->dpi_cliente;
+            }
+
+            if ($request->filled('id')) {
+                $filtros['id'] = $request->id;
+            }
+
+            if ($request->filled('codigo')) {
+                $filtros['codigo'] = $request->codigo;
+            }
+
+            if ($request->filled('nombre_cliente')) {
+                $filtros['nombre_cliente'] = $request->nombre_cliente;
+            }
+
+            if ($request->filled('estado_id')) {
+                $filtros['estado_id'] = $request->estado_id;
+            }
+
+            if ($request->filled('fecha_inicio_desde')) {
+                $filtros['fecha_inicio_desde'] = $request->fecha_inicio_desde;
+            }
+
+            if ($request->filled('fecha_inicio_hasta')) {
+                $filtros['fecha_inicio_hasta'] = $request->fecha_inicio_hasta;
+            }
+
+            if ($request->filled('monto_minimo')) {
+                $filtros['monto_minimo'] = $request->monto_minimo;
+            }
+
+            if ($request->filled('monto_maximo')) {
+                $filtros['monto_maximo'] = $request->monto_maximo;
+            }
+
+            if ($request->filled('id_usuario')) {
+                $filtros['id_usuario'] = $request->id_usuario;
+            }
+
+            if ($request->filled('cancelado')) {
+                $filtros['cancelado'] = $request->cancelado;
+            }
+
+            if ($request->filled('orden_por')) {
+                $filtros['orden_por'] = $request->orden_por;
+            }
+
+            if ($request->filled('direccion')) {
+                $filtros['direccion'] = $request->direccion;
+            }
+
+            if ($request->filled('limite')) {
+                $filtros['limite'] = $request->limite;
+            }
+
+            // Realizar búsqueda
+            $prestamos = $this->prestamoService->buscarPrestamos($filtros);
+
+            $this->log("Búsqueda completada. Encontrados: " . $prestamos->count() . " préstamos");
+
+            return response()->json([
+                'message' => 'Búsqueda completada exitosamente',
+                'data' => PrestamoResource::collection($prestamos),
+                'meta' => [
+                    'total_encontrados' => $prestamos->count(),
+                    'filtros_aplicados' => $filtros
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            $this->log("Error en búsqueda de préstamos: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Error al buscar préstamos: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
+    }
+
+    /**
+     * Busca préstamos con paginación
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function buscarPaginado(\Illuminate\Http\Request $request)
+    {
+        try {
+            // Validar parámetros de paginación
+            $request->validate([
+                'pagina' => 'nullable|integer|min:1',
+                'por_pagina' => 'nullable|integer|min:1|max:100',
+                'dpi_cliente' => 'nullable|string|max:20',
+                'id' => 'nullable|integer|min:1',
+                'codigo' => 'nullable|string|max:50',
+                'nombre_cliente' => 'nullable|string|max:100',
+                'estado_id' => 'nullable|integer|min:1',
+                'fecha_inicio_desde' => 'nullable|date',
+                'fecha_inicio_hasta' => 'nullable|date|after_or_equal:fecha_inicio_desde',
+                'monto_minimo' => 'nullable|numeric|min:0',
+                'monto_maximo' => 'nullable|numeric|min:0',
+                'id_usuario' => 'nullable|integer|min:1',
+                'cancelado' => 'nullable|boolean',
+                'orden_por' => 'nullable|string|in:id,codigo,monto,fecha_inicio,created_at',
+                'direccion' => 'nullable|string|in:asc,desc'
+            ]);
+
+            $this->log("Iniciando búsqueda paginada de préstamos");
+
+            // Obtener parámetros de paginación
+            $pagina = $request->get('pagina', 1);
+            $porPagina = $request->get('por_pagina', 15);
+
+            // Obtener filtros
+            $filtros = $request->only([
+                'dpi_cliente', 'id', 'codigo', 'nombre_cliente', 'estado_id',
+                'fecha_inicio_desde', 'fecha_inicio_hasta', 'monto_minimo',
+                'monto_maximo', 'id_usuario', 'cancelado', 'orden_por', 'direccion'
+            ]);
+
+            // Realizar búsqueda paginada
+            $resultados = $this->prestamoService->buscarPrestamosPaginado($filtros, $pagina, $porPagina);
+
+            $this->log("Búsqueda paginada completada. Página: {$pagina}, Total: " . $resultados->total());
+
+            return response()->json([
+                'message' => 'Búsqueda paginada completada exitosamente',
+                'data' => PrestamoResource::collection($resultados->items()),
+                'meta' => [
+                    'current_page' => $resultados->currentPage(),
+                    'last_page' => $resultados->lastPage(),
+                    'per_page' => $resultados->perPage(),
+                    'total' => $resultados->total(),
+                    'from' => $resultados->firstItem(),
+                    'to' => $resultados->lastItem(),
+                    'filtros_aplicados' => array_filter($filtros)
+                ],
+                'links' => [
+                    'first' => $resultados->url(1),
+                    'last' => $resultados->url($resultados->lastPage()),
+                    'prev' => $resultados->previousPageUrl(),
+                    'next' => $resultados->nextPageUrl()
+                ]
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->log("Error de validación en búsqueda paginada: " . json_encode($e->errors()));
+            return response()->json([
+                'message' => 'Parámetros de búsqueda inválidos',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            $this->log("Error en búsqueda paginada de préstamos: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Error al buscar préstamos: ' . $e->getMessage(),
+                'data' => []
             ], 500);
         }
     }

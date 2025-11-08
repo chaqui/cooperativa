@@ -66,7 +66,6 @@ class PrestamoExistenService
 
         // Verificar y ajustar amortizaciones después de procesar todos los depósitos existentes
         $this->log("Verificando integridad de amortizaciones después de procesar depósitos existentes");
-        $this->cuotaHipotecaService->verificarYAjustarAmortizaciones($prestamo);
     }
 
     private function prestamoCreado($prestamo, $data)
