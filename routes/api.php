@@ -214,3 +214,7 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
     Route::get('orientaciones', [OrientacionController::class, 'index']);
 });
+
+Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
+    Route::get('cuotas/{id}/proyectar', [CuotaController::class, 'proyectarCuota']);
+});

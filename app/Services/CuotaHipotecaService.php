@@ -232,7 +232,7 @@ class CuotaHipotecaService extends CuotaService
         // Obtener el saldo actual correcto para múltiples depósitos
         $saldoActual = $this->obtenerSaldoActualPago($pago);
 
-        $montoRestante = $existente ? $this->procesarPenalizacionExistente($pago, $montoRestante, $detallesPago, $deposito['penalizacion'])
+        $montoRestante = $existente ? $this->procesarPenalizacionExistente($pago, $montoRestante, $detallesPago, $deposito)
             : $this->procesarPenalizacionUsuario($pago, $montoRestante, $detallesPago, $fechaPago, $penalizacionUsuario);
         $montoRestante = $this->procesarIntereses($pago, $montoRestante, $detallesPago, $deposito['fecha_documento']);
         $montoRestante = $this->procesarCapital($pago, $montoRestante, $detallesPago);
@@ -258,7 +258,7 @@ class CuotaHipotecaService extends CuotaService
             $this->log("Pago #{$pago->numero_pago_prestamo} completado");
         }
         $pago->save();
-         $this->verificarYAjustarAmortizaciones($prestamo);
+        $this->verificarYAjustarAmortizaciones($prestamo);
         // Verificar que la fecha del pago existe antes de procesarla
         if ($pago->fecha) {
             $fechaLimite = \Carbon\Carbon::parse($pago->fecha)->addDays(5);
@@ -1015,10 +1015,11 @@ class CuotaHipotecaService extends CuotaService
      * @param mixed $montoDisponible monto disponible para el pago
      * @param mixed $detallesPago detalles del pago
      * @param mixed $penalizacion información de la penalización
+     * @param mixed $existente información sobre si la penalización es existente
      */
-    private function procesarPenalizacionExistente($pago, $montoDisponible, &$detallesPago, $penalizacion)
+    private function procesarPenalizacionExistente($pago, $montoDisponible, &$detallesPago, $deposito)
     {
-        $pago->penalizacion = $penalizacion;
+        $pago->penalizacion = $deposito['existente'] ? $deposito['penalizacion'] : $this->calcularPenalizacion($pago, $deposito['fecha_deposito']);
         return $this->procesarPenalizacion($pago, $montoDisponible, $detallesPago);
     }
 
@@ -1110,13 +1111,6 @@ class CuotaHipotecaService extends CuotaService
 
         $this->log("Actualizando siguiente pago para el pago #{$pago->id} con nuevo saldo Q{$nuevoSaldo} (Nivel de recursión: {$nivelRecursion})");
         $descripcion = '';
-        $maxNivelesRecursion = 50;
-
-        // Protección contra recursión infinita
-        if ($nivelRecursion >= $maxNivelesRecursion) {
-            $this->log("Límite de recursión alcanzado en actualizarSiguentePago");
-            return $descripcion;
-        }
 
         $prestamoHipotecario = $pago->prestamo;
         $pagoSiguiente = $pago->pagoSiguiente();
@@ -1125,6 +1119,18 @@ class CuotaHipotecaService extends CuotaService
         if (!$pagoSiguiente) {
             return $descripcion;
         }
+
+        $maxNivelesRecursion = $this->calcularPlazo(
+            $prestamoHipotecario->plazo,
+            $prestamoHipotecario->tipo_plazo
+        ) + 5; // Margen adicional para seguridad
+
+        // Protección contra recursión infinita
+        if ($nivelRecursion >= $maxNivelesRecursion) {
+            $this->log("Límite de recursión alcanzado en actualizarSiguentePago");
+            return $descripcion;
+        }
+
 
         // Si el saldo es 0, eliminar el pago siguiente y todos los que siguen
         if ($nuevoSaldo <= 0) {
@@ -1571,66 +1577,6 @@ class CuotaHipotecaService extends CuotaService
         }
     }
 
-    /**
-     * Método público para actualizar la fecha final de un préstamo
-     * Útil para ser llamado desde controladores o otros servicios
-     *
-     * @param int $prestamoId ID del préstamo hipotecario
-     * @return bool True si se actualizó correctamente
-     */
-    public function sincronizarFechaFinalPrestamo(int $prestamoId): bool
-    {
-        try {
-            $prestamo = Prestamo_Hipotecario::findOrFail($prestamoId);
-            $this->actualizarFechaFinalPrestamo($prestamo);
-            return true;
-        } catch (\Exception $e) {
-            $this->manejarError($e, 'sincronizarFechaFinalPrestamo');
-            return false;
-        }
-    }
-
-    /**
-     * Valida la integridad de los cálculos de un préstamo
-     * Útil para verificar que no hay faltantes por redondeo
-     *
-     * @param int $prestamoId ID del préstamo hipotecario
-     * @return array Resultado de la validación con detalles
-     */
-    public function validarIntegridadCalculos(int $prestamoId): array
-    {
-        try {
-            $prestamo = Prestamo_Hipotecario::findOrFail($prestamoId);
-            $pagos = $this->getPagos($prestamo);
-
-            $totalCapital = $pagos->sum('capital');
-            $totalInteres = $pagos->sum('interes');
-            $totalCuotas = $totalCapital + $totalInteres;
-
-            $faltanteCapital = $prestamo->monto - $totalCapital;
-            $ultimoPago = $pagos->last();
-
-            $resultado = [
-                'prestamo_id' => $prestamoId,
-                'monto_original' => $prestamo->monto,
-                'total_capital_calculado' => round($totalCapital, 2),
-                'total_interes_calculado' => round($totalInteres, 2),
-                'total_cuotas' => round($totalCuotas, 2),
-                'faltante_capital' => round($faltanteCapital, 2),
-                'saldo_final' => $ultimoPago ? $ultimoPago->saldo : 0,
-                'numero_cuotas' => $pagos->count(),
-                'integridad_ok' => abs($faltanteCapital) < 0.01 && ($ultimoPago ? $ultimoPago->saldo < 0.01 : true)
-            ];
-
-            $this->log("Validación de integridad completada para préstamo #{$prestamoId}: " .
-                ($resultado['integridad_ok'] ? 'CORRECTA' : 'CON PROBLEMAS'));
-
-            return $resultado;
-        } catch (\Exception $e) {
-            $this->manejarError($e, 'validarIntegridadCalculos');
-            return ['error' => $e->getMessage()];
-        }
-    }
 
     /**
      * Verifica y ajusta las amortizaciones para garantizar que sumen exactamente el monto del préstamo
@@ -1718,6 +1664,44 @@ class CuotaHipotecaService extends CuotaService
             $this->logError("Error en verificarYAjustarAmortizaciones: " . $e->getMessage());
             $this->manejarError($e, 'verificarYAjustarAmortizaciones');
             return false;
+        }
+    }
+
+    public function proyectarCuotaAFecha($id, $fecha)
+    {
+        $this->log("Proyectando cuota #{$id} a la fecha {$fecha}");
+
+        // Obtener el pago correspondiente a la fecha
+        $pago = Pago::find($id);
+        if (!$pago) {
+            $this->lanzarExcepcionConCodigo("Pago con ID {$id} no encontrado para proyección");
+        }
+        $penalizacion = $this->calcularPenalizacion($pago, $fecha);
+        $this->log("Proyección - Fecha: {$fecha}, Penalización: Q{$penalizacion}");
+        $interes = $this->bitacoraInteresService->calcularInteresPendiente($pago, $fecha);
+        $this->log("Proyección - Fecha: {$fecha}, Interés: Q{$interes['interes_pendiente']}");
+        $capital = $this->calcularCapitalPendiente($pago, $fecha);
+        $this->log("Proyección - Fecha: {$fecha}, Capital pendiente: Q{$capital}");
+        $total = $penalizacion + $interes['interes_pendiente'] + $capital;
+        return [
+            "fecha" => $fecha,
+            "penalizacion" => $penalizacion,
+            "interes" => $interes['interes_pendiente'],
+            "capital" => $capital,
+            "total" => $total,
+        ];
+    }
+
+    private function calcularCapitalPendiente($pago, $fecha)
+    {
+        $fechaLimite = \Carbon\Carbon::parse($pago->fecha)->addDays(5);
+        $capital = $pago->capital - $pago->capital_pagado;
+        if ($fechaLimite >= $fecha) {
+            return $capital;
+        } else if ($pago->pagoSiguiente()) {
+            return $capital + $this->calcularCapitalPendiente($pago->pagoSiguiente(), $fecha);
+        } else {
+            return $capital;
         }
     }
 }

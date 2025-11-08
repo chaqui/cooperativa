@@ -5,12 +5,14 @@ namespace App\Services;
 use App\Models\Pago;
 use App\Models\Prestamo_Hipotecario;
 use App\Models\Historico_Saldo;
+use App\Traits\ErrorHandler;
 use App\Traits\Loggable;
 use DateTime;
 
 class BitacoraInteresService
 {
     use Loggable;
+    use ErrorHandler;
 
     public function registrarHistoricoSaldo(Prestamo_Hipotecario $prestamo, $nuevoSaldo, $fecha)
     {
@@ -48,18 +50,14 @@ class BitacoraInteresService
         $tasaInteresAnual = $prestamo->interes;
         $fechaUltimoPago = new DateTime($ultimoHistorico->created_at);
         $fechaPagoObj = new DateTime($fechaPago);
-
         if ($fechaPagoObj < $fechaUltimoPago) {
-            throw new \Exception("La fecha de pago no puede ser anterior al último registro de histórico");
+            $this->lanzarExcepcionConCodigo("La fecha de pago no puede ser anterior al último registro de histórico");
         }
         $fechaPago = new DateTime($pago->fecha);
 
         $interesTotal = $this->calcularInteres($fechaPago, $saldo, $tasaInteresAnual, $fechaUltimoPago, $fechaPagoObj);
 
-
-        $this->log("Cálculo de interés pendiente para el pago ID {$pago->id}: Saldo={$saldo}, Interés Pendiente={$interesTotal}");
-
-        $interesAPagar = $interesTotal- $ultimoHistorico->interes_pagado;
+        $interesAPagar = $interesTotal - $ultimoHistorico->interes_pagado;
         return [
             'id_historico' => $ultimoHistorico->id,
             'interes_pendiente' => round($interesAPagar, 2)

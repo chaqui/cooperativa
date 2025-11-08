@@ -211,7 +211,7 @@ class PrestamoService extends CodigoService
     {
         DB::beginTransaction();
         try {
-            $prestamo = $this->get($id);
+            $prestamo = $this->get(id: $id);
             $cuotaApagar = $prestamo->cuotaActiva();
 
             if (!$cuotaApagar) {
