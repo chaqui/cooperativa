@@ -1544,38 +1544,7 @@ class CuotaHipotecaService extends CuotaService
         }
     }
 
-    /**
-     * Obtiene los días acumulados desde la fecha anterior de pago hasta la fecha actual
-     *
-     * @param string $fecha Fecha actual de referencia
-     * @return int Número de días acumulados
-     * @throws \Exception Si la fecha es inválida
-     */
-    private function obtenerDiasAcumulados($fecha)
-    {
-        try {
-            $this->log('Calculando días acumulados para fecha: ' . $fecha);
 
-            if (empty($fecha)) {
-                $this->lanzarExcepcionConCodigo("La fecha no puede estar vacía");
-            }
-
-            $fechaAnterior = $this->obtenerFechaAnterior($fecha);
-            $this->log('Fecha anterior de pago: ' . $fechaAnterior);
-
-            $fechaAnteriorObj = new \DateTime($fechaAnterior);
-            $fechaActualObj = new \DateTime($fecha);
-
-            $diferencia = $fechaAnteriorObj->diff($fechaActualObj);
-            $diasAcumulados = (int)$diferencia->format("%a");
-
-            $this->log("Días acumulados calculados: {$diasAcumulados}");
-            return $diasAcumulados;
-        } catch (\Exception $e) {
-            $this->manejarError($e, 'obtenerDiasAcumulados');
-            return 0; // Esta línea nunca se ejecutará
-        }
-    }
 
 
     /**

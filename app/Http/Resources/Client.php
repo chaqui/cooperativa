@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\Beneficiario as BeneficiarioResource;
 
 class Client extends JsonResource
 {
@@ -28,7 +29,6 @@ class Client extends JsonResource
             'genero' => $this->genero,
             'nivel_academico' => $this->nivel_academico,
             'profesion' => $this->profesion,
-            'fecha_nacimiento' => $this->fecha_nacimiento,
             'estado' => $this->estadoCliente->name,
             'limite_credito' => $this->limite_credito,
             'credito_disponible' => $this->credito_disponible,
@@ -57,6 +57,23 @@ class Client extends JsonResource
             'estabilidad_domiciliaria' => $this->estabilidad_domiciliaria,
             'razon_otros_ingresos' => $this->razon_otros_ingresos,
             'nacionalidad' => $this->nacionalidad,
+
+            // Relaciones
+            'beneficiarios' => BeneficiarioResource::collection($this->whenLoaded('beneficiarios')),
+
+            // Datos enriquecidos (si existen)
+            'nombreMunicipio' => $this->when(isset($this->nombreMunicipio), $this->nombreMunicipio),
+            'nombreDepartamento' => $this->when(isset($this->nombreDepartamento), $this->nombreDepartamento),
+            'estadoCivil' => $this->when(isset($this->estadoCivil), $this->estadoCivil),
+            'nombreTipoCliente' => $this->when(isset($this->nombreTipoCliente), $this->nombreTipoCliente),
+            'nombreProfesion' => $this->when(isset($this->nombreProfesion), $this->nombreProfesion),
+            'nombreNivelAcademico' => $this->when(isset($this->nombreNivelAcademico), $this->nombreNivelAcademico),
+
+            // Referencias clasificadas (si existen)
+            'referenciasPersonales' => $this->when(isset($this->referenciasPersonales), $this->referenciasPersonales),
+            'referenciasLaborales' => $this->when(isset($this->referenciasLaborales), $this->referenciasLaborales),
+            'referenciasComerciales' => $this->when(isset($this->referenciasComerciales), $this->referenciasComerciales),
+            'referenciasFamiliares' => $this->when(isset($this->referenciasFamiliares), $this->referenciasFamiliares),
         ];
     }
 

@@ -52,6 +52,7 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
     Route::get('clients/{id}/pdf', [ClientController::class, 'generateClientPdf']);
     Route::get('clients/{id}/cuotas', [ClientController::class, 'cuotas']);
     Route::get('clients/{id}/beneficiarios', [ClientController::class, 'getBeneficiarios']);
+    Route::get('clients/{id}/data-for-pdf', [ClientController::class, 'getDataForPDF']);
 });
 
 //inversiones

@@ -184,4 +184,32 @@ class ClientController extends Controller
         $beneficiarios = $this->clientService->getBeneficiarios($id);
         return BeneficiarioResource::collection($beneficiarios);
     }
+
+    /**
+     * Obtiene los datos del cliente enriquecidos para PDF
+     *
+     * @param string $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getDataForPDF(string $id)
+    {
+        try {
+            $this->log("Obteniendo datos enriquecidos para PDF del cliente: {$id}");
+
+            $clientData = $this->clientService->getDataForPDF($id);
+
+            $this->log("Datos del cliente obtenidos exitosamente para PDF");
+
+            return response()->json([
+                'message' => 'Datos del cliente obtenidos exitosamente',
+                'data' => new ClientResource($clientData)
+            ], 200);
+
+        } catch (\Exception $e) {
+            $this->log("Error al obtener datos del cliente para PDF: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Error al obtener datos del cliente: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
