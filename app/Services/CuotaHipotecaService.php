@@ -232,7 +232,7 @@ class CuotaHipotecaService extends CuotaService
         // Obtener el saldo actual correcto para múltiples depósitos
         $saldoActual = $this->obtenerSaldoActualPago($pago);
 
-        $montoRestante = $existente ? $this->procesarPenalizacionExistente($pago, $montoRestante, $detallesPago, $deposito)
+        $montoRestante = $existente ? $this->procesarPenalizacionExistente($pago, $montoRestante, $detallesPago, $deposito, $existente)
             : $this->procesarPenalizacionUsuario($pago, $montoRestante, $detallesPago, $fechaPago, $penalizacionUsuario);
         $montoRestante = $this->procesarIntereses($pago, $montoRestante, $detallesPago, $deposito['fecha_documento']);
         $montoRestante = $this->procesarCapital($pago, $montoRestante, $detallesPago);
@@ -1017,9 +1017,9 @@ class CuotaHipotecaService extends CuotaService
      * @param mixed $penalizacion información de la penalización
      * @param mixed $existente información sobre si la penalización es existente
      */
-    private function procesarPenalizacionExistente($pago, $montoDisponible, &$detallesPago, $deposito)
+    private function procesarPenalizacionExistente($pago, $montoDisponible, &$detallesPago, $deposito, $existente)
     {
-        $pago->penalizacion = $deposito['existente'] ? $deposito['penalizacion'] : $this->calcularPenalizacion($pago, $deposito['fecha_deposito']);
+        $pago->penalizacion = $existente? $deposito['penalizacion'] : $this->calcularPenalizacion($pago, $deposito['fecha_deposito']);
         return $this->procesarPenalizacion($pago, $montoDisponible, $detallesPago);
     }
 

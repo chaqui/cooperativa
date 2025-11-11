@@ -296,7 +296,6 @@ class PrestamoService extends CodigoService
             $this->log("Préstamo {$prestamo->codigo} cancelado exitosamente");
 
             return $prestamo;
-
         } catch (\Exception $e) {
             DB::rollBack();
             $this->logError("Error al cancelar el préstamo ID {$id}: " . $e->getMessage());
@@ -336,12 +335,10 @@ class PrestamoService extends CodigoService
                     $nombreCompleto = $filtros['nombre_cliente'];
                     $q->where(function ($subQ) use ($nombreCompleto) {
                         // Buscar en nombres y apellidos
-                        $subQ->where('primer_nombre', 'like', '%' . $nombreCompleto . '%')
-                             ->orWhere('segundo_nombre', 'like', '%' . $nombreCompleto . '%')
-                             ->orWhere('primer_apellido', 'like', '%' . $nombreCompleto . '%')
-                             ->orWhere('segundo_apellido', 'like', '%' . $nombreCompleto . '%')
-                             ->orWhere(DB::raw("CONCAT(primer_nombre, ' ', segundo_nombre, ' ', primer_apellido, ' ', segundo_apellido)"), 'like', '%' . $nombreCompleto . '%')
-                             ->orWhere(DB::raw("CONCAT(primer_nombre, ' ', primer_apellido)"), 'like', '%' . $nombreCompleto . '%');
+                        $subQ->where('nombres', 'like', '%' . $nombreCompleto . '%')
+                            ->orWhere('apellidos', 'like', '%' . $nombreCompleto . '%')
+                            ->orWhere(DB::raw("CONCAT(nombres, ' ', apellidos)"), 'like', '%' . $nombreCompleto . '%')
+                            ->orWhere(DB::raw("CONCAT(nombres, ' ', apellidos)"), 'like', '%' . $nombreCompleto . '%');
                     });
                 });
             }
@@ -399,7 +396,6 @@ class PrestamoService extends CodigoService
             $this->log("Búsqueda de préstamos completada. Filtros aplicados: " . json_encode($filtros) . ". Resultados: " . $resultado->count());
 
             return $resultado;
-
         } catch (\Exception $e) {
             $this->logError("Error en búsqueda de préstamos: " . $e->getMessage());
             throw $e;
@@ -436,12 +432,10 @@ class PrestamoService extends CodigoService
                 $query->whereHas('cliente', function ($q) use ($filtros) {
                     $nombreCompleto = $filtros['nombre_cliente'];
                     $q->where(function ($subQ) use ($nombreCompleto) {
-                        $subQ->where('primer_nombre', 'like', '%' . $nombreCompleto . '%')
-                             ->orWhere('segundo_nombre', 'like', '%' . $nombreCompleto . '%')
-                             ->orWhere('primer_apellido', 'like', '%' . $nombreCompleto . '%')
-                             ->orWhere('segundo_apellido', 'like', '%' . $nombreCompleto . '%')
-                             ->orWhere(DB::raw("CONCAT(primer_nombre, ' ', segundo_nombre, ' ', primer_apellido, ' ', segundo_apellido)"), 'like', '%' . $nombreCompleto . '%')
-                             ->orWhere(DB::raw("CONCAT(primer_nombre, ' ', primer_apellido)"), 'like', '%' . $nombreCompleto . '%');
+                        $subQ->where('nombres', 'like', '%' . $nombreCompleto . '%')
+                            ->orWhere('apellidos', 'like', '%' . $nombreCompleto . '%')
+                            ->orWhere(DB::raw("CONCAT(nombres, ' ', segundo_nombre, ' ', apellidos)"), 'like', '%' . $nombreCompleto . '%')
+                            ->orWhere(DB::raw("CONCAT(primer_nombre, ' ', apellidos)"), 'like', '%' . $nombreCompleto . '%');
                     });
                 });
             }
@@ -493,7 +487,6 @@ class PrestamoService extends CodigoService
             $this->log("Búsqueda paginada de préstamos completada. Página: {$pagina}, Por página: {$porPagina}, Total: " . $resultado->total());
 
             return $resultado;
-
         } catch (\Exception $e) {
             $this->logError("Error en búsqueda paginada de préstamos: " . $e->getMessage());
             throw $e;
