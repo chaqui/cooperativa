@@ -230,7 +230,8 @@ class CuotaHipotecaService extends CuotaService
         ];
 
         // Obtener el saldo actual correcto para múltiples depósitos
-        $saldoActual = $this->obtenerSaldoActualPago($pago);
+        $saldoActualPago = $this->obtenerSaldoActualPago($pago);
+        $saldoActualReal = $this->bitacoraInteresService->obtenerUltimoHistorico($prestamo)->saldo;
 
         $montoRestante = $existente ? $this->procesarPenalizacionExistente($pago, $montoRestante, $detallesPago, $deposito, $existente)
             : $this->procesarPenalizacionUsuario($pago, $montoRestante, $detallesPago, $fechaPago, $penalizacionUsuario);
@@ -239,18 +240,12 @@ class CuotaHipotecaService extends CuotaService
         $pago->monto_pagado += $montoOriginal;
         $pago->fecha_pago = $deposito['fecha_documento'];
         $pago->save();
-        // Calcular correctamente el nuevo saldo después del pago real
+        // Calcular correctamente el nuevo saldo después del pago realizado
         if ($detallesPago['capitalGanado'] > 0) {
-            $nuevoSaldoCalculado = $saldoActual - $detallesPago['capitalGanado'];
-            $pago->nuevo_saldo = $nuevoSaldoCalculado;
+            $saldoActualReal = $saldoActualReal - $detallesPago['capitalGanado'];
 
-            $this->log("Capital: Q{$detallesPago['capitalGanado']} - Saldo: Q{$nuevoSaldoCalculado}");
-            $this->bitacoraInteresService->registrarHistoricoSaldo($pago->prestamo, $nuevoSaldoCalculado, $deposito['fecha_documento']);
-
-            // Solo actualizar pagos siguientes si es necesario (evitar múltiples actualizaciones)
-            $this->actualizarSiguentesPagoSiEsNecesario($pago, $nuevoSaldoCalculado);
-
-            // Verificar y ajustar amortizaciones después de actualizar pagos siguientes
+            $this->log("Capital: Q{$detallesPago['capitalGanado']} - Saldo: Q{$saldoActualReal}");
+            $this->bitacoraInteresService->registrarHistoricoSaldo($pago->prestamo, $saldoActualReal, $deposito['fecha_documento']);
         }
 
         if ($existente && $pago->capitalFaltante() <= 0) {
@@ -258,7 +253,18 @@ class CuotaHipotecaService extends CuotaService
             $this->log("Pago #{$pago->numero_pago_prestamo} completado");
         }
         $pago->save();
-        $this->verificarYAjustarAmortizaciones($prestamo);
+
+
+        // Actualizar el pag y los siguientes pagos si deposito excede el capital faltante
+        if ($pago->capitalFaltante() < 0) {
+            $pago->nuevo_saldo = $saldoActualPago - $pago->capital_pagado;
+            $pago->save();
+            $this->actualizarSiguentePago($pago, $pago->nuevo_saldo);
+            $this->verificarYAjustarAmortizaciones($prestamo);
+        }
+
+
+
         // Verificar que la fecha del pago existe antes de procesarla
         if ($pago->fecha) {
             $fechaLimite = \Carbon\Carbon::parse($pago->fecha)->addDays(5);
@@ -280,7 +286,7 @@ class CuotaHipotecaService extends CuotaService
             'id_cuenta' => $this->tipoCuentaInternaService->getCuentaParaDepositosAnteriores()->id,
             'existente' => true
         ];
-        $this->registrarDepositoYTransaccion($data, $pago, $detallesPago);
+        $this->registrarDepositoYTransaccion($data, $pago, $detallesPago, $saldoActualReal);
 
         // Actualizar fecha final del préstamo después del pago
         $this->actualizarFechaFinalPrestamo($prestamo);
@@ -1019,7 +1025,7 @@ class CuotaHipotecaService extends CuotaService
      */
     private function procesarPenalizacionExistente($pago, $montoDisponible, &$detallesPago, $deposito, $existente)
     {
-        $pago->penalizacion = $existente? $deposito['penalizacion'] : $this->calcularPenalizacion($pago, $deposito['fecha_deposito']);
+        $pago->penalizacion = $existente ? $deposito['penalizacion'] : $this->calcularPenalizacion($pago, $deposito['fecha_deposito']);
         return $this->procesarPenalizacion($pago, $montoDisponible, $detallesPago);
     }
 
@@ -1252,7 +1258,7 @@ class CuotaHipotecaService extends CuotaService
     /**
      * Registra el depósito y la transacción en la cuenta interna
      */
-    private function registrarDepositoYTransaccion($data, $pago, $detallesPago)
+    private function registrarDepositoYTransaccion($data, $pago, $detallesPago, $saldo)
     {
         $descripcion = $detallesPago['descripcion'] . ' del pago #' . $pago->id .
             ' del préstamo #' . $pago->id_prestamo .
@@ -1269,7 +1275,7 @@ class CuotaHipotecaService extends CuotaService
             'interes' => $detallesPago['interesGanado'],
             'penalizacion' => $detallesPago['penalizacion'],
             'motivo' => $descripcion,
-            'saldo' => $pago->nuevo_saldo > 0 ? $pago->nuevo_saldo : ($pago->saldo + $pago->capital),
+            'saldo' => $saldo > 0 ? $saldo : ($pago->saldo + $pago->capital),
             'id_cuenta' => $data['id_cuenta'],
             'existente' => $data['existente'],
             'fecha' => $data['fecha_documento'] ?? now()
