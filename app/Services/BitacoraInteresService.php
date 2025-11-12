@@ -26,7 +26,7 @@ class BitacoraInteresService
         $this->log("Histórico de saldo registrado para el préstamo ID {$prestamo->id} con saldo {$historico->saldo} e interés pagado {$historico->interes_pagado}");
     }
 
-    private function obtenerUltimoHistorico(Prestamo_Hipotecario $prestamo)
+    public function obtenerUltimoHistorico(Prestamo_Hipotecario $prestamo)
     {
         return Historico_Saldo::where('prestamo_hipotecario_id', $prestamo->id)
             ->orderBy('created_at', 'desc')
