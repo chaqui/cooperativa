@@ -144,34 +144,46 @@
         </div>
 
         <div class="content">
-            <div class="content-section">
+            @php
+                $cliente = null;
+                $codigo_operacion = null;
+                $mostrar_beneficiario = false;
 
+                if ($retiro->prestamo && $retiro->prestamo->cliente) {
+                    $cliente = $retiro->prestamo->cliente;
+                    $codigo_operacion = $retiro->prestamo->codigo;
+                    $mostrar_beneficiario = true;
+                } elseif ($retiro->id_pago_inversions && $retiro->pagoInversion->inversion->cliente) {
+                    $cliente = $retiro->pagoInversion->inversion->cliente;
+                    $codigo_operacion = $retiro->pagoInversion->inversion->codigo;
+                    $mostrar_beneficiario = true;
+                }
+            @endphp
 
-                <h3>DATOS DEL BENEFICIARIO</h3>
-                <p><strong>Nombre:</strong>
-                    @if($retiro->prestamo)
-                        {{ $retiro->prestamo->cliente ? $retiro->prestamo->cliente->getFullNameAttribute() : 'No especificado' }}
-                    @elseif($retiro->id_pago_inversions)
-                        {{ $retiro->pagoInversion->inversion->cliente ? $retiro->pagoInversion->inversion->cliente->getFullNameAttribute() : 'No especificado' }}
-                    @else
-                        {{ $retiro->nombre_cliente ?? '__________________________' }}
+            @if($mostrar_beneficiario)
+                <div class="content-section">
+                    <h3>DATOS DEL BENEFICIARIO</h3>
+
+                    <p><strong>Nombre:</strong>
+                        {{ $cliente ? $cliente->getFullNameAttribute() : 'No especificado' }}
+                    </p>
+
+                    <p><strong>Identificación:</strong>
+                        {{ $cliente ? $cliente->dpi : 'No especificado' }}
+                    </p>
+
+                    @if($codigo_operacion)
+                        <p><strong>Código de Operación:</strong> {{ $codigo_operacion }}</p>
                     @endif
-                </p>
-                <p><strong>Identificación:</strong>
-                    @if($retiro->prestamo)
-                        {{ $retiro->prestamo->cliente ? $retiro->prestamo->cliente->identificacion : 'No especificado' }}
-                    @elseif($retiro->id_pago_inversions)
-                        {{ $retiro->pagoInversion->inversion->cliente ? $retiro->pagoInversion->inversion->cliente->identificacion : 'No especificado' }}
-                    @else
-                        {{ $retiro->identificacion_cliente ?? '___________________________' }}
-                    @endif
-            </div>
+                </div>
+            @endif
 
             <div class="content-section">
                 <h3>DATOS DEL RETIRO</h3>
                 <p><strong>Monto:</strong> <span class="amount">Q{{ number_format($retiro->monto, 2) }}</span></p>
                 <p><strong>Cuenta:</strong> {{ $retiro->tipoCuentaInterna->numero_cuenta ?? 'No especificada' }}</p>
                 <p><strong>Motivo:</strong> {{ $retiro->motivo ?? 'No especificado' }}</p>
+
                 @if($retiro->prestamo)
                     <p><strong>Préstamo asociado:</strong> {{ $retiro->prestamo->codigo ?? 'No especificado' }}</p>
                 @elseif($retiro->id_pago_inversions)
@@ -179,29 +191,19 @@
                         {{ $retiro->pagoInversion->inversion->codigo ?? 'No especificado' }}</p>
                 @endif
 
-                @if($retiro->id_pago_inversions)
-                    <p><strong>Inversion asociada:</strong>
-                        {{ $retiro->pagoInversion->inversion->codigo ?? 'No especificado' }}</p>
-                @endif
                 <p><strong>Estado:</strong> {{ $retiro->realizado ? 'Realizado' : 'Pendiente' }}</p>
             </div>
         </div>
 
-        <div class="signatures">
-            <div class="signature" style="text-align: center;">
-                <div class="signature-line">
-                    @if($retiro->prestamo)
-                        {{ $retiro->prestamo->cliente ? $retiro->prestamo->cliente->getFullNameAttribute() : 'No especificado' }}
-
-                    @elseif($retiro->id_pago_inversions)
-                        {{ $retiro->pagoInversion->inversion->cliente ? $retiro->pagoInversion->inversion->cliente->getFullNameAttribute() : 'No especificado' }}
-                    @else
-                        Firma del Beneficiario
-
-                    @endif
+        @if($mostrar_beneficiario)
+            <div class="signatures">
+                <div class="signature" style="text-align: center;">
+                    <div class="signature-line">
+                        {{ $cliente ? $cliente->getFullNameAttribute() : 'Firma del Beneficiario' }}
+                    </div>
                 </div>
             </div>
-        </div>
+        @endif
 
         <div class="footer">
             <p>Este recibo confirma la operación de retiro realizada en COPECRECI. El beneficiario declara haber

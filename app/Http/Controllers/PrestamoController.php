@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App;
+use App\Http\Requests\ActualizarPrestamoRequest;
 use App\Http\Requests\EstadoRequest;
 use App\Http\Requests\PrestamoRequest;
 use App\Http\Resources\Prestamo as PrestamoResource;
 use App\Http\Resources\HistoricoEstado as HistoricoEstadoResource;
 use App\Http\Resources\Cuota as PagoResource;
 use App\Http\Resources\Retiro as RetiroResource;
+use App\Http\Resources\Propiedad as PropiedadResource;
 use App\Http\Requests\StorePagarCuota;
 
 use App\Services\PrestamoService;
@@ -190,7 +193,7 @@ class PrestamoController extends Controller
             $this->log("Solicitud de cancelación para préstamo ID: {$id}");
 
             // Cancelar el préstamo
-            $prestamoCancelado = $this->prestamoService->cancelarPrestamo($id, $request->motivo);
+            $prestamoCancelado = $this->prestamoService->cancelarPrestamo($id, $request->motivo, $request->tipo);
 
             $this->log("Préstamo {$prestamoCancelado->codigo} cancelado exitosamente");
 
@@ -204,14 +207,12 @@ class PrestamoController extends Controller
                     'estado_cancelado' => $prestamoCancelado->estaCancelado()
                 ]
             ], 200);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->log("Error de validación al cancelar préstamo: " . json_encode($e->errors()));
             return response()->json([
                 'message' => 'Datos de entrada inválidos',
                 'errors' => $e->errors()
             ], 422);
-
         } catch (\Exception $e) {
             $this->log("Error al cancelar préstamo ID {$id}: " . $e->getMessage());
             return response()->json([
@@ -324,7 +325,6 @@ class PrestamoController extends Controller
                     'filtros_aplicados' => $filtros
                 ]
             ], 200);
-
         } catch (\Exception $e) {
             $this->log("Error en búsqueda de préstamos: " . $e->getMessage());
             return response()->json([
@@ -370,9 +370,19 @@ class PrestamoController extends Controller
 
             // Obtener filtros
             $filtros = $request->only([
-                'dpi_cliente', 'id', 'codigo', 'nombre_cliente', 'estado_id',
-                'fecha_inicio_desde', 'fecha_inicio_hasta', 'monto_minimo',
-                'monto_maximo', 'id_usuario', 'cancelado', 'orden_por', 'direccion'
+                'dpi_cliente',
+                'id',
+                'codigo',
+                'nombre_cliente',
+                'estado_id',
+                'fecha_inicio_desde',
+                'fecha_inicio_hasta',
+                'monto_minimo',
+                'monto_maximo',
+                'id_usuario',
+                'cancelado',
+                'orden_por',
+                'direccion'
             ]);
 
             // Realizar búsqueda paginada
@@ -399,19 +409,43 @@ class PrestamoController extends Controller
                     'next' => $resultados->nextPageUrl()
                 ]
             ], 200);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->log("Error de validación en búsqueda paginada: " . json_encode($e->errors()));
             return response()->json([
                 'message' => 'Parámetros de búsqueda inválidos',
                 'errors' => $e->errors()
             ], 422);
-
         } catch (\Exception $e) {
             $this->log("Error en búsqueda paginada de préstamos: " . $e->getMessage());
             return response()->json([
                 'message' => 'Error al buscar préstamos: ' . $e->getMessage(),
                 'data' => []
+            ], 500);
+        }
+    }
+
+    public function actualizarPrestamo(ActualizarPrestamoRequest $request, string $id)
+    {
+        try {
+            $prestamo = $this->prestamoService->actualizarPrestamo($request, $id);
+            return new PrestamoResource($prestamo);
+        } catch (\Exception $e) {
+            $this->log("Error al actualizar el préstamo ID {$id}: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Error al actualizar el préstamo: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getPropiedad($id)
+    {
+        try {
+            $propiedad = $this->prestamoService->propiedadAsociada($id);
+            return new PropiedadResource($propiedad);
+        } catch (\Exception $e) {
+            $this->log("Error al obtener la propiedad asociada al préstamo ID {$id}: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Error al obtener la propiedad: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -191,6 +191,14 @@
                             <td>Q{{ number_format($totalPagado, 2) }}</td>
                         </tr>
                         <tr>
+                            <td>Capital Pendiente</td>
+                            <td>Q{{ number_format($capitalPendiente, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td>Interes Pendiente</td>
+                            <td>Q{{ number_format($interesPendiente, 2) }}</td>
+                        </tr>
+                        <tr>
                             <td><strong>Saldo Pendiente</strong></td>
                             <td><strong>Q{{ number_format($montoPendiente, 2) }}</strong></td>
                         </tr>

@@ -42,8 +42,9 @@ class Prestamo extends JsonResource
             'intereses' => $this->intereses(),
             'saldo' => $this->saldoPendiente(),
             'morosidad' => $this->morosidad(),
-
-
+            'asesor' => $this->asesor ? $this->asesor->name : null,
+            'motivo_rechazo' => $this->getMotivoRechazo(),
+            'propiedad_id' => $this->propiedad_id,
         ];
     }
 }

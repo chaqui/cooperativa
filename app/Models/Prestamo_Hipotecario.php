@@ -5,11 +5,12 @@ namespace App\Models;
 use App\Constants\FrecuenciaPago;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\Loggable;
+use App\Constants\EstadoPrestamo;
 
 class Prestamo_Hipotecario extends Model
 {
     use Loggable;
-    protected $id = 'id';
+    protected $primaryKey = 'id';
     protected $table = 'prestamo_hipotecarios';
     protected $fillable = [
         'dpi_cliente',
@@ -286,5 +287,17 @@ class Prestamo_Hipotecario extends Model
     public function getFechaCancelacionFormateada(): ?string
     {
         return $this->fecha_cancelacion ? $this->fecha_cancelacion->format('Y-m-d H:i:s') : null;
+    }
+
+    public function getMotivoRechazo()
+    {
+        return HistorialEstado::where('id_prestamo', $this->id)
+            ->where('id_estado', EstadoPrestamo::$RECHAZADO)
+            ->value('razon');
+    }
+
+    public function propiedadAsociada()
+    {
+        return $this->belongsTo(Propiedad::class, 'propiedad_id');
     }
 }

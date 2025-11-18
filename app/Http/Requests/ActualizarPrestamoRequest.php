@@ -2,13 +2,12 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use App\Constants\Roles;
+use Illuminate\Foundation\Http\FormRequest;
 use App\Traits\Authorizable;
 
-class EstadoInversionRequest extends FormRequest
+class ActualizarPrestamoRequest extends FormRequest
 {
-
     use Authorizable;
     /**
      * Determine if the user is authorized to make this request.
@@ -26,7 +25,14 @@ class EstadoInversionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'estado' => 'required|string',
+            "interes" => "required|numeric|min:0",
+            'monto' => 'required|numeric',
+            "plazo" => "required|integer|min:1",
+            'tipo_plazo' => 'required|numeric',
+            'uso_prestamo' => 'required|string',
+            'propiedad_id' => 'required|numeric',
+            'frecuencia_pago' => 'required|string',
+            'destino' => 'required|string',
         ];
     }
 }

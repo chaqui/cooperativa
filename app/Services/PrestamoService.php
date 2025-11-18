@@ -38,6 +38,9 @@ class PrestamoService extends CodigoService
     protected  $cuotaHipotecaService;
 
     protected $prestamoExistenteService;
+
+    private string $cancelacionPorPagoTotal = '24';
+
     public function __construct(
         ControladorEstado $controladorEstado,
         ClientService $clientService,
@@ -98,6 +101,7 @@ class PrestamoService extends CodigoService
             if ($prestamo->existente) {
                 $this->log("Procesando préstamo existente: {$prestamo->codigo}");
                 $this->prestamoExistenteService->procesarPrestamoExistente($prestamo, $data, $request->file('file'));
+                $this->verificarYCancelarPrestamoSiCorresponde($prestamo);
             } else {
                 $this->log("Estableciendo estado inicial para el préstamo: {$prestamo->codigo}");
                 $dataEstado = [
@@ -147,10 +151,34 @@ class PrestamoService extends CodigoService
             $this->lanzarExcepcionConCodigo("El plazo debe ser múltiplo de {$frecuenciasValidas[$frecuenciaPago]} meses");
         }
     }
+    /**
+     * Filtra los datos del request eliminando campos no permitidos para update
+     *
+     * @param array $data Datos del request
+     * @return array Datos filtrados
+     */
+    private function filtrarDatosParaUpdate(array $data): array
+    {
+        // Campos que NO se deben actualizar
+        $camposProhibidos = [
+            'monto_liquido',
+            'id',
+            'codigo',
+            'created_at',
+            'updated_at',
+            // Agregar más campos según necesites
+        ];
+
+        return collect($data)->except($camposProhibidos)->toArray();
+    }
+
     public function update($id, $data)
     {
+        // Usar el método helper para filtrar datos
+        $dataFiltrada = $this->filtrarDatosParaUpdate($data);
+
         $prestamo = Prestamo_Hipotecario::find($id);
-        $prestamo->update($data);
+        $prestamo->update($dataFiltrada);
         return $prestamo;
     }
 
@@ -222,12 +250,28 @@ class PrestamoService extends CodigoService
             $cuotaHipotecaService = app(CuotaHipotecaService::class);
             $cuotaHipotecaService->realizarPago($data, $cuotaApagar->id);
 
+            $this->verificarYCancelarPrestamoSiCorresponde($prestamo);
+
             DB::commit();
             $this->log('Pago realizado con éxito para la cuota: ' . $cuotaApagar->id);
         } catch (Exception $e) {
             DB::rollBack();
             $this->log('Error al realizar el pago: ' . $e->getMessage());
             throw $e;
+        }
+    }
+
+    protected function verificarYCancelarPrestamoSiCorresponde(Prestamo_Hipotecario $prestamo)
+    {
+        $pagosPendientes = $prestamo->pagos()->where('realizado', false)->count();
+        if ($pagosPendientes === 0 && $prestamo->saldoPendienteCapital() === 0 && !$prestamo->estaCancelado()) {
+            $dataEstado = [
+                'razon' => 'Préstamo creado',
+                'estado' => EstadoPrestamo::$CREADO,
+                'tipo' => $this->cancelacionPorPagoTotal
+            ];
+
+            $this->controladorEstado->cambiarEstado($prestamo, $dataEstado);
         }
     }
 
@@ -239,7 +283,7 @@ class PrestamoService extends CodigoService
      * @return Prestamo_Hipotecario Préstamo cancelado
      * @throws \Exception Si ocurre un error durante la cancelación
      */
-    public function cancelarPrestamo(int $id, string $motivo): Prestamo_Hipotecario
+    public function cancelarPrestamo(int $id, string $motivo, string $tipo): Prestamo_Hipotecario
     {
         DB::beginTransaction();
         try {
@@ -491,5 +535,39 @@ class PrestamoService extends CodigoService
             $this->logError("Error en búsqueda paginada de préstamos: " . $e->getMessage());
             throw $e;
         }
+    }
+
+    public function actualizarPrestamo($request, $id)
+    {
+        try {
+            // Usar el método helper para filtrar datos
+            $dataFiltrada = $this->filtrarDatosParaUpdate($request->all());
+
+            $prestamo = Prestamo_Hipotecario::find($id);
+            if (!$prestamo) {
+                $this->lanzarExcepcionConCodigo("Préstamo no encontrado con id: " . $id);
+            }
+            if ($prestamo->estado_id != EstadoPrestamo::$RECHAZADO) {
+                $this->lanzarExcepcionConCodigo("No se puede actualizar un préstamo que no está en estado RECHAZADO");
+            }
+            $prestamo->update($dataFiltrada);
+            $this->log("Préstamo actualizado con éxito: {$prestamo->codigo}");
+            $dataEstado = [
+                'razon' => 'Corregida la información del préstamo',
+                'estado' => EstadoPrestamo::$CREADO,
+            ];
+
+            $this->controladorEstado->cambiarEstado($prestamo, $dataEstado);
+            return $prestamo;
+        } catch (\Exception $e) {
+            $this->logError("Error al actualizar el préstamo ID {$id}: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function propiedadAsociada($prestamoId)
+    {
+        $prestamo = $this->get($prestamoId);
+        return $prestamo->propiedadAsociada;
     }
 }

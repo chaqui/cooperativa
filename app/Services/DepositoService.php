@@ -13,7 +13,7 @@ use App\Traits\ErrorHandler;
 class DepositoService
 {
 
-     use ErrorHandler;
+    use ErrorHandler;
     use Loggable;
 
     private $pdfService;
@@ -305,6 +305,8 @@ class DepositoService
         if ($prestamo) {
             $montoPendiente = $prestamo->saldoPendiente();
             $totalPagado = $prestamo->totalPagado();
+            $interesPendiente = $prestamo->interesPendiente();
+            $capitalPendiente = $prestamo->capitalPendiente();
         }
         $cliente = $deposito->inversion ? $deposito->inversion->cliente : ($deposito->pago ? $deposito->pago->prestamo->cliente : null);
         $this->log("Cliente asociado al depósito: " . ($cliente ? $cliente->getFullNameAttribute() : 'N/A'));
@@ -312,6 +314,8 @@ class DepositoService
             'deposito' => $deposito,
             'montoPendiente' => $montoPendiente,
             'totalPagado' => $totalPagado,
+            'interesPendiente' => $interesPendiente,
+            'capitalPendiente' => $capitalPendiente,
             'prestamo' => $prestamo,
             'cliente' => $cliente
         ])->render();
@@ -343,7 +347,4 @@ class DepositoService
             $this->lanzarExcepcionConCodigo("El motivo es requerido");
         }
     }
-
-
-
 }

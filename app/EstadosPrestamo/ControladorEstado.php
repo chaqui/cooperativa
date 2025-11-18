@@ -9,6 +9,7 @@ use App\Services\CuotaHipotecaService;
 use App\Services\RetiroService;
 use App\Traits\Loggable;
 use App\Services\BitacoraInteresService;
+use App\Services\DepositoService;
 
 class ControladorEstado
 {
@@ -52,14 +53,14 @@ class ControladorEstado
             );
         }
 
-        $this->log("Intentando cambiar estado de préstamo #{$prestamo->id} al estado {$data['estado']}");
+        $this->log("Intentando cambiar estado de préstamo #{$prestamo->codigo} al estado {$data['estado']}");
 
         // Obtener el manejador de estado adecuado
         $estado = self::getEstado($data['estado']);
         // Ejecutar el cambio de estado
         $estado->cambiarEstado($prestamo, $data);
 
-        $this->log("Estado de préstamo #{$prestamo->id} cambiado exitosamente a {$data['estado']}");
+        $this->log("Estado de préstamo #{$prestamo->codigo} cambiado exitosamente a {$data['estado']}");
     }
 
     /**
@@ -87,6 +88,14 @@ class ControladorEstado
             ],
             EstadoPrestamo::$FINALIZADO => [
                 'clase' => PrestamoFinalizado::class,
+                'dependencias' => []
+            ],
+            EstadoPrestamo::$CANCELADO => [
+                'clase' => PrestamoCancelado::class,
+                'dependencias' => [app(DepositoService::class)]
+            ],
+            EstadoPrestamo::$RECHAZADO => [
+                'clase' => PrestamoRechazado::class,
                 'dependencias' => []
             ],
             // Agregar nuevos estados aquí siguiendo el mismo patrón

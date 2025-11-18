@@ -136,6 +136,7 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::post('propiedades', [PropiedadController::class, 'store']);
     Route::put('propiedades/{id}', [PropiedadController::class, 'update']);
     Route::delete('propiedades/{id}', [PropiedadController::class, 'destroy']);
+    Route::get('propiedades/{id}', [PropiedadController::class, 'show']);
 });
 
 //prestamos
@@ -149,6 +150,7 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('prestamos/{id}', [PrestamoController::class, 'show']);
     Route::put('prestamos/{id}', [PrestamoController::class, 'update']);
     Route::delete('prestamos/{id}', [PrestamoController::class, 'destroy']);
+    Route::put('prestamos/{id}', [PrestamoController::class, 'actualizarPrestamo']);
     Route::put('prestamos/inactivar/{id}', [PrestamoController::class, 'inactivar']);
     Route::get('prestamos/{id}/estados', [PrestamoController::class, 'historial']);
     Route::put('prestamos/{id}/estados', [PrestamoController::class, 'cambiarEstado']);
@@ -157,8 +159,8 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('prestamos/{id}/estado-cuenta/pdf', [PrestamoController::class, 'generarEstadoCuenta']);
     Route::get('prestamos/{id}/pagos', [PrestamoController::class, 'pagos']);
     Route::post('prestamos/{id}/pagos', [PrestamoController::class, 'pagarCuota']);
-    Route::post('prestamos/{id}/cancelar', [PrestamoController::class, 'cancelar']);
     Route::get('prestamos/{id}/depositos/pdf', [PrestamoController::class, 'generarEstadoCuentaDepositos']);
+    Route::get('prestamos/{id}/propiedad', [PrestamoController::class, 'getPropiedad']);
 });
 
 //estados
