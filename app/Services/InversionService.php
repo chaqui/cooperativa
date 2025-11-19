@@ -120,18 +120,6 @@ class InversionService extends CodigoService
         if ($inversionData['plazo'] <= 0) {
             $this->lanzarExcepcionConCodigo("El plazo de la inversión debe ser un número positivo");
         }
-
-        $beneficiarios = $inversionData['beneficiarios'] ?? [];
-        if (empty($beneficiarios) || !is_array($beneficiarios)) {
-            $this->lanzarExcepcionConCodigo("Los beneficiarios deben ser un arreglo");
-        }
-        $totalPorcentaje = 0;
-        foreach ($beneficiarios as $beneficiario) {
-            $totalPorcentaje += $beneficiario['porcentaje'];
-        }
-        if ($totalPorcentaje != 100) {
-            $this->lanzarExcepcionConCodigo("El total de los porcentajes de los beneficiarios debe ser 100");
-        }
     }
 
     public function updateInversion(Inversion $inversion, array $inversionData): Inversion
@@ -199,7 +187,8 @@ class InversionService extends CodigoService
         }
         $this->log("Iniciando generación de PDF para la inversion #{$id}");
         $inversion = $this->getInversion($id);
-        $html = view('pdf.inversion', ['inversion' => $inversion])->render();
+        $beneficiarios = $inversion->cliente->beneficiarios;
+        $html = view('pdf.inversion', ['inversion' => $inversion, 'beneficiarios' => $beneficiarios])->render();
         return $this->pdfService->generatePdf($html);
     }
 }

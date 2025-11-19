@@ -4,10 +4,23 @@
     Carbon::setLocale('es');
     function base64Image($path)
     {
-        $fullPath = storage_path("app/public/" . $path);
-        $type = pathinfo($fullPath, PATHINFO_EXTENSION);
-        $data = file_get_contents($fullPath);
-        return 'data:image/' . $type . ';base64,' . base64_encode($data);
+        // Intentar múltiples rutas
+        $paths = [
+            storage_path("app/public/" . $path),
+            public_path($path),
+            storage_path("app/" . $path),
+            base_path("storage/app/public/" . $path)
+        ];
+
+        foreach ($paths as $fullPath) {
+            if (file_exists($fullPath)) {
+                $type = pathinfo($fullPath, PATHINFO_EXTENSION);
+                $data = file_get_contents($fullPath);
+                return 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+        }
+
+        return ''; // Retorna vacío si no encuentra la imagen
     }
 @endphp
 <!DOCTYPE html>
@@ -28,10 +41,7 @@
             font-size: 12px;
             margin: 0;
             padding: 20px;
-            background-image: url('{{ base64Image("images/background.png") }}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            position: relative;
         }
 
         .numero {
@@ -68,8 +78,14 @@
         }
 
         .logo {
-            width: 100px;
-            height: auto;
+            width: 60px;
+            height: 30px;
+            max-width: 60px;
+            max-height: 30px;
+            object-fit: contain;
+            display: block;
+            margin: 5px auto;
+            border: 1px solid #ccc; /* Para debug - ver el tamaño exacto */
         }
 
         .header {
@@ -105,7 +121,7 @@
 </head>
 
 <body>
-    <div class="certificate-container">
+    <div class="certificate-container" style="background-image: url('{{ base64Image("images/background.png") }}'); background-size: cover; background-position: center; background-repeat: no-repeat; min-height: 500px;">
         <div class="header">
             <img src="{{ base64Image('images/logoNegro.png') }}" alt="Logo" class="logo">
         </div>
@@ -189,7 +205,7 @@
                         <strong>Beneficiarios:</strong>
                     </td>
                 </tr>
-                @foreach ($inversion->beneficiarios as $beneficiario)
+                @foreach ($beneficiarios as $beneficiario)
                     <tr>
                         <td style="width: 25%"></td>
                         <td style="width:25%">
@@ -230,13 +246,13 @@
         </div>
     </div>
     <div style="page-break-after: always;"></div>
-    <div class="certificate-container">
+    <div class="certificate-container" style="background-image: url('{{ base64Image("images/background.png") }}'); background-size: cover; background-position: center; background-repeat: no-repeat; min-height: 500px;">
         <br />
         <br />
         <br />
         <br />
         <br />
-        <p class="linea">ESTE DEPÓSITO ESTA SUJETO A LAS SIGUIENTES CONDICIONES:</p>
+        <p class="linea">ESTE CERTIFICADO ESTA SUJETO A LAS SIGUIENTES CONDICIONES:</p>
         <div class="content">
             <ul style="font-size: 13px; text-align: left;">
                 <li style="text-align: justify;">Será pagado el día de su vencimiento mediante la entrega del presente

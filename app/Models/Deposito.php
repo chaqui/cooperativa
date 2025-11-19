@@ -14,7 +14,7 @@ class Deposito extends Model
         'numero_documento',
         'imagen',
         'monto',
-        'inversion_id',
+        'id_inversion',  // Cambiado para ser consistente
         'id_pago',
         'tipo_cuenta_interna_id',
         'motivo',
@@ -74,7 +74,7 @@ class Deposito extends Model
 
     public function inversion()
     {
-        return $this->belongsTo(Inversion::class, 'inversion_id');
+        return $this->belongsTo(Inversion::class, 'id_inversion');
     }
 
     public function pago()

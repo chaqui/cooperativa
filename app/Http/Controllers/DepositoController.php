@@ -61,6 +61,7 @@ class DepositoController extends Controller
     {
         try {
             $data = $request->validated();
+            $data['existente'] = false;
             $deposito = $this->depositoService->depositar($id, $data);
             return response()->json(['message' => 'Deposito realizado con exito', 'data' => $deposito], 201);
         } catch (\Exception $e) {

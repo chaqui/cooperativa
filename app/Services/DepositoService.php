@@ -102,7 +102,13 @@ class DepositoService
 
     public function getDeposito($id)
     {
-        return Deposito::with(['inversion.cliente', 'pago.prestamo.cliente'])->findOrFail($id);
+        $deposito = Deposito::with(['inversion.cliente', 'pago.prestamo.cliente'])->find($id);
+
+        if (!$deposito) {
+            $this->lanzarExcepcionConCodigo("Depósito no encontrado");
+        }
+
+        return $deposito;
     }
     public function getDepositos()
     {
@@ -301,6 +307,8 @@ class DepositoService
         // Calculate loan information only if there's an associated loan
         $montoPendiente = 0;
         $totalPagado = 0;
+        $interesPendiente = 0;
+        $capitalPendiente = 0;
 
         if ($prestamo) {
             $montoPendiente = $prestamo->saldoPendiente();
@@ -308,7 +316,15 @@ class DepositoService
             $interesPendiente = $prestamo->interesPendiente();
             $capitalPendiente = $prestamo->capitalPendiente();
         }
-        $cliente = $deposito->inversion ? $deposito->inversion->cliente : ($deposito->pago ? $deposito->pago->prestamo->cliente : null);
+
+        // Obtener el cliente de forma segura
+        $cliente = null;
+        if ($deposito->id_inversion && $deposito->id_inversion > 0 && $deposito->inversion) {
+            $cliente = $deposito->inversion->cliente;
+        } elseif ($deposito->pago && $deposito->pago->prestamo) {
+            $cliente = $deposito->pago->prestamo->cliente;
+        }
+
         $this->log("Cliente asociado al depósito: " . ($cliente ? $cliente->getFullNameAttribute() : 'N/A'));
         $html = view('pdf.deposito', [
             'deposito' => $deposito,
@@ -319,6 +335,8 @@ class DepositoService
             'prestamo' => $prestamo,
             'cliente' => $cliente
         ])->render();
+
+        $this->log("HTML del PDF generado para depósito #{$deposito->id}");
         return $this->pdfService->generatePdf($html);
     }
 
