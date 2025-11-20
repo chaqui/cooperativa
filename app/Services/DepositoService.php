@@ -129,7 +129,13 @@ class DepositoService
      */
     public function depositar($id, $data)
     {
-        DB::beginTransaction();
+        // Verificar si ya hay una transacción activa
+        $transactionStarted = false;
+        if (!DB::transactionLevel()) {
+            DB::beginTransaction();
+            $transactionStarted = true;
+        }
+
         try {
             // Obtener el depósito
             $deposito = $this->getDeposito($id);
@@ -162,10 +168,14 @@ class DepositoService
             // Generar y guardar el PDF del depósito
             $this->generarYGuardarPdfDeposito($deposito);
 
-            DB::commit();
+            if ($transactionStarted) {
+                DB::commit();
+            }
             return $deposito;
         } catch (\Exception $e) {
-            DB::rollBack();
+            if ($transactionStarted) {
+                DB::rollBack();
+            }
 
             // Registrar error detallado
             $this->logError(

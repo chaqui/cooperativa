@@ -21,16 +21,20 @@ class InversionService extends CodigoService
 
     private ControladorEstado $controladorEstado;
 
+    private TipoCuentaInternaService $tipoCuentaInternaService;
+
     private PdfService $pdfService;
 
     public function __construct(
         CuotaInversionService $cuotaInversionService,
         ControladorEstado $controladorEstado,
-        PdfService $pdfService
+        PdfService $pdfService,
+        TipoCuentaInternaService $tipoCuentaInternaService
     ) {
         $this->cuotaInversionService = $cuotaInversionService;
         $this->controladorEstado = $controladorEstado;
         $this->pdfService = $pdfService;
+        $this->tipoCuentaInternaService = $tipoCuentaInternaService;
         parent::__construct(InicialesCodigo::$Inversion);
     }
 
@@ -85,10 +89,12 @@ class InversionService extends CodigoService
             // Crear la inversión
             $inversion = Inversion::create($inversionData);
 
-            // Cambiar el estado de la inversión a "CREADO"
-            $this->controladorEstado->cambiarEstado($inversion, ['estado' => EstadoInversion::$CREADO]);
-
+            if (!$inversionData['existente']) {
+                $this->controladorEstado->cambiarEstado($inversion, ['estado' => EstadoInversion::$CREADO]);
+            }
+            $this->cambiarEstadosAutomaticamente($inversion, $inversionData);
             DB::commit();
+            $inversion->refresh();
 
             $this->log("Inversión creada con éxito: {$inversion->codigo}");
             return $inversion;
@@ -98,6 +104,50 @@ class InversionService extends CodigoService
             // Esta línea nunca se alcanzará porque manejarError siempre lanza excepción
             throw new \Exception("Error inesperado en createInversion");
         }
+    }
+
+    private function cambiarEstadosAutomaticamente(Inversion $inversion, $datos): void
+    {
+        // Lógica para cambiar estados automáticamente según reglas de negocio
+        $this->log("Verificando cambios automáticos de estado para la inversión ID: {$inversion->id}");
+        $this->log("Estado actual de la inversión: {$inversion->id_estado}");
+        $this->controladorEstado->cambiarEstado($inversion, ['estado' => EstadoInversion::$CREADO]);
+        $this->log("Estado actual de la inversión después del primer cambio: {$inversion->id_estado}");
+        $this->gestionarElDepositoAutomatico($inversion, $datos);
+
+        // Refrescar la inversión para obtener el estado actualizado después del depósito
+        $inversion->refresh();
+        $this->log("Estado actual de la inversión después del depósito automático: {$inversion->id_estado}");
+        $this->controladorEstado->cambiarEstado($inversion, ['estado' => EstadoInversion::$APROBADO]);
+        $this->log("Estado actual de la inversión después del cambio a APROBADO: {$inversion->id_estado}");
+
+        // Otras reglas pueden ser añadidas aquí
+    }
+
+    private function gestionarElDepositoAutomatico(Inversion $inversion, $datos): void
+    {
+        $this->log("Gestionando depósito automático para la inversión ID: {$inversion->id}");
+
+        $depositoService = app(DepositoService::class);
+        $datos = [
+            'id_inversion' => $inversion->id,
+            'monto' => $inversion->monto,
+            'fecha_documento' => $inversion->fecha,
+            'tipo_documento' => $datos['tipo_documento'] ?? 'inversion',
+            'no_documento' => $datos['no_documento'] ?? $inversion->codigo,
+            'numero_documento' => $datos['no_documento'] ?? $inversion->codigo,
+            'motivo' => $datos['motivo'] ?? 'Depósito inicial de inversión ' . $inversion->codigo,
+            'id_cuenta' => $this->tipoCuentaInternaService->getCuentaParaDepositosAnteriores()->id,
+            'existente' => true // Flag para indicar que es un depósito automático
+        ];
+
+        // Usar crearDeposito en lugar de crearDepositoInterno para evitar transacciones anidadas
+        $deposito = $depositoService->crearDeposito($datos);
+
+        // Procesar el depósito inmediatamente ya que es automático
+        $depositoService->depositar($deposito->id, $datos);
+
+        $this->log("Depósito automático creado y procesado para la inversión ID: {$inversion->id}");
     }
 
 
@@ -139,10 +189,26 @@ class InversionService extends CodigoService
 
     public function cambiarEstado($id, $data)
     {
-        DB::beginTransaction();
-        $inversion = $this->getInversion($id);
-        $this->controladorEstado->cambiarEstado($inversion, $data);
-        DB::commit();
+        // Verificar si ya hay una transacción activa
+        $transactionStarted = false;
+        if (!DB::transactionLevel()) {
+            DB::beginTransaction();
+            $transactionStarted = true;
+        }
+
+        try {
+            $inversion = $this->getInversion($id);
+            $this->controladorEstado->cambiarEstado($inversion, $data);
+
+            if ($transactionStarted) {
+                DB::commit();
+            }
+        } catch (\Exception $e) {
+            if ($transactionStarted) {
+                DB::rollBack();
+            }
+            throw $e;
+        }
     }
 
     public function getHistoricoInversion($id)
