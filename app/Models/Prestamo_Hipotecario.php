@@ -300,4 +300,19 @@ class Prestamo_Hipotecario extends Model
     {
         return $this->belongsTo(Propiedad::class, 'propiedad_id');
     }
+
+    public function diasDeAtraso()
+    {
+        $cuotaActiva = $this->cuotaActiva();
+        if (!$cuotaActiva) {
+            return 0;
+        }
+        $fechaHoy = now();
+        $fechaCuota = \Carbon\Carbon::parse($cuotaActiva->fecha);
+        $fechaLimite = $fechaCuota->copy()->addDays(5);
+        if($fechaHoy <= $fechaLimite) {
+            return 0;
+        }
+        return (int) $fechaLimite->diffInDays($fechaHoy);
+    }
 }

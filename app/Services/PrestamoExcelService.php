@@ -17,17 +17,20 @@ use App\Traits\ErrorHandler;
 
 class PrestamoExcelService extends PrestamoService
 {
+    private BitacoraInteresService $bitacoraInteresService;
 
-   public function __construct(
+    public function __construct(
         ControladorEstado $controladorEstado,
         ClientService $clientService,
         PropiedadService $propiedadService,
         CatologoService $catalogoService,
         UserService $userService,
         CuotaHipotecaService $cuotaHipotecaService,
-        PrestamoExistenService $prestamoExistenteService
+        PrestamoExistenService $prestamoExistenteService,
+        BitacoraInteresService $bitacoraInteresService
     ) {
         parent::__construct($controladorEstado, $clientService, $propiedadService, $catalogoService, $userService, $cuotaHipotecaService, $prestamoExistenteService);
+        $this->bitacoraInteresService = $bitacoraInteresService;
     }
 
 
@@ -45,7 +48,7 @@ class PrestamoExcelService extends PrestamoService
                 'cliente',     // Relación con Client
                 'propiedad',   // Relación con Propiedad
                 'estado'       // Relación con Estado
-            ])->get();
+            ])->where('estado_id', '=', 3)->get();
         } else {
             // Si se pasan préstamos, asegurar que las relaciones estén cargadas
             if (is_array($prestamos) || $prestamos instanceof \Illuminate\Database\Eloquent\Collection) {
@@ -76,23 +79,24 @@ class PrestamoExcelService extends PrestamoService
 
         // Configurar encabezados
         $headers = [
-            'A1' => 'No. de Asesor Financiero',
+            'A1' => 'Nombre de Asesor Financiero',
             'B1' => 'No. de Financiamiento',
             'C1' => 'No. de Cliente',
             'D1' => 'Nombre del Cliente',
             'E1' => 'Teléfono',
-            'F1' => 'MONTO ORIGINAL',
-            'G1' => 'SALDO CAPITAL ACTUAL',
+            'F1' => 'GENERO',
+            'G1' => 'MONTO ORIGINAL',
             'H1' => 'INTERES MENSUAL',
             'I1' => 'GARANTIA',
-            'J1' => 'PLAZO (MESES)',
+            'J1' => 'PLAZO (MESESx)',
             'K1' => 'DESTINO',
-            'L1' => 'GENERO',
-            'M1' => 'FECHA DE DESEMBOLSO',
-            'N1' => 'FECHA DE FINALIZACION',
-            'O1' => 'ESTATUS',
-            'P1' => 'Días de atraso',
-            'Q1' => 'CUOTA TOTAL'
+            'L1' => 'FECHA DE DESEMBOLSO',
+            'M1' => 'FECHA DE FINALIZACION',
+            'N1' => 'SALDO CAPITAL ACTUAL',
+            'O1' => 'INTERES A LA FECHA',
+            'P1' => 'ESTATUS',
+            'Q1' => 'Días de atraso',
+            'R1' => 'CUOTA TOTAL'
         ];
 
         // Aplicar encabezados
@@ -101,7 +105,7 @@ class PrestamoExcelService extends PrestamoService
         }
 
         // Aplicar estilo a los encabezados
-        $headerRange = 'A1:Q1';
+        $headerRange = 'A1:R1';
         $sheet->getStyle($headerRange)->applyFromArray([
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
@@ -157,12 +161,11 @@ class PrestamoExcelService extends PrestamoService
                     $clienteCodigo = $p->cliente->codigo ?? '';
                     $clienteTelefono = $p->cliente->telefono ?? '';
                     $clienteGenero = $this->catalogoService->getCatalogo($p->cliente->genero)['value'] ?? '';
-
                 }
 
                 $propiedadInfo = '';
-                if (isset($p->propiedad) && $p->propiedad) {
-                    $propiedadInfo = $p->propiedad->nombreTipo ?? ($p->propiedad->tipo ?? '');
+                if (isset($p->propiedadAsociada) && $p->propiedadAsociada) {
+                    $propiedadInfo = $p->propiedadAsociada->Descripcion ?? '';
                 }
 
                 $estadoNombre = '';
@@ -194,28 +197,27 @@ class PrestamoExcelService extends PrestamoService
                 }
 
                 $p->nombreDestino = $this->catalogoService->getCatalogo($p->destino)['value'] ?? 'No especificado';
-
+                $interesAcumulado = $p->cuotaActiva() ? $this->bitacoraInteresService->calcularInteresPendiente($p->cuotaActiva(), fechaPago: now()->format('Y-m-d'))['interes_pendiente'] ?? 0 : 0;
                 // Llenar las celdas
                 $sheet->setCellValue('A' . $row, $asesorNombre);
                 $sheet->setCellValue('B' . $row, $p->codigo ?? '');
                 $sheet->setCellValue('C' . $row, $clienteCodigo);
                 $sheet->setCellValue('D' . $row, $clienteNombre);
                 $sheet->setCellValue('E' . $row, $clienteTelefono);
-                $sheet->setCellValue('F' . $row, $p->monto ?? 0);
-                $sheet->setCellValue('G' . $row, method_exists($p, 'saldoPendiente') ? $p->saldoPendiente() : ($p->saldo_pendiente ?? 0));
-                $sheet->setCellValue('H' . $row, $p->interes ?? 0);
+                $sheet->setCellValue('F' . $row, $clienteGenero);
+                $sheet->setCellValue('G' . $row, $p->monto ?? 0);
+                $sheet->setCellValue('H' . $row, ($p->interes ?? 0) / 100);
                 $sheet->setCellValue('I' . $row, $propiedadInfo);
                 $sheet->setCellValue('J' . $row, $p->plazo ?? 0);
                 $sheet->setCellValue('K' . $row, $p->nombreDestino ?? ($p->destino ?? ''));
-                $sheet->setCellValue('L' . $row, $clienteGenero);
-                $sheet->setCellValue('M' . $row, $fechaInicio);
-                $sheet->setCellValue('N' . $row, $fechaFin);
-                $sheet->setCellValue('O' . $row, $estadoNombre);
+                $sheet->setCellValue('L' . $row, $fechaInicio);
+                $sheet->setCellValue('M' . $row, $fechaFin);
+                $sheet->setCellValue('N' . $row, method_exists($p, 'saldoPendiente') ? $p->saldoPendiente() : ($p->saldo_pendiente ?? 0));
+                $sheet->setCellValue('O' . $row, $interesAcumulado);
                 $sheet->setCellValue('P' . $row, method_exists($p, 'morosidad') ? $p->morosidad() : ($p->dias_atraso ?? 0));
-                $sheet->setCellValue('Q' . $row, $p->cuota ?? 0);
-
+                $sheet->setCellValue('Q' . $row, method_exists($p, 'diasDeAtraso') ? $p->diasDeAtraso() : ($p->dias_atraso ?? 0));
+                $sheet->setCellValue('R' . $row, $p->cuota ?? 0);
                 $row++;
-
             } catch (\Exception $e) {
                 $this->log('Error al procesar préstamo ID ' . ($p->id ?? 'desconocido') . ': ' . $e->getMessage());
                 continue;
@@ -236,7 +238,7 @@ class PrestamoExcelService extends PrestamoService
         ]);
 
         // Formato de moneda para columnas de dinero
-        $moneyColumns = ['F', 'G', 'Q'];
+        $moneyColumns = ['G', 'N', 'O', 'R'];
         foreach ($moneyColumns as $col) {
             $sheet->getStyle($col . '2:' . $col . ($row - 1))->getNumberFormat()->setFormatCode('_("Q"* #,##0.00_);_("Q"* \(#,##0.00\);_("Q"* "-"??_);_(@_)');
         }
