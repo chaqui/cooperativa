@@ -29,7 +29,7 @@ use App\Http\Controllers\ExcelTemplateController;
 use App\Http\Resources\Rol;
 
 $rolesEdicion = implode('|', [Roles::$ADMIN, Roles::$ASESOR]);
-$rolesSoloLectura = implode('|', [Roles::$ADMIN, Roles::$ASESOR, Roles::$CAJERO]);
+$rolesSoloLectura = implode('|', [Roles::$ADMIN, Roles::$ASESOR, Roles::$CAJERO, Roles::$SECRETARIA]);
 
 //clientes
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
@@ -45,6 +45,7 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
 
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
     Route::get('clients', [ClientController::class, 'index']);
+    Route::get('clients/buscar', [ClientController::class, 'buscar']);
     Route::get('clients/{id}', [ClientController::class, 'show']);
     Route::get('clients/{id}/cuentas-bancarias', [ClientController::class, 'cuentasBancarias']);
     Route::get('clients/{id}/inversiones', [ClientController::class, 'inversiones']);

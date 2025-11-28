@@ -8,4 +8,6 @@ class Roles
     public static $ASESOR = 2;
 
     public static $CAJERO = 3;
+    public static $SECRETARIA = 4;
+    public static $COTIZADOR = 5;
 }
