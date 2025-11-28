@@ -293,6 +293,8 @@ class Prestamo_Hipotecario extends Model
     {
         return HistorialEstado::where('id_prestamo', $this->id)
             ->where('id_estado', EstadoPrestamo::$RECHAZADO)
+            ->orderBy('created_at', 'desc')
+            ->first()
             ->value('razon');
     }
 
@@ -310,7 +312,7 @@ class Prestamo_Hipotecario extends Model
         $fechaHoy = now();
         $fechaCuota = \Carbon\Carbon::parse($cuotaActiva->fecha);
         $fechaLimite = $fechaCuota->copy()->addDays(5);
-        if($fechaHoy <= $fechaLimite) {
+        if ($fechaHoy <= $fechaLimite) {
             return 0;
         }
         return (int) $fechaLimite->diffInDays($fechaHoy);

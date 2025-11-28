@@ -93,10 +93,11 @@ class PrestamoExcelService extends PrestamoService
             'L1' => 'FECHA DE DESEMBOLSO',
             'M1' => 'FECHA DE FINALIZACION',
             'N1' => 'SALDO CAPITAL ACTUAL',
-            'O1' => 'INTERES A LA FECHA',
-            'P1' => 'ESTATUS',
-            'Q1' => 'Días de atraso',
-            'R1' => 'CUOTA TOTAL'
+            'O1' => 'CUOTA CAPITAL',
+            'P1' => 'INTERES A LA FECHA',
+            'Q1' => 'ESTATUS',
+            'R1' => 'Días de atraso',
+            'S1' => 'CUOTA TOTAL'
         ];
 
         // Aplicar encabezados
@@ -165,7 +166,7 @@ class PrestamoExcelService extends PrestamoService
 
                 $propiedadInfo = '';
                 if (isset($p->propiedadAsociada) && $p->propiedadAsociada) {
-                    $propiedadInfo = $p->propiedadAsociada->Descripcion ?? '';
+                    $propiedadInfo = $this->catalogoService->getCatalogo($p->propiedadAsociada->tipo_propiedad)['value'] ?? '';
                 }
 
                 $estadoNombre = '';
@@ -196,6 +197,12 @@ class PrestamoExcelService extends PrestamoService
                     }
                 }
 
+                $capitalCuota = 0;
+                if (method_exists($p, 'cuotaActiva') && $p->cuotaActiva()) {
+                    $cuotaActiva = $p->cuotaActiva();
+                    $capitalCuota = $cuotaActiva->capital - $cuotaActiva->capital_pagado;
+                }
+
                 $p->nombreDestino = $this->catalogoService->getCatalogo($p->destino)['value'] ?? 'No especificado';
                 $interesAcumulado = $p->cuotaActiva() ? $this->bitacoraInteresService->calcularInteresPendiente($p->cuotaActiva(), fechaPago: now()->format('Y-m-d'))['interes_pendiente'] ?? 0 : 0;
                 // Llenar las celdas
@@ -213,10 +220,11 @@ class PrestamoExcelService extends PrestamoService
                 $sheet->setCellValue('L' . $row, $fechaInicio);
                 $sheet->setCellValue('M' . $row, $fechaFin);
                 $sheet->setCellValue('N' . $row, method_exists($p, 'saldoPendiente') ? $p->saldoPendiente() : ($p->saldo_pendiente ?? 0));
-                $sheet->setCellValue('O' . $row, $interesAcumulado);
-                $sheet->setCellValue('P' . $row, method_exists($p, 'morosidad') ? $p->morosidad() : ($p->dias_atraso ?? 0));
-                $sheet->setCellValue('Q' . $row, method_exists($p, 'diasDeAtraso') ? $p->diasDeAtraso() : ($p->dias_atraso ?? 0));
-                $sheet->setCellValue('R' . $row, $p->cuota ?? 0);
+                $sheet->setCellValue('O' . $row, $capitalCuota);
+                $sheet->setCellValue('P' . $row, $interesAcumulado);
+                $sheet->setCellValue('Q' . $row, method_exists($p, 'morosidad') ? $p->morosidad() : ($p->dias_atraso ?? 0));
+                $sheet->setCellValue('R' . $row, method_exists($p, 'diasDeAtraso') ? $p->diasDeAtraso() : ($p->dias_atraso ?? 0));
+                $sheet->setCellValue('S' . $row, $p->cuota ?? 0);
                 $row++;
             } catch (\Exception $e) {
                 $this->log('Error al procesar préstamo ID ' . ($p->id ?? 'desconocido') . ': ' . $e->getMessage());

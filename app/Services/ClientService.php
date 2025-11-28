@@ -423,6 +423,36 @@ class ClientService extends CodigoService
     }
 
     /**
+     * Buscar clientes por nombres, apellidos, DPI o código
+     * @param string $searchTerm Término de búsqueda
+     * @return \Illuminate\Database\Eloquent\Collection<int, Client>
+     */
+    public function buscarClientes(string $searchTerm)
+    {
+        $this->log("Buscando clientes con término: {$searchTerm}");
+
+        // Limpiar el término de búsqueda
+        $searchTerm = trim($searchTerm);
+
+        if (empty($searchTerm)) {
+            $this->log("Término de búsqueda vacío, retornando colección vacía");
+            return collect();
+        }
+
+        // Buscar en múltiples campos usando LIKE
+        $clientes = Client::where(function ($query) use ($searchTerm) {
+            $query->where('nombres', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('apellidos', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('dpi', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('codigo', 'LIKE', "%{$searchTerm}%");
+        })->get();
+
+        $this->log("Se encontraron " . $clientes->count() . " clientes");
+
+        return $clientes;
+    }
+
+    /**
      * Get the bank accounts of a client
      * @param mixed $id The id of the client
      */

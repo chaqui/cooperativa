@@ -87,6 +87,16 @@ class ClientController extends Controller
         return response()->json(['message' => 'Client deleted successfully'], 200);
     }
 
+    public function buscar(Request $request)
+    {
+        $searchTerm = $request->input('query', '');
+        if(empty($searchTerm)) {
+            return ClientResource::collection(collect());
+        }
+        $clients = $this->clientService->buscarClientes($searchTerm);
+        return ClientResource::collection($clients);
+    }
+
     public function inactivar(string $id)
     {
         $this->clientService->inactivarClient($id);
