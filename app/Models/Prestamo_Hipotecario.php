@@ -291,11 +291,12 @@ class Prestamo_Hipotecario extends Model
 
     public function getMotivoRechazo()
     {
-        return HistorialEstado::where('id_prestamo', $this->id)
+        $historial = HistorialEstado::where('id_prestamo', $this->id)
             ->where('id_estado', EstadoPrestamo::$RECHAZADO)
             ->orderBy('created_at', 'desc')
-            ->first()
-            ->value('razon');
+            ->first();
+
+        return $historial ? $historial->razon : null;
     }
 
     public function propiedadAsociada()
