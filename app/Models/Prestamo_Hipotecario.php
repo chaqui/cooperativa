@@ -318,4 +318,14 @@ class Prestamo_Hipotecario extends Model
         }
         return (int) $fechaLimite->diffInDays($fechaHoy);
     }
+
+    public function interesPendiente()
+    {
+        $cuotasPendientes = $this->getCuotasPendientes();
+        $interesTotal = 0.0;
+        foreach ($cuotasPendientes as $cuota) {
+            $interesTotal += $cuota->interesFaltante();
+        }
+        return round($interesTotal, 2);
+    }
 }
