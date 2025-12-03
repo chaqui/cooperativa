@@ -328,4 +328,9 @@ class Prestamo_Hipotecario extends Model
         }
         return round($interesTotal, 2);
     }
+
+    public function capitalPendiente()
+    {
+        return $this->saldoPendienteCapital();
+    }
 }
