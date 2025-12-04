@@ -568,7 +568,7 @@ class CuotaHipotecaService extends CuotaService
         // Calcular componentes del pago
         $tasaInteresMensual = $this->calcularTaza($prestamo->interes);
         $this->log("Tasa de interés mensual: {$tasaInteresMensual}");
-        $interesMensual = $this->calcularInteres($saldoBase, $tasaInteresMensual);
+        $interesMensual = $this->calcularInteres($saldoBase, $tasaInteresMensual, $fechaBase);
         $this->log("Interés mensual calculado: Q{$interesMensual}");
         $capitalMensual = $this->calcularCapital($interesMensual, $prestamo, $saldoBase, $plazo, $pagoAnterior);
         $this->log("Capital mensual calculado: Q{$capitalMensual}");
@@ -1148,7 +1148,7 @@ class CuotaHipotecaService extends CuotaService
 
         // Recalcular interés basado en el nuevo saldo
         $tasaInteresMensual = $this->calcularTaza($prestamoHipotecario->interes);
-        $nuevoInteres = $this->calcularInteres($nuevoSaldo, $tasaInteresMensual);
+        $nuevoInteres = $this->calcularInteres($nuevoSaldo, $tasaInteresMensual, $pagoSiguiente->fecha);
 
         // Calcular nuevo capital y saldo
         if ($nuevoSaldo < ($prestamoHipotecario->cuota - $nuevoInteres)) {
@@ -1377,7 +1377,7 @@ class CuotaHipotecaService extends CuotaService
      * @return float Interés calculado
      * @throws \Exception Si los parámetros son inválidos
      */
-    private function calcularInteres($monto, $tasa)
+    private function calcularInteres($monto, $tasa, $fechaPago)
     {
         try {
             if ($monto < 0) {
@@ -1387,7 +1387,17 @@ class CuotaHipotecaService extends CuotaService
                 $this->lanzarExcepcionConCodigo("La tasa de interés no puede ser negativa");
             }
 
-            $interes = $monto * $tasa;
+            // Obtener los días del mes antes de la fecha de pago
+            $diasDelMes = $this->obtenerDiasDelMes($fechaPago, -1);
+            $this->log("Días del mes anterior a la fecha de pago: {$diasDelMes}");
+            // Validar si el año es bisiesto para ajustar los días del año
+            $anio = (int)date('Y', strtotime($fechaPago));
+            $esBisiesto = (($anio % 4 == 0 && $anio % 100 != 0) || ($anio % 400 == 0));
+            $diasDelAnio = $esBisiesto ? 366 : 365;
+            $this->log("Año: {$anio}, Es bisiesto: " . ($esBisiesto ? 'Sí' : 'No') . ", Días del año: {$diasDelAnio}");
+
+            // Ajustar el interés proporcionalmente a los días del año
+            $interes = (($monto * ($tasa * 12)) / $diasDelAnio) * $diasDelMes;
             $interes = round($interes, 2);
 
             $this->log("Interés calculado: Monto=Q{$monto} × Tasa={$tasa} = Q{$interes}");

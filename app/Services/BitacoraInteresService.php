@@ -67,7 +67,6 @@ class BitacoraInteresService
     private function calcularInteresNormal($saldo, $interesMensual, $fechaInicio, $fechaFin)
     {
         $diasTranscurridos = $fechaFin->diff($fechaInicio)->days;
-        $diasDelMes = (int)$fechaInicio->format('t');
         $anio = (int)$fechaInicio->format('Y');
         $esBisiesto = ($anio % 4 === 0 && ($anio % 100 !== 0 || $anio % 400 === 0));
         $diasDelAnio = $esBisiesto ? 366 : 365;
@@ -76,7 +75,7 @@ class BitacoraInteresService
     }
 
 
-    private function calcularInteres(DateTime $fechaPago, $saldo, $interesMensual, DateTime $fechaUltimoPago, DateTime $fechaDeposito)
+    public function calcularInteres(DateTime $fechaPago, $saldo, $interesMensual, DateTime $fechaUltimoPago, DateTime $fechaDeposito)
     {
 
         $fechaLimiteStr = date('Y-m-10', strtotime($fechaPago->format('Y-m-d')));
