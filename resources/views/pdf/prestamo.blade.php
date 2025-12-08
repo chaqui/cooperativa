@@ -291,10 +291,10 @@
                     <th>Telefono</th>
                 </tr>
                 @foreach ($prestamo->cliente->referenciasLaborales as $reference)
-                    @if($reference->nombre || $reference->telefono)
+                    @if((is_array($reference) && ($reference['nombre'] ?? $reference['telefono'])) || (is_object($reference) && ($reference->nombre || $reference->telefono)))
                         <tr>
-                            <td>{{ $reference->nombre ?? '' }}</td>
-                            <td>{{ $reference->telefono ?? '' }}</td>
+                            <td>{{ is_array($reference) ? ($reference['nombre'] ?? '') : ($reference->nombre ?? '') }}</td>
+                            <td>{{ is_array($reference) ? ($reference['telefono'] ?? '') : ($reference->telefono ?? '') }}</td>
                         </tr>
                     @endif
                 @endforeach
