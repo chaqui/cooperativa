@@ -403,7 +403,7 @@
                 <tr>
                     @php
                         $descripcion = $prestamo->propiedad->Descripcion;
-                        $maxLength = 60; // caracteres por fila
+                        $maxLength = 75; // caracteres por fila
                         $lineasDescripcion = str_split($descripcion, $maxLength);
                     @endphp
                     @foreach($lineasDescripcion as $linea)
