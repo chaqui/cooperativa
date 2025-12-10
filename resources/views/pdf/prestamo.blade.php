@@ -291,10 +291,10 @@
                     <th>Telefono</th>
                 </tr>
                 @foreach ($prestamo->cliente->referenciasLaborales as $reference)
-                    @if((is_array($reference) && ($reference['nombre'] ?? $reference['telefono'])) || (is_object($reference) && ($reference->nombre || $reference->telefono)))
+                    @if($reference->nombre || $reference->telefono)
                         <tr>
-                            <td>{{ is_array($reference) ? ($reference['nombre'] ?? '') : ($reference->nombre ?? '') }}</td>
-                            <td>{{ is_array($reference) ? ($reference['telefono'] ?? '') : ($reference->telefono ?? '') }}</td>
+                            <td>{{ $reference->nombre ?? '' }}</td>
+                            <td>{{ $reference->telefono ?? '' }}</td>
                         </tr>
                     @endif
                 @endforeach
@@ -403,8 +403,25 @@
                 <tr>
                     @php
                         $descripcion = $prestamo->propiedad->Descripcion;
-                        $maxLength = 75; // caracteres por fila
-                        $lineasDescripcion = str_split($descripcion, $maxLength);
+                        $maxLength = 60; // caracteres por fila
+                        $lineasDescripcion = [];
+                        $palabras = explode(' ', $descripcion);
+                        $lineaActual = '';
+
+                        foreach ($palabras as $palabra) {
+                            if (strlen($lineaActual . ' ' . $palabra) <= $maxLength) {
+                                $lineaActual .= ($lineaActual ? ' ' : '') . $palabra;
+                            } else {
+                                if ($lineaActual) {
+                                    $lineasDescripcion[] = $lineaActual;
+                                }
+                                $lineaActual = $palabra;
+                            }
+                        }
+
+                        if ($lineaActual) {
+                            $lineasDescripcion[] = $lineaActual;
+                        }
                     @endphp
                     @foreach($lineasDescripcion as $linea)
                         <tr>
