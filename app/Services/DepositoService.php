@@ -275,8 +275,8 @@ class DepositoService
     {
         $this->log("Generando PDF del depósito con ID: {$deposito->id}");
         $pdf = $this->generarPdf($deposito);
-        // Definir la ruta y nombre del archivo
-        $path = storage_path('app/depositos/');
+        // Definir la ruta y nombre del archivo (relativa a storage/app)
+        $path = 'depositos/';
         $fileName = 'deposito_' . $deposito->id . '_' . time() . '.pdf';
 
         // Guardar el archivo usando el servicio de archivos

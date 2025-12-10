@@ -22,8 +22,17 @@ class ArchivoService
         try {
             $this->log("Guardando archivo en la ruta: {$path} con el nombre: {$fileName}");
 
-            // Verificar si la ruta existe, si no, crearla
-            $fullPath = storage_path("app/{$path}");
+            // Determinar si el path es absoluto o relativo
+            // Si el path ya contiene storage_path, es absoluto
+            if (strpos($path, storage_path('')) !== false) {
+                // Path absoluto, usar tal cual
+                $fullPath = rtrim($path, '/\\');
+            } else {
+                // Path relativo, construir ruta completa
+                $fullPath = storage_path('app/' . ltrim($path, '/'));
+            }
+
+            // Crear directorio si no existe
             if (!file_exists($fullPath)) {
                 mkdir($fullPath, 0777, true);
                 $this->log("Ruta creada: {$fullPath}");
