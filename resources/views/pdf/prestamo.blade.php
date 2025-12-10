@@ -291,10 +291,10 @@
                     <th>Telefono</th>
                 </tr>
                 @foreach ($prestamo->cliente->referenciasLaborales as $reference)
-                    @if($reference->nombre || $reference->telefono)
+                    @if((is_array($reference) && (isset($reference['nombre']) || isset($reference['telefono']))) || (is_object($reference) && ($reference->nombre ?? $reference->telefono)))
                         <tr>
-                            <td>{{ $reference->nombre ?? '' }}</td>
-                            <td>{{ $reference->telefono ?? '' }}</td>
+                            <td>{{ is_array($reference) ? ($reference['nombre'] ?? '') : ($reference->nombre ?? '') }}</td>
+                            <td>{{ is_array($reference) ? ($reference['telefono'] ?? '') : ($reference->telefono ?? '') }}</td>
                         </tr>
                     @endif
                 @endforeach
@@ -447,6 +447,9 @@
                     @endforeach
                 </tr>
             @endif
+            <tr><strong>VALOR:</strong></tr>
+            <tr>
+                <td>Q. {{ $prestamo->propiedad->Valor_tasacion ? number_format($prestamo->propiedad->Valor_tasacion, 2) : '0.00' }}</td>
         </table>
     @endif
     @if($prestamo->fiador_dpi && $prestamo->fiador)
