@@ -447,10 +447,10 @@
                     @endforeach
                 </tr>
             @endif
-            <tr><td></td><td><strong>VALOR BANCARIO:</strong></td>
+            <tr><td><strong>VALOR BANCARIO:</strong></td>
                 <td>Q. {{ $prestamo->propiedad->Valor_tasacion ? number_format($prestamo->propiedad->Valor_tasacion, 2) : '0.00' }}</td>
             </tr>
-            <tr></tr><td></td><td><strong>VALOR COMERCIAL:</strong></td>
+            <tr><td><strong>VALOR COMERCIAL:</strong></td>
                 <td>Q. {{ $prestamo->propiedad->Valor_comercial ? number_format($prestamo->propiedad->Valor_comercial, 2) : '0.00' }}</td>
             </tr>
 
