@@ -399,8 +399,7 @@
             @if($prestamo->propiedad->Descripcion)
                 <tr>
                     <td><strong>DESCRIPCION DE LA GARANTIA:</strong></td>
-                </tr>
-                <tr>
+                <td>
                     @php
                         $descripcion = $prestamo->propiedad->Descripcion;
                         $maxLength = 60; // caracteres por fila
@@ -428,6 +427,7 @@
                             <td colspan="4">{{ $linea }}</td>
                         </tr>
                     @endforeach
+                </td>
                 </tr>
             @endif
             @if($prestamo->propiedad->Direccion)
@@ -447,9 +447,13 @@
                     @endforeach
                 </tr>
             @endif
-            <tr><strong>VALOR:</strong></tr>
-            <tr>
+            <tr><td></td><td><strong>VALOR BANCARIO:</strong></td>
                 <td>Q. {{ $prestamo->propiedad->Valor_tasacion ? number_format($prestamo->propiedad->Valor_tasacion, 2) : '0.00' }}</td>
+            </tr>
+            <tr></tr><td></td><td><strong>VALOR COMERCIAL:</strong></td>
+                <td>Q. {{ $prestamo->propiedad->Valor_comercial ? number_format($prestamo->propiedad->Valor_comercial, 2) : '0.00' }}</td>
+            </tr>
+
         </table>
     @endif
     @if($prestamo->fiador_dpi && $prestamo->fiador)
