@@ -17,6 +17,7 @@ use App\Services\PrestamoService;
 use App\Services\PrestamoPdfService;
 use App\Services\EstadosPrestamoService;
 use App\Services\PrestamoExcelService;
+use App\Services\ArchivoService;
 use App\Traits\Loggable;
 
 class PrestamoController extends Controller
@@ -30,18 +31,22 @@ class PrestamoController extends Controller
 
     private $prestamoExcelService;
 
+    private $archivoService;
+
     use Loggable;
 
     public function __construct(
         PrestamoService $prestamoService,
         PrestamoPdfService $prestamoPdfService,
         EstadosPrestamoService $estadosPrestamoService,
-        PrestamoExcelService $prestamoExcelService
+        PrestamoExcelService $prestamoExcelService,
+        ArchivoService $archivoService
     ) {
         $this->prestamoService = $prestamoService;
         $this->prestamoPdfService = $prestamoPdfService;
         $this->estadosPrestamoService = $estadosPrestamoService;
         $this->prestamoExcelService = $prestamoExcelService;
+        $this->archivoService = $archivoService;
     }
     /**
      * Display a listing of the resource.
@@ -160,7 +165,18 @@ class PrestamoController extends Controller
             $this->log('No se ha generado el estado de cuenta para el préstamo: ' . $id);
             return response()->json(['message' => 'No se ha generado el estado de cuenta'], 404);
         }
-        return response()->download($prestamo->estado_cuenta_path);
+        try {
+            return response()->download($prestamo->estado_cuenta_path);
+        } catch (\Exception $e) {
+            $pdf = $this->prestamoPdfService->generarEstadoCuentaPdf($id, true);
+            $path = storage_path(path: 'app/estados_cuenta/');
+
+            $fileName = 'estado_cuenta_prestamo_' . $prestamo->id . '.pdf';
+            $pathArchivo = $this->archivoService->guardarArchivo($pdf, $path, $fileName);
+            $prestamo->estado_cuenta_path = $pathArchivo;
+            $prestamo->save();
+            return response($pdf, 200)->header('Content-Type', 'application/pdf');
+        }
     }
 
     public function pagarCuota(StorePagarCuota $request, string $id)
