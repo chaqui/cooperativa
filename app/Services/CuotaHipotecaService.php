@@ -1388,7 +1388,7 @@ class CuotaHipotecaService extends CuotaService
             }
 
             // Obtener los días del mes antes de la fecha de pago
-            $diasDelMes = $this->obtenerDiasDelMes($fechaPago, -1);
+            $diasDelMes = $this->obtenerDiasDelMes($fechaPago,0);
             $this->log("Días del mes anterior a la fecha de pago: {$diasDelMes}");
             // Validar si el año es bisiesto para ajustar los días del año
             $anio = (int)date('Y', strtotime($fechaPago));
