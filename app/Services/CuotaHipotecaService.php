@@ -215,11 +215,7 @@ class CuotaHipotecaService extends CuotaService
 
         $this->log("Registrando depósito Q{$montoOriginal} - Pago #{$pago->numero_pago_prestamo}");
 
-        // NUEVA VALIDACIÓN: Verificar monto mínimo requerido (solo para pagos nuevos)
-        if (!$existente) {
-            $validacionMonto = $this->validarMontoMinimoRequerido($pago, $montoOriginal, $fechaPago, $penalizacionUsuario);
-            $this->log("✅ Validación de monto completada - Excedente para capital: Q{$validacionMonto['excedente']}");
-        }
+
 
         $montoRestante = $montoOriginal;
         $detallesPago = [
@@ -418,63 +414,6 @@ class CuotaHipotecaService extends CuotaService
         }
     }
 
-    /**
-     * Valida que el monto del pago sea suficiente para cubrir intereses y penalizaciones
-     *
-     * @param Pago $pago Pago a validar
-     * @param float $montoPago Monto del pago
-     * @param string $fechaPago Fecha del pago
-     * @param float $penalizacionUsuario Penalización ingresada por el usuario (opcional)
-     * @return array Información detallada de la validación
-     * @throws \Exception Si el pago es insuficiente
-     */
-    private function validarMontoMinimoRequerido($pago, $montoPago, $fechaPago, $penalizacionUsuario = null)
-    {
-        $this->log("🔍 Validando monto mínimo requerido para pago #{$pago->numero_pago_prestamo}");
-
-        // Calcular interés pendiente
-        $respuestaInteres = $this->bitacoraInteresService->calcularInteresPendiente($pago, $fechaPago);
-        $interesPendiente = $respuestaInteres['interes_pendiente'];
-
-        // Usar penalización del usuario si está disponible, sino calcular automáticamente
-        if ($penalizacionUsuario !== null && $penalizacionUsuario >= 0) {
-            $penalizacion = $penalizacionUsuario;
-            $this->log("💰 Usando penalización ingresada por usuario: Q{$penalizacion}");
-        } else {
-            $penalizacion = $this->calcularPenalizacionPorRetraso($pago, $fechaPago);
-            $this->log("🧮 Penalización calculada automáticamente: Q{$penalizacion}");
-        }
-
-        // Calcular monto mínimo requerido
-        $montoMinimoRequerido = $interesPendiente + $penalizacion;
-
-        $detallesValidacion = [
-            'interes_pendiente' => round($interesPendiente, 2),
-            'penalizacion' => round($penalizacion, 2),
-            'monto_minimo_requerido' => round($montoMinimoRequerido, 2),
-            'monto_pagado' => round($montoPago, 2),
-            'deficit' => round(max(0, $montoMinimoRequerido - $montoPago), 2),
-            'excedente' => round(max(0, $montoPago - $montoMinimoRequerido), 2),
-            'es_suficiente' => $montoPago >= $montoMinimoRequerido
-        ];
-
-        $this->log("💰 Interés pendiente: Q{$detallesValidacion['interes_pendiente']}");
-        $this->log("⚠️ Penalización: Q{$detallesValidacion['penalizacion']}");
-        $this->log("📋 Monto mínimo requerido: Q{$detallesValidacion['monto_minimo_requerido']}");
-        $this->log("💵 Monto pagado: Q{$detallesValidacion['monto_pagado']}");
-
-        if (!$detallesValidacion['es_suficiente']) {
-            $this->log("❌ PAGO INSUFICIENTE - Déficit: Q{$detallesValidacion['deficit']}");
-            $this->lanzarExcepcionConCodigo(
-                "El monto del pago (Q{$detallesValidacion['monto_pagado']}) es insuficiente. " .
-                    "Monto mínimo requerido: Q{$detallesValidacion['monto_minimo_requerido']} " .
-                    "(Interés: Q{$detallesValidacion['interes_pendiente']} + Penalización: Q{$detallesValidacion['penalizacion']})"
-            );
-        }
-
-        $this->log("✅ Pago suficiente - Excedente para capital: Q{$detallesValidacion['excedente']}");
-        return $detallesValidacion;
-    }
 
     public function obtenerDepositos($id)
     {
