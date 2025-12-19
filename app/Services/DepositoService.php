@@ -20,10 +20,14 @@ class DepositoService
 
     private ImpuestoTransaccionService $impuestoTransaccionService;
 
-    public function __construct(PdfService $pdfService, ImpuestoTransaccionService $impuestoTransaccionService)
+    private BitacoraInteresService $bitacoraInteresService;
+
+    public function __construct(PdfService $pdfService,
+    ImpuestoTransaccionService $impuestoTransaccionService, BitacoraInteresService $bitacoraInteresService)
     {
         $this->pdfService = $pdfService;
         $this->impuestoTransaccionService = $impuestoTransaccionService;
+        $this->bitacoraInteresService = $bitacoraInteresService;
     }
     /**
      * Crea un nuevo registro de depósito en el sistema - No es llamado desde el controlador
@@ -321,10 +325,14 @@ class DepositoService
         $capitalPendiente = 0;
 
         if ($prestamo) {
-            $montoPendiente = $prestamo->saldoPendiente();
+
             $totalPagado = $prestamo->totalPagado();
-            $interesPendiente = $prestamo->interesPendiente();
+            $interesPendiente = $this->bitacoraInteresService->calcularInteresPendiente(
+                $deposito->pago,
+                now()->format('Y-m-d')
+            )['interes_pendiente'];
             $capitalPendiente = $prestamo->capitalPendiente();
+            $montoPendiente = $interesPendiente + $capitalPendiente;
         }
 
         // Obtener el cliente de forma segura
