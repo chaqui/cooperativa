@@ -320,13 +320,12 @@ class DepositoService
 
         // Calculate loan information only if there's an associated loan
         $montoPendiente = 0;
-        $totalPagado = 0;
+        $capitalPagado = $deposito->capital_pagado;
         $interesPendiente = 0;
         $capitalPendiente = 0;
 
         if ($prestamo) {
 
-            $totalPagado = $prestamo->totalPagado();
             $interesPendiente = $this->bitacoraInteresService->calcularInteresPendiente(
                 $deposito->pago,
                 now()->format('Y-m-d')
@@ -347,7 +346,7 @@ class DepositoService
         $html = view('pdf.deposito', [
             'deposito' => $deposito,
             'montoPendiente' => $montoPendiente,
-            'totalPagado' => $totalPagado,
+            'capitalPagado' => $capitalPagado,
             'interesPendiente' => $interesPendiente,
             'capitalPendiente' => $capitalPendiente,
             'prestamo' => $prestamo,

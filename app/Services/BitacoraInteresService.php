@@ -67,7 +67,8 @@ class BitacoraInteresService
     private function calcularInteresNormal($saldo, $interesMensual, $fechaInicio, $fechaFin)
     {
         $diasTranscurridos = $fechaFin->diff($fechaInicio)->days;
-        $anio = (int)$fechaInicio->format('Y');
+        // Usar el año de la FECHA FIN para determinar bisiesto (fecha en que se cobra el interés)
+        $anio = (int)$fechaFin->format('Y');
         $esBisiesto = ($anio % 4 === 0 && ($anio % 100 !== 0 || $anio % 400 === 0));
         $diasDelAnio = $esBisiesto ? 366 : 365;
         $interesDiario = $saldo * (($interesMensual * 12 / 100) / $diasDelAnio);

@@ -20,124 +20,126 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recibo de Depósito</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 9px;
+        @page {
+            size: letter;
+            margin: 15mm;
+        }
+
+        * {
             margin: 0;
             padding: 0;
-        }
-
-        .logo {
-            width: 100px;
-            height: auto;
-        }
-
-
-        .receipt-container {
-            border: 1px solid #000;
-            padding: 20px;
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
             box-sizing: border-box;
         }
 
-        .header,
-        .footer {
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10mm;
+            background: #fff;
+            color: #000;
+        }
+
+        .logo {
+            width: 80px;
+            height: auto;
+            display: block;
+            margin: 0 auto 10px;
+        }
+
+        .receipt-container {
+            width: 100%;
+            max-height: 50%;
+        }
+
+        .header {
             text-align: center;
-            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
         }
 
-        .details {
-            margin-bottom: 20px;
-        }
-
-        .details p {
-            margin: 5px 0;
-        }
-
-        .amount {
-            font-size: 1.2em;
+        .title {
+            font-size: 12px;
             font-weight: bold;
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .client-info {
-            background-color: #f9f9f9;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 15px 0;
-        }
-
-        .client-info h4 {
-            margin: 0 0 10px 0;
-            color: #333;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 5px;
+            margin: 4px 0;
         }
 
         .receipt-number {
-            background-color: #e8f4f8;
-            padding: 15px;
-            border-radius: 5px;
             text-align: center;
-            margin: 15px 0;
-            border: 2px solid #007bff;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 0;
+            border: 1px solid #000;
+            margin-bottom: 8px;
+            background-color: #f5f5f5;
         }
 
-        .receipt-number h3 {
-            margin: 0;
-            color: #007bff;
-            font-size: 11px;
+        .section {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ccc;
         }
 
-        .deposit-info {
-            background-color: #f0f8f0;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 15px 0;
-            border-left: 4px solid #28a745;
-        }
-
-        .deposit-info h4 {
-            margin: 0 0 10px 0;
+        .section-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 8px;
             color: #333;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 5px;
         }
 
-        .payment-info {
-            background-color: #fff3cd;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 15px 0;
-            border-left: 4px solid #ffc107;
+        .row {
+            font-size: 12px;
+            line-height: 1.6;
+            margin-bottom: 4px;
         }
 
-        .payment-info h4 {
-            margin: 0 0 10px 0;
-            color: #333;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 5px;
+        .amount-box {
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px;
+            border: 1px solid #000;
+            margin: 6px 0;
+            background-color: #f9f9f9;
         }
 
         .payment-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            font-size: 12px;
         }
 
-        .payment-table th,
         .payment-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
+            padding: 6px 4px;
+            border-bottom: 1px solid #ddd;
         }
 
-        .payment-table th {
-            background-color: #f8f9fa;
+        .payment-table td:last-child {
+            text-align: right;
             font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            border-top: 2px solid #000;
+            padding-top: 15px;
+            margin-top: 20px;
+            font-size: 11px;
+        }
+
+        .footer p {
+            margin: 4px 0;
+        }
+
+        .cut-line {
+            border-top: 1px dashed #000;
+            margin-top: 25px;
+            padding-top: 5px;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
         }
     </style>
 </head>
@@ -146,76 +148,69 @@
     <div class="receipt-container">
         <div class="header">
             <img src="{{ base64Image('images/logoNegro.png') }}" alt="Logo" class="logo">
-            <p style="margin: 5px 0; font-size: 12px;">Recibo de Depósito</p>
+            <div class="title">RECIBO DE DEPOSITO</div>
         </div>
 
         <div class="receipt-number">
-            <h3>Número de Recibo: {{ $deposito->id }}</h3>
+            RECIBO No. {{ $deposito->id }}
         </div>
 
-        <div class="details">
-
-
-            @if($cliente)
-                <div class="client-info">
-                    <h4>Información del Cliente</h4>
-                    <p><strong>Codigo:</strong> {{ $cliente->codigo }}</p>
-                    <p><strong>DPI:</strong> {{ substr($cliente->dpi, 0, 4) }} {{ substr($cliente->dpi, 4, 5) }}
-                        {{ substr($cliente->dpi, 9, 4) }}| <strong>Nombre:</strong> {{ $cliente->nombres }}
-                        {{ $cliente->apellidos }}
-                    </p>
+        @if($cliente)
+            <div class="section" style="padding-bottom:2px;margin-bottom:2px;">
+                <div class="row" style="margin-bottom:1px;">
+                    <span style="font-weight:bold;">Cliente:</span>
+                    {{ $cliente->nombres }} {{ $cliente->apellidos }} |
+                    <span style="font-weight:bold;">Cod:</span> {{ $cliente->codigo }} |
+                    <span style="font-weight:bold;">DPI:</span> {{ substr($cliente->dpi, 0, 4) }}-{{ substr($cliente->dpi, 4, 5) }}-{{ substr($cliente->dpi, 9, 4) }}
                 </div>
-            @endif
-
-            <div class="deposit-info">
-                <h4>Información del Depósito</h4>
-                <p><strong>Monto Depositado:</strong> Q{{ number_format($deposito->monto, 2) }} | <strong>Tipo:</strong>
-                    {{$deposito->tipo_documento}} | <strong>No. Documento:</strong> {{$deposito->numero_documento}}</p>
-                <p><strong>Motivo:</strong> {{$deposito->motivo}}</p>
             </div>
+        @endif
 
-            @if($deposito->pago && $deposito->pago->prestamo)
-                <div class="payment-info">
-                    <h4>Estado del Préstamo</h4>
-                    <table class="payment-table">
-                        <tr>
-                            <th>Concepto</th>
-                            <th>Monto</th>
-                        </tr>
-                        <tr>
-                            <td>Monto Total del Préstamo</td>
-                            <td>Q{{ number_format($prestamo->monto, 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td>Total Pagado</td>
-                            <td>Q{{ number_format($totalPagado, 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td>Capital Pendiente</td>
-                            <td>Q{{ number_format($capitalPendiente, 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td>Interes Pendiente</td>
-                            <td>Q{{ number_format($interesPendiente, 2) }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Saldo Pendiente</strong></td>
-                            <td><strong>Q{{ number_format($montoPendiente, 2) }}</strong></td>
-                        </tr>
-                    </table>
-                </div>
-            @endif
+        <div class="section">
+            <div class="row" style="margin-bottom:1px;">
+                <span style="font-weight:bold;">Depósito</span>
+            </div>
+            <div class="amount-box">Q{{ number_format($deposito->monto, 2) }}</div>
+            <div class="row">
+                <span style="font-weight:bold;">Tipo:</span> {{ $deposito->tipo_documento }} |
+                <span style="font-weight:bold;">No. Doc:</span> {{ $deposito->numero_documento }}
+            </div>
+            <div class="row"><span style="font-weight:bold;">Motivo:</span> {{ $deposito->motivo }}</div>
         </div>
+
+        @if($deposito->pago && $deposito->pago->prestamo)
+            <div class="section">
+                <div class="row" style="margin-bottom:1px;">
+                    <span style="font-weight:bold;">Estado Préstamo</span>
+                </div>
+                <table class="payment-table">
+                    <tr>
+                        <td><span style="font-weight:bold;">Monto Préstamo</span></td>
+                        <td>Q{{ number_format($prestamo->monto, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td><span style="font-weight:bold;">Capital Pagado</span></td>
+                        <td>Q{{ number_format($capitalPagado, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td><span style="font-weight:bold;">Capital Pend.</span></td>
+                        <td>Q{{ number_format($capitalPendiente, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td><span style="font-weight:bold;">Interés a fecha</span></td>
+                        <td>Q{{ number_format($interesPendiente, 2) }}</td>
+                    </tr>
+                </table>
+            </div>
+        @endif
 
         <div class="footer">
-            <p><strong>Documento que confirma el depósito realizado</strong></p>
-            <p style="font-size: 10px; margin-top: 15px;">
-                Este recibo constituye comprobante oficial del depósito efectuado.
-                Conserve este documento para sus registros contables.
-            </p>
-            <p style="font-size: 10px; color: #666;">
-                Fecha de emisión: {{ Carbon::now()->translatedFormat('d \d\e F \d\e Y \a \l\a\s H:i') }}
-            </p>
+            <p><strong>Comprobante oficial</strong></p>
+            <p>Conserve este documento</p>
+        </div>
+
+        <div class="cut-line">
+            - - - - - - - - - - - - - - - - -
         </div>
     </div>
 </body>

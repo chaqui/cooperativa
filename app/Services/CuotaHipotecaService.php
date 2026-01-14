@@ -210,12 +210,8 @@ class CuotaHipotecaService extends CuotaService
     {
 
         $montoOriginal = $deposito['monto'];
-        $fechaPago = $deposito['fecha_documento'];
-        $penalizacionUsuario = isset($deposito['penalizacion']) ? $deposito['penalizacion'] : null;
 
         $this->log("Registrando depósito Q{$montoOriginal} - Pago #{$pago->numero_pago_prestamo}");
-
-
 
         $montoRestante = $montoOriginal;
         $detallesPago = [
@@ -229,8 +225,7 @@ class CuotaHipotecaService extends CuotaService
         $saldoActualPago = $this->obtenerSaldoActualPago($pago);
         $saldoActualReal = $this->bitacoraInteresService->obtenerUltimoHistorico($prestamo)->saldo;
 
-        $montoRestante = $existente ? $this->procesarPenalizacionExistente($pago, $montoRestante, $detallesPago, $deposito, $existente)
-            : $this->procesarPenalizacionUsuario($pago, $montoRestante, $detallesPago, $fechaPago, $penalizacionUsuario);
+        $montoRestante = $this->procesarPenalizacionExistente($pago, $montoRestante, $detallesPago, $deposito);
         $montoRestante = $this->procesarIntereses($pago, $montoRestante, $detallesPago, $deposito['fecha_documento']);
         $montoRestante = $this->procesarCapital($pago, $montoRestante, $detallesPago);
         $pago->monto_pagado += $montoOriginal;
@@ -244,7 +239,7 @@ class CuotaHipotecaService extends CuotaService
             $this->bitacoraInteresService->registrarHistoricoSaldo($pago->prestamo, $saldoActualReal, $deposito['fecha_documento']);
         }
 
-        if ($existente && $pago->capitalFaltante() <= 0) {
+        if ($pago->capitalFaltante() <= 0) {
             $pago->realizado = true;
             $this->log("Pago #{$pago->numero_pago_prestamo} completado");
         }
@@ -504,10 +499,13 @@ class CuotaHipotecaService extends CuotaService
         $fechaBase = $pagoAnterior ? $pagoAnterior->fecha : $prestamo->fecha_inicio;
         $this->log("Saldo base: Q{$saldoBase}, Fecha base: {$fechaBase}");
 
+        // Calcular fecha de pago (siguiente mes desde la fecha base)
+        $fechaPago = $this->obtenerFechaSiguienteMes($fechaBase, true);
+
         // Calcular componentes del pago
         $tasaInteresMensual = $this->calcularTaza($prestamo->interes);
         $this->log("Tasa de interés mensual: {$tasaInteresMensual}");
-        $interesMensual = $this->calcularInteres($saldoBase, $tasaInteresMensual, $fechaBase);
+        $interesMensual = $this->calcularInteres($saldoBase, $tasaInteresMensual, $fechaBase, $fechaPago);
         $this->log("Interés mensual calculado: Q{$interesMensual}");
         $capitalMensual = $this->calcularCapital($interesMensual, $prestamo, $saldoBase, $plazo, $pagoAnterior);
         $this->log("Capital mensual calculado: Q{$capitalMensual}");
@@ -962,9 +960,11 @@ class CuotaHipotecaService extends CuotaService
      * @param mixed $penalizacion información de la penalización
      * @param mixed $existente información sobre si la penalización es existente
      */
-    private function procesarPenalizacionExistente($pago, $montoDisponible, &$detallesPago, $deposito, $existente)
+    private function procesarPenalizacionExistente($pago, $montoDisponible, &$detallesPago, $deposito)
     {
-        $pago->penalizacion = $existente ? $deposito['penalizacion'] : $this->calcularPenalizacion($pago, $deposito['fecha_deposito']);
+        $penalizacion = $deposito['penalizacion'] ? $deposito['penalizacion']: 0;
+        $pago->penalizacion = $pago->penalizacion + $penalizacion;
+        $this->log("Procesando penalización existente: {$pago->penalizacion}");
         return $this->procesarPenalizacion($pago, $montoDisponible, $detallesPago);
     }
 
@@ -1087,7 +1087,9 @@ class CuotaHipotecaService extends CuotaService
 
         // Recalcular interés basado en el nuevo saldo
         $tasaInteresMensual = $this->calcularTaza($prestamoHipotecario->interes);
-        $nuevoInteres = $this->calcularInteres($nuevoSaldo, $tasaInteresMensual, $pagoSiguiente->fecha);
+        // Obtener fecha del pago anterior para calcular días transcurridos
+        $fechaAnterior = $pago->fecha;
+        $nuevoInteres = $this->calcularInteres($nuevoSaldo, $tasaInteresMensual, $fechaAnterior, $pagoSiguiente->fecha);
 
         // Calcular nuevo capital y saldo
         if ($nuevoSaldo < ($prestamoHipotecario->cuota - $nuevoInteres)) {
@@ -1205,7 +1207,7 @@ class CuotaHipotecaService extends CuotaService
             ' fecha ' . now();
         // Crear depósito
         $this->depositoService->crearDeposito([
-            'tipo_documento' => $data['tipo_documento'],
+            'tipo_documento' => $data ['tipo_documento'],
             'id_pago' => $pago->id,
             'monto' => $data['monto'],
             'numero_documento' => $data['no_documento'],
@@ -1316,7 +1318,17 @@ class CuotaHipotecaService extends CuotaService
      * @return float Interés calculado
      * @throws \Exception Si los parámetros son inválidos
      */
-    private function calcularInteres($monto, $tasa, $fechaPago)
+    /**
+     * Calcula el interés usando días transcurridos reales entre dos fechas.
+     * Fórmula unificada: Interés = Saldo × Tasa Anual × (Días / Días del Año)
+     *
+     * @param float $monto Saldo sobre el cual calcular
+     * @param float $tasa Tasa de interés mensual (decimal, ej: 0.02 para 2%)
+     * @param string $fechaInicio Fecha desde (último pago o inicio del préstamo)
+     * @param string|null $fechaFin Fecha hasta (fecha del pago). Si es null, se calcula +1 mes
+     * @return float Interés calculado
+     */
+    private function calcularInteres($monto, $tasa, $fechaInicio, $fechaFin = null)
     {
         try {
             if ($monto < 0) {
@@ -1326,20 +1338,29 @@ class CuotaHipotecaService extends CuotaService
                 $this->lanzarExcepcionConCodigo("La tasa de interés no puede ser negativa");
             }
 
-            // Obtener los días del mes antes de la fecha de pago
-            $diasDelMes = $this->obtenerDiasDelMes($fechaPago,0);
-            $this->log("Días del mes anterior a la fecha de pago: {$diasDelMes}");
-            // Validar si el año es bisiesto para ajustar los días del año
-            $anio = (int)date('Y', strtotime($fechaPago));
+            // Si no se proporciona fecha fin, calcular +1 mes desde fecha inicio
+            if ($fechaFin === null) {
+                $fechaFin = $this->obtenerFechaSiguienteMes($fechaInicio, true);
+            }
+
+            // Calcular días transcurridos reales entre las dos fechas
+            $fechaInicioObj = new \DateTime($fechaInicio);
+            $fechaFinObj = new \DateTime($fechaFin);
+            $diasTranscurridos = $fechaFinObj->diff($fechaInicioObj)->days;
+            $this->log("Días transcurridos entre {$fechaInicio} y {$fechaFin}: {$diasTranscurridos}");
+
+            // Usar el año de la FECHA FIN para determinar bisiesto (fecha en que se cobra el interés)
+            $anio = (int)$fechaFinObj->format('Y');
             $esBisiesto = (($anio % 4 == 0 && $anio % 100 != 0) || ($anio % 400 == 0));
             $diasDelAnio = $esBisiesto ? 366 : 365;
             $this->log("Año: {$anio}, Es bisiesto: " . ($esBisiesto ? 'Sí' : 'No') . ", Días del año: {$diasDelAnio}");
 
-            // Ajustar el interés proporcionalmente a los días del año
-            $interes = (($monto * ($tasa * 12)) / $diasDelAnio) * $diasDelMes;
+            // Calcular interés: Saldo × Tasa Anual × (Días / Días del Año)
+            $tasaAnual = $tasa * 12;
+            $interes = $monto * $tasaAnual * ($diasTranscurridos / $diasDelAnio);
             $interes = round($interes, 2);
 
-            $this->log("Interés calculado: Monto=Q{$monto} × Tasa={$tasa} = Q{$interes}");
+            $this->log("Interés calculado: Monto=Q{$monto} × TasaAnual={$tasaAnual} × ({$diasTranscurridos}/{$diasDelAnio}) = Q{$interes}");
             return $interes;
         } catch (\Exception $e) {
             $this->manejarError($e, 'calcularInteres');

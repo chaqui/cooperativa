@@ -26,6 +26,7 @@ class StorePagarCuota extends FormRequest
             'tipo_documento' => ['required', 'string'],
             'fecha_documento' => ['required', 'date'],
             'monto' => ['required', 'numeric'],
+            'penalizacion' => ['nullable', 'numeric'],
             'id_cuenta' => ['required', 'integer', 'exists:tipo_cuenta_interna,id'],
 
         ];
