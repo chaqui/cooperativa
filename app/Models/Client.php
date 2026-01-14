@@ -53,8 +53,8 @@ class Client extends Model
         'tipo_vivienda',
         'estabilidad_domiciliaria',
         'nacionalidad', // Nuevo campo para nacionalidad
-        'carga_familiar' // Nuevo campo para carga familiar
-
+        'carga_familiar', // Nuevo campo para carga familiar
+        'path_dpi' // Nuevo campo para la ruta del DPI
     ];
 
     public function estadoCliente()
@@ -110,6 +110,7 @@ class Client extends Model
         $client->tipo_vivienda = $data['tipo_vivienda'] ?? null;
         $client->etado_cliente  = 1;
         $client->nacionalidad = $data['nacionalidad'] ?? null;
+        $client->path_dpi = $data['path_dpi'] ?? null;
         return $client;
     }
 
@@ -187,5 +188,10 @@ class Client extends Model
     public function beneficiarios()
     {
         return $this->hasMany(Beneficiario::class, 'dpi_cliente', 'dpi');
+    }
+
+    public function clientChanges()
+    {
+        return $this->hasMany(ClientChange::class, 'dpi_cliente', 'dpi');
     }
 }

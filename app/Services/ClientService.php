@@ -10,6 +10,7 @@ use App\Constants\InicialesCodigo;
 use App\Models\Beneficiario;
 use App\Traits\ErrorHandler;
 
+
 class ClientService extends CodigoService
 {
     use Loggable;
@@ -21,14 +22,22 @@ class ClientService extends CodigoService
 
     private $catalogoService;
 
+    private $archivoService;
+
+    private $clientChangeService;
+
     public function __construct(
         ReferenceService $referenceService,
         PdfService $pdfService,
-        CatologoService $catalogoService
+        CatologoService $catalogoService,
+        ArchivoService $archivoService,
+        ClientChangeService $clientChangeService
     ) {
         $this->referenceService = $referenceService;
         $this->pdfService = $pdfService;
         $this->catalogoService = $catalogoService;
+        $this->archivoService = $archivoService;
+        $this->clientChangeService = $clientChangeService;
         parent::__construct(InicialesCodigo::$Cliente);
     }
 
@@ -256,29 +265,31 @@ class ClientService extends CodigoService
         DB::beginTransaction();
         try {
             $client = $this->getClient($id);
-
+            // Clonar el cliente original para preservar los valores anteriores
+            $clientOriginal = clone $client;
             // Update client data
             $client = Client::updateData($data, $client);
             $client->save();
             $this->log('Cliente actualizado exitosamente id ' . $client->id);
-
+            $referencias = [];
             // Handle references - update if provided, delete if not provided
             if (isset($data['referencias']) && is_array($data['referencias'])) {
-                $this->updateReferences($client, $data['referencias']);
+                $referencias = $this->updateReferences($client, $data['referencias']);
             } else {
                 // No references provided - delete all existing references
                 $this->deleteAllReferences($client);
             }
 
+            $beneficiarios = [];
             // Handle beneficiarios - update if provided, delete if not provided
             if (isset($data['beneficiarios']) && is_array($data['beneficiarios'])) {
                 $this->validateBeneficiarioPercentages($data['beneficiarios']);
-                $this->updateBeneficiarios($client, $data['beneficiarios']);
+                $beneficiarios = $this->updateBeneficiarios($client, $data['beneficiarios']);
             } else {
                 // No beneficiarios provided - delete all existing beneficiarios
                 $this->deleteAllBeneficiarios($client);
             }
-
+            $this->clientChangeService->logClientChanges($clientOriginal, $client, $beneficiarios, $referencias);
             DB::commit();
             $this->log('Cliente y relaciones actualizadas exitosamente');
 
@@ -294,7 +305,7 @@ class ClientService extends CodigoService
      * Update references for a client
      * @param Client $client
      * @param array $referencias
-     * @return void
+     * @return array
      */
     private function updateReferences($client, $referencias)
     {
@@ -302,6 +313,7 @@ class ClientService extends CodigoService
 
         // Primero eliminar todas las referencias existentes que no están en el array
         $existingReferences = $client->references;
+        $referenciasAnteriores = $existingReferences->toArray();
         $referencesIds = array_column($referencias, 'id');
         $referencesIds = array_filter($referencesIds, function ($id) {
             return $id !== null;
@@ -329,15 +341,15 @@ class ClientService extends CodigoService
                 $client->references()->save($newReference);
             }
         }
-
         $this->log("Referencias actualizadas exitosamente");
+        return ['actuales' => $referencias, 'anteriores' => $referenciasAnteriores];
     }
 
     /**
      * Update beneficiarios for a client
      * @param Client $client
      * @param array $beneficiarios
-     * @return void
+     * @return array
      */
     private function updateBeneficiarios($client, $beneficiarios)
     {
@@ -345,6 +357,7 @@ class ClientService extends CodigoService
 
         // Primero eliminar todos los beneficiarios existentes que no están en el array
         $existingBeneficiarios = $client->beneficiarios;
+        $beneficiariosAnteriores = $existingBeneficiarios->toArray();
         $beneficiariosIds = array_column($beneficiarios, 'id');
         $beneficiariosIds = array_filter($beneficiariosIds, function ($id) {
             return $id !== null;
@@ -377,6 +390,7 @@ class ClientService extends CodigoService
         }
 
         $this->log("Beneficiarios actualizados exitosamente");
+        return ['actuales' => $beneficiarios, 'anteriores' => $beneficiariosAnteriores];
     }
 
 
@@ -439,12 +453,15 @@ class ClientService extends CodigoService
             return collect();
         }
 
-        // Buscar en múltiples campos usando LIKE
-        $clientes = Client::where(function ($query) use ($searchTerm) {
-            $query->where('nombres', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('apellidos', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('dpi', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('codigo', 'LIKE', "%{$searchTerm}%");
+        // Convertir a minúsculas para búsqueda case-insensitive
+        $searchTermLower = strtolower($searchTerm);
+
+        // Buscar en múltiples campos usando LIKE (case-insensitive)
+        $clientes = Client::where(function ($query) use ($searchTermLower) {
+            $query->whereRaw('LOWER(nombres) LIKE ?', ["%{$searchTermLower}%"])
+                ->orWhereRaw('LOWER(apellidos) LIKE ?', ["%{$searchTermLower}%"])
+                ->orWhereRaw('LOWER(dpi) LIKE ?', ["%{$searchTermLower}%"])
+                ->orWhereRaw('LOWER(codigo) LIKE ?', ["%{$searchTermLower}%"]);
         })->get();
 
         $this->log("Se encontraron " . $clientes->count() . " clientes");
@@ -697,5 +714,56 @@ class ClientService extends CodigoService
         } else {
             $this->log("El cliente no tiene beneficiarios para eliminar");
         }
+    }
+
+    /**
+     * Guarda el archivo DPI de un cliente
+     *
+     * @param mixed $clienteId ID del cliente
+     * @param mixed $archivo Contenido del archivo o instancia de UploadedFile
+     * @param string $dpiCliente DPI del cliente
+     * @return string Ruta completa del archivo guardado
+     * @throws \Exception Si ocurre un error al guardar el archivo
+     */
+    public function guardarArchivoDpi($archivo, $dpiCliente)
+    {
+        if (!$archivo) {
+            $this->log("No se proporcionó ningún archivo DPI para el cliente: {$dpiCliente}");
+            throw new \Exception("No se proporcionó ningún archivo DPI.");
+        }
+
+        // Validar que sea un archivo PDF
+        $mimeType = $archivo->getMimeType();
+        $extension = strtolower($archivo->getClientOriginalExtension());
+
+        if ($mimeType !== 'application/pdf' && $extension !== 'pdf') {
+            $this->log("Archivo inválido: tipo {$mimeType}, extensión {$extension}");
+            throw new \Exception("El archivo debe ser de formato PDF.");
+        }
+
+        // Validar tamaño máximo de 5 MB (5 * 1024 * 1024 = 5242880 bytes)
+        $maxSize = 5 * 1024 * 1024;
+        $fileSize = $archivo->getSize();
+
+        if ($fileSize > $maxSize) {
+            $fileSizeMB = round($fileSize / (1024 * 1024), 2);
+            $this->log("Archivo demasiado grande: {$fileSizeMB} MB");
+            throw new \Exception("El archivo no debe superar los 5 MB. Tamaño actual: {$fileSizeMB} MB.");
+        }
+
+        $correlativo = '0';
+        $client = Client::where('dpi', $dpiCliente)->first();
+        if ($client) {
+            $existingPath = $client->path_dpi ?? '';
+            if (!empty($existingPath)) {
+                preg_match('/_(\d+)\.pdf$/', $existingPath, $matches);
+                $correlativo = isset($matches[1]) ? (string)((int)$matches[1] + 1) : '1';
+            }
+        }
+
+        $path = 'archivos/clientes/dpi';
+        $fileName = 'dpi_cliente_' . $dpiCliente . '_' . $correlativo . '.pdf';
+        // Usar el servicio de archivo para guardar el archivo
+        return $this->archivoService->guardarArchivo($archivo, $path, $fileName);
     }
 }

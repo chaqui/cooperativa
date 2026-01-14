@@ -80,7 +80,7 @@ class ArchivoService
      * @return string Contenido del archivo
      * @throws \Exception Si el archivo no existe
      */
-    public function obtenerArchivo($path): string
+    public function obtenerArchivo(string $path): string
     {
         $this->log("Obteniendo archivo desde: {$path}");
 

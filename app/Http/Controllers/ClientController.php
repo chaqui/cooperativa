@@ -6,6 +6,8 @@ use App\Traits\Loggable;
 use Illuminate\Http\Request;
 
 use App\Services\ClientService;
+use App\Services\ClientExcelService;
+use App\Services\ClientChangeService;
 use App\Services\FotografiaService;
 use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\StoreFotografiaRequest;
@@ -17,6 +19,7 @@ use App\Http\Resources\Reference as ReferenceResource;
 use App\Http\Resources\Propiedad as PropiedadResource;
 use App\Http\Resources\Prestamo as PrestamoResource;
 use App\Http\Resources\Cuota as CuotaResource;
+use App\Http\Resources\ClientChange as ClientChangeResource;
 
 class ClientController extends Controller
 {
@@ -24,13 +27,20 @@ class ClientController extends Controller
 
     private $clientService;
     private $fotografiaService;
+    private $clientExcelService;
+
+    private $clientChangeService;
 
     public function __construct(
         ClientService $clientService,
-        FotografiaService $fotografiaService
+        FotografiaService $fotografiaService,
+        ClientExcelService $clientExcelService,
+        ClientChangeService $clientChangeService
     ) {
         $this->clientService = $clientService;
         $this->fotografiaService = $fotografiaService;
+        $this->clientExcelService = $clientExcelService;
+        $this->clientChangeService = $clientChangeService;
     }
     /**
      * Display a listing of the resource.
@@ -90,7 +100,7 @@ class ClientController extends Controller
     public function buscar(Request $request)
     {
         $searchTerm = $request->input('query', '');
-        if(empty($searchTerm)) {
+        if (empty($searchTerm)) {
             return ClientResource::collection(collect());
         }
         $clients = $this->clientService->buscarClientes($searchTerm);
@@ -214,12 +224,44 @@ class ClientController extends Controller
                 'message' => 'Datos del cliente obtenidos exitosamente',
                 'data' => new ClientResource($clientData)
             ], 200);
-
         } catch (\Exception $e) {
             $this->log("Error al obtener datos del cliente para PDF: " . $e->getMessage());
             return response()->json([
                 'message' => 'Error al obtener datos del cliente: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function guardarDpi(string $dpi, Request $request)
+    {
+        $this->log("Guardando DPI para el cliente: {$dpi}");
+
+        $file = $request->file('dpi_file');
+        try {
+            $path = $this->clientService->guardarArchivoDpi($file, $dpi);
+            $this->log("DPI guardado exitosamente para el cliente: {$dpi}");
+            return response()->json(['message' => 'DPI guardado exitosamente', 'data' => ['path' => $path]], 200);
+        } catch (\Exception $e) {
+            $this->log("Error al guardar DPI para el cliente: {$dpi}. Error: " . $e->getMessage());
+            return response()->json(['message' => 'Error al guardar DPI: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function exportarExcel()
+    {
+        $this->log('Iniciando exportación de clientes a Excel');
+
+        $exportData = $this->clientExcelService->obtenerClientesExcel();
+
+        $this->log('Exportación de clientes a Excel completada');
+
+        return response($exportData['content'], 200, $exportData['headers']);
+    }
+
+
+    public function getChangesLog($id)
+    {
+        $changes = $this->clientChangeService->getClientChangesByDpi($id);
+        return ClientChangeResource::collection($changes);
     }
 }

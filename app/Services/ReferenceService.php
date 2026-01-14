@@ -26,6 +26,10 @@ class ReferenceService
     public function updateReference( $id, array $referenceData): Reference
     {
         $reference = $this->getReference($id);
+
+        // Si afinidad no existe en los datos, dejarlo vacío
+        $reference->afinidad = $referenceData['afinidad'] ?? null;
+
         $reference->update($referenceData);
         return $reference;
     }

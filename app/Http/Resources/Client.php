@@ -57,6 +57,7 @@ class Client extends JsonResource
             'estabilidad_domiciliaria' => $this->estabilidad_domiciliaria,
             'razon_otros_ingresos' => $this->razon_otros_ingresos,
             'nacionalidad' => $this->nacionalidad,
+            'path_dpi' => $this->path_dpi,
 
             // Relaciones
             'beneficiarios' => BeneficiarioResource::collection($this->whenLoaded('beneficiarios')),

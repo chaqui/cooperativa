@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
-use Tymon\JWTAuth\Http\Middleware\Authenticate;
 
 use App\Constants\Roles;
 use App\Http\Middleware\CheckRole;
@@ -24,13 +23,14 @@ use App\Http\Controllers\TipoCuentaInternaController;
 use App\Http\Controllers\DeclaracionController;
 use App\Http\Controllers\ImpuestoController;
 use App\Http\Controllers\OrientacionController;
-use App\Http\Controllers\ExcelController;
 use App\Http\Controllers\ExcelTemplateController;
-use App\Http\Resources\Rol;
+use App\Http\Controllers\ArchivoController;
 
 $rolesEdicion = implode('|', [Roles::$ADMIN, Roles::$ASESOR]);
 $rolesSoloLectura = implode('|', [Roles::$ADMIN, Roles::$ASESOR, Roles::$CAJERO, Roles::$SECRETARIA]);
 
+Route::get('clients/excel/download', [ClientController::class, 'exportarExcel'])
+    ->middleware(CheckRole::class . ':' . Roles::$ADMIN);
 //clientes
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::post('clients', [ClientController::class, 'store']);
@@ -41,6 +41,7 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('clients/{id}/propiedades', [ClientController::class, 'propiedades']);
     Route::get('clients/{id}/propiedades-sin-prestamo', [ClientController::class, 'getPropiedadSinPrestamo']);
     Route::get('clients/{id}/prestamos', [ClientController::class, 'prestamos']);
+    Route::post('clients/{id}/upload-dpi', [ClientController::class, 'guardarDpi']);
 });
 
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
@@ -54,6 +55,7 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
     Route::get('clients/{id}/cuotas', [ClientController::class, 'cuotas']);
     Route::get('clients/{id}/beneficiarios', [ClientController::class, 'getBeneficiarios']);
     Route::get('clients/{id}/data-for-pdf', [ClientController::class, 'getDataForPDF']);
+    Route::get('clients/{id}/changes-log', [ClientController::class, 'getChangesLog']);
 });
 
 //inversiones
@@ -124,8 +126,8 @@ Route::post('users/{id}/change-password', [UserController::class, 'changePasswor
 
 //Auth
 Route::post('login', [AuthController::class, 'login']);
-Route::post('logout', [AuthController::class, 'logout'])->middleware(Authenticate::class);
-Route::post('validate-token', [AuthController::class, 'validateToken'])->middleware(Authenticate::class);
+Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:api');
+Route::post('validate-token', [AuthController::class, 'validateToken'])->middleware('auth:api');
 
 //Roles
 Route::middleware(CheckRole::class . ':' . Roles::$ADMIN)->group(function () {
@@ -215,10 +217,16 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::put('declaraciones/{id}', [DeclaracionController::class, 'declarar']);
 });
 
+//orientaciones
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
     Route::get('orientaciones', [OrientacionController::class, 'index']);
 });
 
+//proyectar cuotas
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
     Route::get('cuotas/{id}/proyectar', [CuotaController::class, 'proyectarCuota']);
+});
+
+Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
+    Route::get('archivos', [ArchivoController::class, 'obtenerArchivo']);
 });

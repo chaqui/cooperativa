@@ -65,6 +65,8 @@ class StoreClientRequest extends FormRequest
             'beneficiarios.*.nombre' => ['required', 'string'],
             'beneficiarios.*.parentezco' => ['required', 'string'],
             'beneficiarios.*.porcentaje' => ['required', 'numeric', 'min:0', 'max:100'],
+            'beneficiarios.*.fecha_nacimiento' => ['required', 'date'],
+            'path_dpi' => 'required|string',
         ];
     }
 
