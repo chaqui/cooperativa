@@ -18,7 +18,8 @@ class Inversion extends Model
         'dpi_cliente',
         'fecha',
         'fecha_inicio',
-        'codigo'
+        'codigo',
+        'path_documentacion'
     ];
 
     public function cliente()

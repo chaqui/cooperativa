@@ -27,6 +27,7 @@ class Inversion extends JsonResource
             'codigo' => $this->codigo,
             'interes' =>(int) $this->interes,
             'tipo_plazo' => $this->tipo_plazo,
+            'path_documentacion' => $this->path_documentacion,
         ];
     }
 }

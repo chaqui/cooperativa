@@ -39,6 +39,8 @@ class PrestamoService extends CodigoService
 
     protected $prestamoExistenteService;
 
+    protected  PrestamoArchivoService $prestamoArchivoService;
+
     private string $cancelacionPorPagoTotal = '24';
 
     public function __construct(
@@ -48,7 +50,8 @@ class PrestamoService extends CodigoService
         CatologoService $catalogoService,
         UserService $userService,
         CuotaHipotecaService $cuotaHipotecaService,
-        PrestamoExistenService $prestamoExistenteService
+        PrestamoExistenService $prestamoExistenteService,
+        PrestamoArchivoService $prestamoArchivoService
     ) {
         $this->controladorEstado = $controladorEstado;
         $this->clientService = $clientService;
@@ -57,6 +60,7 @@ class PrestamoService extends CodigoService
         $this->userService = $userService;
         $this->cuotaHipotecaService = $cuotaHipotecaService;
         $this->prestamoExistenteService = $prestamoExistenteService;
+        $this->prestamoArchivoService = $prestamoArchivoService;
 
         parent::__construct(InicialesCodigo::$Prestamo_Hipotecario);
     }
@@ -71,7 +75,7 @@ class PrestamoService extends CodigoService
     public function create($request)
     {
         $data = $request->all();
-
+        $data['existente'] = filter_var($data['existente'], FILTER_VALIDATE_BOOLEAN);
 
         $this->validarFrecuenciaPago($data);
         $this->validarExcel($data, $request);
@@ -111,7 +115,9 @@ class PrestamoService extends CodigoService
 
                 $this->controladorEstado->cambiarEstado($prestamo, $dataEstado);
             }
+            $prestamo->path_archivo = $this->prestamoArchivoService->guardarArchivoPrestamo($request->file('file_soporte'), $prestamo->codigo);
             $prestamo->save();
+
             DB::commit();
 
 
@@ -248,12 +254,13 @@ class PrestamoService extends CodigoService
             }
             $this->log('Realizando pago de cuota' . $cuotaApagar->numero_pago_prestamo . ' del prestamo : ' . $prestamo->codigo);
             $cuotaHipotecaService = app(CuotaHipotecaService::class);
-            $cuotaHipotecaService->realizarPago($data, $cuotaApagar->id);
+            $idDeposito = $cuotaHipotecaService->realizarPago($data, $cuotaApagar->id);
 
             $this->verificarYCancelarPrestamoSiCorresponde($prestamo);
 
             DB::commit();
             $this->log('Pago realizado con éxito para la cuota: ' . $cuotaApagar->id);
+            return $idDeposito;
         } catch (Exception $e) {
             DB::rollBack();
             $this->log('Error al realizar el pago: ' . $e->getMessage());

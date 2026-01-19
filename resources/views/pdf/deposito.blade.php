@@ -33,7 +33,7 @@
 
         body {
             font-family: Arial, sans-serif;
-            font-size: 12px;
+            font-size: 11px;
             max-width: 100%;
             margin: 0 auto;
             padding: 10mm;
@@ -61,14 +61,14 @@
         }
 
         .title {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             margin: 4px 0;
         }
 
         .receipt-number {
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             padding: 4px 0;
             border: 1px solid #000;
@@ -84,20 +84,20 @@
 
         .section-title {
             font-weight: bold;
-            font-size: 14px;
+            font-size: 11px;
             margin-bottom: 8px;
             color: #333;
         }
 
         .row {
-            font-size: 12px;
+            font-size: 11px;
             line-height: 1.6;
             margin-bottom: 4px;
         }
 
         .amount-box {
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             padding: 4px;
             border: 1px solid #000;
@@ -108,7 +108,7 @@
         .payment-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12px;
+            font-size: 11px;
         }
 
         .payment-table td {
@@ -138,7 +138,7 @@
             margin-top: 25px;
             padding-top: 5px;
             text-align: center;
-            font-size: 10px;
+            font-size: 11px;
             color: #666;
         }
     </style>

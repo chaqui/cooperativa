@@ -14,14 +14,17 @@ class PropiedadService
 
 
     private $catalogoService;
+    private $archivoService;
 
 
     public function __construct(
         ClientService $clientService,
-        CatologoService $catalogoService
+        CatologoService $catalogoService,
+        ArchivoService $archivoService
     ) {
         $this->clientService = $clientService;
         $this->catalogoService = $catalogoService;
+        $this->archivoService = $archivoService;
     }
 
     public function getPropiedad(string $id): Propiedad
@@ -34,10 +37,15 @@ class PropiedadService
         return Propiedad::all();
     }
 
-    public function createPropiedad(array $propiedadData): Propiedad
+    public function createPropiedad(array $propiedadData, $documentoSoporte): Propiedad
     {
         $this->clientService->getClient($propiedadData['dpi_cliente']);
-        return Propiedad::create($propiedadData);
+        $garantia = Propiedad::create($propiedadData);
+        if (isset($documentoSoporte)) {
+            $garantia->path_documentacion = $this->guardarArchivoPrestamo($documentoSoporte, $garantia->id);
+            $garantia->save();
+        }
+        return $garantia;
     }
 
     public function updatePropiedad($id, array $propiedadData): Propiedad
@@ -57,5 +65,14 @@ class PropiedadService
     {
         $garantia->nombreTipo = $this->catalogoService->getCatalogo($garantia->tipo_propiedad)['value'] ?? 'No definido';
         return $garantia;
+    }
+
+
+    private function guardarArchivoPrestamo($archivo, $idGarantia)
+    {
+        $path = 'archivos/garantias/documentacion';
+        $fileName = 'garantia_' . $idGarantia . '.pdf';
+        // Usar el servicio de archivo para guardar el archivo
+        return $this->archivoService->guardarArchivo($archivo, $path, $fileName);
     }
 }

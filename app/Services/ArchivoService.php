@@ -7,6 +7,13 @@ use App\Traits\ErrorHandler;
 
 class ArchivoService
 {
+
+    use Loggable;
+    /**
+     * Ruta base relativa a storage para archivos
+     */
+    private const BASE_STORAGE_PATH = 'app/';
+
     use Loggable, ErrorHandler;
     /**
      * Guarda un archivo en el sistema de almacenamiento
@@ -29,7 +36,7 @@ class ArchivoService
                 $fullPath = rtrim($path, '/\\');
             } else {
                 // Path relativo, construir ruta completa
-                $fullPath = storage_path('app/' . ltrim($path, '/'));
+                $fullPath = storage_path(self::BASE_STORAGE_PATH . ltrim($path, '/'));
             }
 
             // Crear directorio si no existe

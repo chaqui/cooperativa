@@ -46,7 +46,11 @@ class InversionController extends Controller
      */
     public function store(StoreInversionRequest $request)
     {
-        $this->inversionService->createInversion($request->all());
+        $archivo = $request->file('documentacion');
+        if (!$archivo) {
+            return response()->json(['message' => 'Archivo de documentación es requerido'], 400);
+        }
+        $this->inversionService->createInversion($request->all(), $archivo);
         return response()->json(['message' => 'Inversion created successfully'], 201);
     }
 

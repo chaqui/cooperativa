@@ -15,7 +15,8 @@ class EstadosPrestamoService extends PrestamoService
         CatologoService $catalogoService,
         UserService $userService,
         CuotaHipotecaService $cuotaHipotecaService,
-        PrestamoExistenService $prestamoExistenteService
+        PrestamoExistenService $prestamoExistenteService,
+        PrestamoArchivoService $prestamoArchivoService
     ) {
         parent::__construct(
             $controladorEstado,
@@ -24,7 +25,8 @@ class EstadosPrestamoService extends PrestamoService
             $catalogoService,
             $userService,
             $cuotaHipotecaService,
-            $prestamoExistenteService
+            $prestamoExistenteService,
+            $prestamoArchivoService
         );
     }
 
@@ -32,7 +34,7 @@ class EstadosPrestamoService extends PrestamoService
      * Función para cambiar el estado de un préstamo hipotecario
      * @param mixed $id identificador del préstamo
      * @param mixed $data datos necesarios para cambiar el estado
-     * @return void 
+     * @return void
      */
     public function cambiarEstado($id, $data)
     {
@@ -55,7 +57,7 @@ class EstadosPrestamoService extends PrestamoService
 
     /**
      * Obtiene el historial de estados de un préstamo hipotecario
-     * @param mixed $id 
+     * @param mixed $id
      */
     public function getHistorial($id)
     {

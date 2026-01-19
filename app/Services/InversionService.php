@@ -25,16 +25,20 @@ class InversionService extends CodigoService
 
     private PdfService $pdfService;
 
+    private ArchivoService $archivoService;
+
     public function __construct(
         CuotaInversionService $cuotaInversionService,
         ControladorEstado $controladorEstado,
         PdfService $pdfService,
-        TipoCuentaInternaService $tipoCuentaInternaService
+        TipoCuentaInternaService $tipoCuentaInternaService,
+        ArchivoService $archivoService
     ) {
         $this->cuotaInversionService = $cuotaInversionService;
         $this->controladorEstado = $controladorEstado;
         $this->pdfService = $pdfService;
         $this->tipoCuentaInternaService = $tipoCuentaInternaService;
+        $this->archivoService = $archivoService;
         parent::__construct(InicialesCodigo::$Inversion);
     }
 
@@ -73,7 +77,7 @@ class InversionService extends CodigoService
      * @return \App\Models\Inversion
      * @throws \Exception Si ocurre un error durante el proceso
      */
-    public function createInversion(array $inversionData): Inversion
+    public function createInversion(array $inversionData, $archivo): Inversion
     {
         // Validar los datos de la inversión
         $this->validarInversionData($inversionData);
@@ -89,10 +93,15 @@ class InversionService extends CodigoService
             // Crear la inversión
             $inversion = Inversion::create($inversionData);
 
-            if (!$inversionData['existente']) {
+            $inversion->path_documentacion = $this->guardarArchivoPrestamo($archivo, $inversion->codigo);
+            $inversion->save();
+            $existente = $inversionData['existente'] ?? false;
+            if (!$existente) {
                 $this->controladorEstado->cambiarEstado($inversion, ['estado' => EstadoInversion::$CREADO]);
+            } else {
+                $this->cambiarEstadosAutomaticamente($inversion, $inversionData);
             }
-            $this->cambiarEstadosAutomaticamente($inversion, $inversionData);
+
             DB::commit();
             $inversion->refresh();
 
@@ -256,5 +265,13 @@ class InversionService extends CodigoService
         $beneficiarios = $inversion->cliente->beneficiarios;
         $html = view('pdf.inversion', ['inversion' => $inversion, 'beneficiarios' => $beneficiarios])->render();
         return $this->pdfService->generatePdf($html);
+    }
+
+    public function guardarArchivoPrestamo($archivo, $codigoInversion)
+    {
+        $path = 'archivos/inversiones/documentacion';
+        $fileName = 'inversion_' . $codigoInversion . '.pdf';
+        // Usar el servicio de archivo para guardar el archivo
+        return $this->archivoService->guardarArchivo($archivo, $path, $fileName);
     }
 }

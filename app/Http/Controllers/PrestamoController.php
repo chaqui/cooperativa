@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App;
 use App\Http\Requests\ActualizarPrestamoRequest;
 use App\Http\Requests\EstadoRequest;
 use App\Http\Requests\PrestamoRequest;
@@ -13,11 +12,12 @@ use App\Http\Resources\Retiro as RetiroResource;
 use App\Http\Resources\Propiedad as PropiedadResource;
 use App\Http\Requests\StorePagarCuota;
 
+use App\Services\ArchivoService;
 use App\Services\PrestamoService;
 use App\Services\PrestamoPdfService;
-use App\Services\EstadosPrestamoService;
 use App\Services\PrestamoExcelService;
-use App\Services\ArchivoService;
+use App\Services\EstadosPrestamoService;
+use App\Services\PrestamoArchivoService;
 use App\Traits\Loggable;
 
 class PrestamoController extends Controller
@@ -33,6 +33,8 @@ class PrestamoController extends Controller
 
     private $archivoService;
 
+    private $prestamoArchivoService;
+
     use Loggable;
 
     public function __construct(
@@ -40,13 +42,15 @@ class PrestamoController extends Controller
         PrestamoPdfService $prestamoPdfService,
         EstadosPrestamoService $estadosPrestamoService,
         PrestamoExcelService $prestamoExcelService,
-        ArchivoService $archivoService
+        ArchivoService $archivoService,
+        PrestamoArchivoService $prestamoArchivoService
     ) {
         $this->prestamoService = $prestamoService;
         $this->prestamoPdfService = $prestamoPdfService;
         $this->estadosPrestamoService = $estadosPrestamoService;
         $this->prestamoExcelService = $prestamoExcelService;
         $this->archivoService = $archivoService;
+        $this->prestamoArchivoService = $prestamoArchivoService;
     }
     /**
      * Display a listing of the resource.
@@ -62,7 +66,11 @@ class PrestamoController extends Controller
      */
     public function store(PrestamoRequest $request)
     {
+         if(!$request->hasFile('file_soporte')){
+            return response()->json(['message' => 'El archivo es requerido'], 400);
+        }
         $prestamo = $this->prestamoService->create($request);
+
         return new PrestamoResource($prestamo);
     }
 
@@ -181,8 +189,8 @@ class PrestamoController extends Controller
 
     public function pagarCuota(StorePagarCuota $request, string $id)
     {
-        $this->prestamoService->pagarCuota($id, $request->all());
-        return response()->json(['message' => 'Pago realizado correctamente'], 200);
+        $id = $this->prestamoService->pagarCuota($id, $request->all());
+        return response()->json(['message' => 'Pago realizado correctamente', 'id_deposito' => $id], 200);
     }
 
     /**

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Propiedad extends Model
 {
     protected $table = 'propiedades';
-    protected $fillable = ['Direccion', 'Descripcion', 'Valor_tasacion', 'Valor_comercial', 'tipo_propiedad', 'dpi_cliente'];
+    protected $fillable = ['Direccion', 'Descripcion', 'Valor_tasacion', 'Valor_comercial', 'path_documentacion', 'tipo_propiedad', 'dpi_cliente'];
 
     public function cliente()
     {
@@ -18,5 +18,4 @@ class Propiedad extends Model
     {
         return $this->hasMany(Prestamo_Hipotecario::class, 'propiedad_id');
     }
-
 }

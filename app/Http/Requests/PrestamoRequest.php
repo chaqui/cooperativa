@@ -29,7 +29,8 @@ class PrestamoRequest extends FormRequest
 
         $validacionesBasicas = $this->validacionesBasicas();
         $this->log("Input existente: " . json_encode($this->input("existente")));
-        if ($this->input("existente")) {
+        $existente = filter_var($this->input("existente"), FILTER_VALIDATE_BOOLEAN);
+        if ($existente) {
             $validacionesBasicas = array_merge($validacionesBasicas, $this->validacionesSiExiste());
         }
         return $validacionesBasicas;

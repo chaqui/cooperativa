@@ -39,6 +39,7 @@ class Prestamo_Hipotecario extends Model
         'fecha_fin_nueva',
         'motivo_cancelacion',
         'fecha_cancelacion',
+        'path_archivo'
     ];
 
     protected $dates = [

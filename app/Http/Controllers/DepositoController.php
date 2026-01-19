@@ -5,14 +5,18 @@ namespace App\Http\Controllers;
 use App\Http\Requests\DepositoInternoRequest;
 use App\Services\DepositoService;
 use App\Http\Requests\DepositoRequest;
+use App\Services\DepositoExcelService;
 
 class DepositoController extends Controller
 {
 
     private $depositoService;
-    public function __construct(DepositoService $depositoService)
+
+    private $depositoExcelService;
+    public function __construct(DepositoService $depositoService, DepositoExcelService $depositoExcelService)
     {
         $this->depositoService =  $depositoService;
+        $this->depositoExcelService = $depositoExcelService;
     }
 
     /**
@@ -66,6 +70,18 @@ class DepositoController extends Controller
             return response()->json(['message' => 'Deposito realizado con exito', 'data' => $deposito], 201);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Error al realizar el deposito', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function obtenerDepositosPorFecha($fecha)
+    {
+        try {
+            $excelData = $this->depositoExcelService->generarExcelDepositosPorFecha($fecha);
+
+            return response($excelData['content'])
+                ->withHeaders($excelData['headers']);
+        } catch (\Exception $e) {
+            return response()->json(['message'  => $e->getMessage()], 500);
         }
     }
 }

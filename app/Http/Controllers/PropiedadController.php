@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Http\Requests\PropiedadRequest;
 use App\Services\PropiedadService;
 use App\Http\Resources\Propiedad as PropiedadResource;
 
@@ -37,7 +36,10 @@ class PropiedadController extends Controller
      */
     public function store(Request $request)
     {
-        $propiedad = $this->propiedadService->createPropiedad($request->all());
+        if (!$request->hasFile('file_soporte')) {
+            return response()->json(['message' => 'El archivo es requerido'], 400);
+        }
+        $propiedad = $this->propiedadService->createPropiedad($request->all(), $request->file('file_soporte'));
         return new PropiedadResource($propiedad);
     }
 
@@ -53,10 +55,7 @@ class PropiedadController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
-    {
-
-    }
+    public function edit(string $id) {}
 
     /**
      * Update the specified resource in storage.

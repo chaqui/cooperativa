@@ -22,9 +22,11 @@ class DepositoService
 
     private BitacoraInteresService $bitacoraInteresService;
 
-    public function __construct(PdfService $pdfService,
-    ImpuestoTransaccionService $impuestoTransaccionService, BitacoraInteresService $bitacoraInteresService)
-    {
+    public function __construct(
+        PdfService $pdfService,
+        ImpuestoTransaccionService $impuestoTransaccionService,
+        BitacoraInteresService $bitacoraInteresService
+    ) {
         $this->pdfService = $pdfService;
         $this->impuestoTransaccionService = $impuestoTransaccionService;
         $this->bitacoraInteresService = $bitacoraInteresService;
@@ -381,5 +383,10 @@ class DepositoService
         if (!isset($datos['motivo']) && empty($datos['motivo'])) {
             $this->lanzarExcepcionConCodigo("El motivo es requerido");
         }
+    }
+
+    public function obtenerDepositosPorFecha($fecha)
+    {
+        return Deposito::whereDate('created_at', $fecha)->get();
     }
 }

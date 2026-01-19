@@ -133,7 +133,7 @@ class CuotaHipotecaService extends CuotaService
      *      - id_pago: ID del pago asociado
      *
      * @param mixed $id ID del pago a realizar
-     * @return void
+     * @return string Ruta del archivo PDF del comprobante de pago
      */
     public function realizarPago($data, $id)
     {
@@ -143,8 +143,9 @@ class CuotaHipotecaService extends CuotaService
             $pago = $this->getPago($id);
             $this->log('Iniciando proceso de pago de cuota No.' . $pago->numero_pago_prestamo);
             $this->validarEstadoPago($pago);
-            $this->procesarPago($pago, $data, $pago->prestamo);
+            $idDeposito = $this->procesarPago($pago, $data, $pago->prestamo);
             DB::commit();
+            return $idDeposito;
         } catch (\Exception $e) {
             $this->logError('Error al realizar el pago: ' . $e->getMessage());
             DB::rollBack();
@@ -277,12 +278,17 @@ class CuotaHipotecaService extends CuotaService
             'id_cuenta' => $this->tipoCuentaInternaService->getCuentaParaDepositosAnteriores()->id,
             'existente' => true
         ];
-        $this->registrarDepositoYTransaccion($data, $pago, $detallesPago, $saldoActualReal);
+        $idDeposito = $this->registrarDepositoYTransaccion($data, $pago, $detallesPago, $saldoActualReal);
 
         // Actualizar fecha final del préstamo después del pago
         $this->actualizarFechaFinalPrestamo($prestamo);
+        if($existente) {
+           return $pago->nuevo_saldo;
+        }
+        else {
+            return $idDeposito;
+        }
 
-        return $pago->nuevo_saldo;
     }
 
     /**
@@ -300,8 +306,7 @@ class CuotaHipotecaService extends CuotaService
             }
 
             // Si no hay nuevo_saldo, calcular el saldo original
-            $saldoOriginal = $pago->saldo + $pago->capital;
-            return $saldoOriginal;
+            return $pago->saldo + $pago->capital;
         } catch (\Exception $e) {
             $this->manejarError($e, 'obtenerSaldoActualPago');
             return 0; // Esta línea nunca se ejecutará
@@ -1206,7 +1211,7 @@ class CuotaHipotecaService extends CuotaService
             ' codigo del préstamo ' . $pago->prestamo->codigo .
             ' fecha ' . now();
         // Crear depósito
-        $this->depositoService->crearDeposito([
+        $deposito = $this->depositoService->crearDeposito([
             'tipo_documento' => $data ['tipo_documento'],
             'id_pago' => $pago->id,
             'monto' => $data['monto'],
@@ -1221,6 +1226,7 @@ class CuotaHipotecaService extends CuotaService
             'existente' => $data['existente'],
             'fecha' => $data['fecha_documento'] ?? now()
         ]);
+        return $deposito->id;
     }
 
 

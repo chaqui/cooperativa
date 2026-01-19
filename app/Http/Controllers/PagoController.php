@@ -29,8 +29,8 @@ class PagoController extends Controller
      */
     public function pagarCuota(StorePagarCuota $request, $id)
     {
-        $this->cuotaService->realizarPago($request->all(), $id);
-        return response()->json(['message' => 'Cuota pagada correctamente'], 200);
+       $idDeposito = $this->cuotaService->realizarPago($request->all(), $id);
+        return response()->json(['message' => 'Cuota pagada correctamente', 'id_deposito' => $idDeposito], 200);
     }
 
     public function obtenerDepositos($id)

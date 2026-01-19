@@ -182,6 +182,7 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
 //depositos
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::post('depositos', [DepositoController::class, 'crearDepositoyDepositar']);
+    Route::get('depositos/excel/por-fecha/{fecha}', [DepositoController::class, 'obtenerDepositosPorFecha']);
     Route::get('depositos/excel', [ExcelTemplateController::class, 'downloadDepositTemplate']);
     Route::put('depositos/{id}', [DepositoController::class, 'depositar']);
     Route::get('depositos/{id}/pdf', [DepositoController::class, 'getPDF']);

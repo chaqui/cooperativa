@@ -22,6 +22,7 @@ class Propiedad extends JsonResource
             'Valor_comercial' => $this->Valor_comercial,
             'tipo_propiedad' => $this->tipo_propiedad,
             'dpi_cliente' => $this->dpi_cliente,
+            'path_documentacion' => $this->path_documentacion,
         ];
     }
 }
