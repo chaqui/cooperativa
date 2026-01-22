@@ -66,7 +66,9 @@ class PrestamoController extends Controller
      */
     public function store(PrestamoRequest $request)
     {
-         if(!$request->hasFile('file_soporte')){
+        $data = $request->all();
+         $existente = filter_var($data['existente'], FILTER_VALIDATE_BOOLEAN);
+         if(!$existente && !$request->hasFile('file_soporte')){
             return response()->json(['message' => 'El archivo es requerido'], 400);
         }
         $prestamo = $this->prestamoService->create($request);

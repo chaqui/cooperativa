@@ -19,7 +19,7 @@ class ClientChange extends JsonResource
             'cambios' => json_decode($this->cambios, true),
             'dpi_cliente' => $this->dpi_cliente,
             'fecha_modificacion' => $this->created_at,
-            'usuario_modifico' => $this->usuario_modifico,
+            'usuario_modifico' => $this->asesor ? $this->asesor->name : null,
         ];
     }
 }

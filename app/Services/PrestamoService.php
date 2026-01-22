@@ -115,8 +115,10 @@ class PrestamoService extends CodigoService
 
                 $this->controladorEstado->cambiarEstado($prestamo, $dataEstado);
             }
-            $prestamo->path_archivo = $this->prestamoArchivoService->guardarArchivoPrestamo($request->file('file_soporte'), $prestamo->codigo);
-            $prestamo->save();
+            if ($request->hasFile('file_soporte')) {
+                $prestamo->path_archivo = $this->prestamoArchivoService->guardarArchivoPrestamo($request->file('file_soporte'), $prestamo->codigo);
+                $prestamo->save();
+            }
 
             DB::commit();
 

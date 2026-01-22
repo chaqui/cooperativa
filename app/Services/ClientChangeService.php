@@ -57,7 +57,7 @@ class ClientChangeService
             ClientChange::create(attributes: [
                 'dpi_cliente' => $originalClient->dpi,
                 'cambios' => json_encode($changes),
-                'usuario_modifico' => $usuario?->username,
+                'usuario_modifico' => $usuario?->id,
             ]);
         }
     }
@@ -69,7 +69,8 @@ class ClientChangeService
 
     public function getClientChangesByDpi($dpi)
     {
-        return ClientChange::where('dpi_cliente', $dpi)->orderBy('created_at', 'desc')->get();
+        $changes = ClientChange::where('dpi_cliente', $dpi)->orderBy('created_at', 'desc')->get();
+        return $changes;
     }
 
     /**

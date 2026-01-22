@@ -15,10 +15,16 @@ class ClientChange extends Model
     protected $fillable = [
         'cambios',
         'dpi_cliente',
+        'usuario_modifico',
     ];
 
     public function client()
     {
         return $this->belongsTo(Client::class, 'dpi_cliente', 'dpi');
+    }
+
+    public function asesor()
+    {
+        return $this->belongsTo(User::class, 'usuario_modifico', 'id');
     }
 }
