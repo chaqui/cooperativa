@@ -122,7 +122,7 @@ class PrestamoService extends CodigoService
                 $prestamo->path_archivo = $this->prestamoArchivoService->guardarArchivoPrestamo($request->file('file_soporte'), $prestamo->codigo);
                 $prestamo->save();
             }
-            if ($data['id_prestamo_cancelado']) {
+            if (!empty($data['id_prestamo_cancelado'])) {
                 $this->prestamoRemplazadoService->registrarPrestamoRemplazo(
                     $data['id_prestamo_cancelado'],
                     $prestamo->id
@@ -144,7 +144,7 @@ class PrestamoService extends CodigoService
 
     private function validarPrestamoRemplazo($data)
     {
-        if ($data['id_prestamo_cancelado'] == null) {
+        if (empty($data['id_prestamo_cancelado'])) {
             return;
         }
         if ($data['existente']) {
