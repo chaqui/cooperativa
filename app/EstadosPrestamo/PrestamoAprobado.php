@@ -44,7 +44,7 @@ class PrestamoAprobado extends EstadoBasePrestamo
     private function generarRetiro($prestamo, $data)
     {
         // Calcular monto neto del préstamo (monto - gastos)
-        $montoDeposito = $prestamo->monto - $prestamo->gastos_administrativos - $prestamo->gastos_formalidad;
+        $montoDeposito = $prestamo->monto - $prestamo->gastos_administrativos - $prestamo->gastos_formalidad - $prestamo->capitalPrestamosCancelados();
         if ($montoDeposito <= 0) {
             throw new \InvalidArgumentException(
                 "El monto a retirar debe ser positivo. Gastos excesivos: gastos administrativos + " .

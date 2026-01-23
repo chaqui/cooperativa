@@ -15,8 +15,6 @@ use App\Services\ClientService;
 use App\Services\PropiedadService;
 use App\Services\CatologoService;
 use App\Services\UserService;
-use App\Services\SimpleExcelService;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use Exception;
 use App\Traits\ErrorHandler;
 
@@ -41,6 +39,8 @@ class PrestamoService extends CodigoService
 
     protected  PrestamoArchivoService $prestamoArchivoService;
 
+    protected PrestamoRemplazadoService $prestamoRemplazadoService;
+
     private string $cancelacionPorPagoTotal = '24';
 
     public function __construct(
@@ -51,7 +51,8 @@ class PrestamoService extends CodigoService
         UserService $userService,
         CuotaHipotecaService $cuotaHipotecaService,
         PrestamoExistenService $prestamoExistenteService,
-        PrestamoArchivoService $prestamoArchivoService
+        PrestamoArchivoService $prestamoArchivoService,
+        PrestamoRemplazadoService $prestamoRemplazadoService
     ) {
         $this->controladorEstado = $controladorEstado;
         $this->clientService = $clientService;
@@ -61,6 +62,7 @@ class PrestamoService extends CodigoService
         $this->cuotaHipotecaService = $cuotaHipotecaService;
         $this->prestamoExistenteService = $prestamoExistenteService;
         $this->prestamoArchivoService = $prestamoArchivoService;
+        $this->prestamoRemplazadoService = $prestamoRemplazadoService;
 
         parent::__construct(InicialesCodigo::$Prestamo_Hipotecario);
     }
@@ -77,6 +79,7 @@ class PrestamoService extends CodigoService
         $data = $request->all();
         $data['existente'] = filter_var($data['existente'], FILTER_VALIDATE_BOOLEAN);
 
+        $this->validarPrestamoRemplazo($data);
         $this->validarFrecuenciaPago($data);
         $this->validarExcel($data, $request);
         DB::beginTransaction();
@@ -119,6 +122,12 @@ class PrestamoService extends CodigoService
                 $prestamo->path_archivo = $this->prestamoArchivoService->guardarArchivoPrestamo($request->file('file_soporte'), $prestamo->codigo);
                 $prestamo->save();
             }
+            if ($data['id_prestamo_cancelado']) {
+                $this->prestamoRemplazadoService->registrarPrestamoRemplazo(
+                    $data['id_prestamo_cancelado'],
+                    $prestamo->id
+                );
+            }
 
             DB::commit();
 
@@ -130,6 +139,26 @@ class PrestamoService extends CodigoService
             $this->manejarError($e, 'create prestamo');
             // Esta línea nunca se alcanzará porque manejarError siempre lanza excepción
             $this->lanzarExcepcionConCodigo("Error inesperado en create");
+        }
+    }
+
+    private function validarPrestamoRemplazo($data)
+    {
+        if ($data['id_prestamo_cancelado'] == null) {
+            return;
+        }
+        if ($data['existente']) {
+            $this->lanzarExcepcionConCodigo("Un préstamo existente no puede ser un préstamo de reemplazo.");
+        }
+
+        $prstamoCancelado = $this->get($data['id_prestamo_cancelado']);
+
+        if (!$prstamoCancelado->estaCancelado()) {
+            $this->lanzarExcepcionConCodigo("El préstamo a ser reemplazado debe estar cancelado.");
+        }
+
+        if ($data['monto'] < $prstamoCancelado->capitalPendiente()) {
+            $this->lanzarExcepcionConCodigo("El monto del nuevo préstamo debe ser mayor o igual al capital pendiente del préstamo cancelado.");
         }
     }
 

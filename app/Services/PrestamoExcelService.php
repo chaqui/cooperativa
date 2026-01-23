@@ -28,9 +28,10 @@ class PrestamoExcelService extends PrestamoService
         CuotaHipotecaService $cuotaHipotecaService,
         PrestamoExistenService $prestamoExistenteService,
         BitacoraInteresService $bitacoraInteresService,
-        PrestamoArchivoService $prestamoArchivoService
+        PrestamoArchivoService $prestamoArchivoService,
+        PrestamoRemplazadoService $prestamoRemplazadoService
     ) {
-        parent::__construct($controladorEstado, $clientService, $propiedadService, $catalogoService, $userService, $cuotaHipotecaService, $prestamoExistenteService, $prestamoArchivoService);
+        parent::__construct($controladorEstado, $clientService, $propiedadService, $catalogoService, $userService, $cuotaHipotecaService, $prestamoExistenteService, $prestamoArchivoService, $prestamoRemplazadoService);
         $this->bitacoraInteresService = $bitacoraInteresService;
     }
 

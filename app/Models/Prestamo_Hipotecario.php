@@ -99,7 +99,7 @@ class Prestamo_Hipotecario extends Model
 
     public function montoLiquido()
     {
-        return $this->monto - $this->gastos_administrativos - $this->gastos_formalidad;
+        return $this->monto - $this->gastos_administrativos - $this->gastos_formalidad - $this->capitalPrestamosCancelados();
     }
 
     public function intereses()
@@ -333,5 +333,30 @@ class Prestamo_Hipotecario extends Model
     public function capitalPendiente()
     {
         return $this->saldoPendienteCapital();
+    }
+
+    public function prestamosCancelados()
+    {
+        return $this->hasMany(Prestamo_Remplazo::class, 'prestamo_remplazo');
+    }
+
+    public function capitalPrestamosCancelados()
+    {
+        $prestamosCancelados = $this->prestamosCancelados;
+        $capitalTotal = 0.0;
+        foreach ($prestamosCancelados as $prestamoCancelado) {
+            $capitalTotal += $prestamoCancelado->prestamoCancelado->saldoPendienteCapital();
+        }
+        return round($capitalTotal, 2);
+    }
+
+    public function codigoPrestamosCancelados()
+    {
+        $prestamosCancelados = $this->prestamosCancelados;
+        $codigos = [];
+        foreach ($prestamosCancelados as $prestamoCancelado) {
+            $codigos[] = $prestamoCancelado->prestamoCancelado->codigo;
+        }
+        return $codigos;
     }
 }

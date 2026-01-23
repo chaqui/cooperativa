@@ -24,9 +24,10 @@ class PrestamoPdfService extends PrestamoService
         UserService $userService,
         CuotaHipotecaService $cuotaHipotecaService,
         PrestamoExistenService $prestamoExistenteService,
-        PrestamoArchivoService $prestamoArchivoService
+        PrestamoArchivoService $prestamoArchivoService,
+        PrestamoRemplazadoService $prestamoRemplazadoService
     ) {
-        parent::__construct($controladorEstado, $clientService, $propiedadService, $catalogoService, $userService, $cuotaHipotecaService, $prestamoExistenteService, $prestamoArchivoService);
+        parent::__construct($controladorEstado, $clientService, $propiedadService, $catalogoService, $userService, $cuotaHipotecaService, $prestamoExistenteService, $prestamoArchivoService, $prestamoRemplazadoService);
         $this->pdfService = $pdfService;
     }
 

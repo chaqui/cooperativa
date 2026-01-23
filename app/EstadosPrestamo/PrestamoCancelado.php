@@ -5,13 +5,15 @@ namespace App\EstadosPrestamo;
 use App\Constants\EstadoPrestamo;
 use App\Models\Prestamo_Hipotecario;
 use App\Services\DepositoService;
+use App\Traits\ErrorHandler;
 
 class PrestamoCancelado extends EstadoBasePrestamo
 {
+    use ErrorHandler;
+
     private string $cancelacionPorReestructuracion = '23';
     private string $cancelacionPorPagoTotal = '24';
     private string $cancelacionPorAmpliacion = '25';
-
     private DepositoService $depositoService;
 
     public function __construct(DepositoService $depositoService)
@@ -23,7 +25,10 @@ class PrestamoCancelado extends EstadoBasePrestamo
     public function cambiarEstado(Prestamo_Hipotecario $prestamo, $data)
     {
         if (!$data['razon']) {
-            throw new \Exception('La razón es requerida');
+            $this->lanzarExcepcionConCodigo('La razón es requerida');
+        }
+        if ($prestamo->interesPendiente() > 0) {
+            $this->lanzarExcepcionConCodigo('No se puede cancelar el préstamo mientras haya intereses pendientes.');
         }
         $prestamo->motivo_cancelacion = $data['razon'];
         $prestamo->fecha_cancelacion = now();

@@ -16,7 +16,9 @@ class EstadosPrestamoService extends PrestamoService
         UserService $userService,
         CuotaHipotecaService $cuotaHipotecaService,
         PrestamoExistenService $prestamoExistenteService,
-        PrestamoArchivoService $prestamoArchivoService
+        PrestamoArchivoService $prestamoArchivoService,
+        PrestamoRemplazadoService $prestamoRemplazadoService
+
     ) {
         parent::__construct(
             $controladorEstado,
@@ -26,7 +28,8 @@ class EstadosPrestamoService extends PrestamoService
             $userService,
             $cuotaHipotecaService,
             $prestamoExistenteService,
-            $prestamoArchivoService
+            $prestamoArchivoService,
+            $prestamoRemplazadoService
         );
     }
 
