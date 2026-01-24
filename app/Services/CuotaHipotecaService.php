@@ -648,23 +648,6 @@ class CuotaHipotecaService extends CuotaService
 
     /**
      *
-     * Función para registrar la fecha final del préstamo
-     * @param mixed $prestamo prestamo
-     * @param mixed $pago ultimo pago
-     * @return void
-     * @deprecated Use actualizarFechaFinalPrestamo() instead
-     */
-    private function registrarFechaFinalPrestamo($prestamo, $pago)
-    {
-        $this->log("El pago " . $pago->numero_pago_prestamo . " es el último pago del préstamo");
-        $this->log("Actualizando fecha de finalización del préstamo a {$pago->fecha}");
-        $prestamo->fecha_fin_nueva = $pago->fecha;
-        $prestamo->save();
-        $this->log("Fecha de finalización del préstamo actualizada a {$prestamo->fecha_fin_nueva}");
-    }
-
-    /**
-     *
      * Función para obtener el saldo base del préstamo
      * @param mixed $prestamo prestamo
      * @param mixed $pagoAnterior pago anterior
@@ -815,68 +798,6 @@ class CuotaHipotecaService extends CuotaService
             DB::commit();
             $this->lanzarExcepcionConCodigo("El saldo ya es cero");
         }
-    }
-
-    /**
-     * Procesa la penalización usando el valor ingresado por el usuario o calculado automáticamente
-     *
-     * @param Pago $pago Cuota a procesar
-     * @param float $montoDisponible Monto disponible para el pago
-     * @param array $detallesPago Array de detalles del pago (por referencia)
-     * @param string $fechaPago Fecha del pago
-     * @param float|null $penalizacionUsuario Penalización ingresada por el usuario
-     * @return float Monto restante después de aplicar penalización
-     */
-    private function procesarPenalizacionUsuario($pago, $montoDisponible, &$detallesPago, $fechaPago, $penalizacionUsuario = null)
-    {
-        if ($montoDisponible <= 0) {
-            $this->log("No hay monto disponible para procesar penalización");
-            return $montoDisponible;
-        }
-
-        // Determinar la penalización a usar
-        if ($penalizacionUsuario !== null && $penalizacionUsuario >= 0) {
-            $penalizacionTotal = $penalizacionUsuario;
-            $this->log("💰 Usando penalización ingresada por usuario: Q{$penalizacionTotal}");
-
-            // Actualizar el pago con la penalización del usuario
-            $pago->penalizacion = $penalizacionTotal;
-        } else {
-            // Si no hay penalización del usuario, usar la existente o calcular
-            if ($pago->penalizacion > 0) {
-                $penalizacionTotal = $pago->penalizacion;
-                $this->log("📋 Usando penalización existente en el pago: Q{$penalizacionTotal}");
-            } else {
-                $penalizacionTotal = $this->calcularPenalizacionPorRetraso($pago, $fechaPago);
-                $this->log("🧮 Penalización calculada automáticamente: Q{$penalizacionTotal}");
-                $pago->penalizacion = $penalizacionTotal;
-            }
-        }
-
-        if ($penalizacionTotal <= 0) {
-            $this->log("No hay penalización que procesar");
-            return $montoDisponible;
-        }
-
-        // Verificar si ya se ha pagado parte de la penalización
-        $penalizacionPendiente = $penalizacionTotal - $pago->recargo;
-
-        if ($penalizacionPendiente <= 0) {
-            $this->log("Penalización ya pagada completamente");
-            return $montoDisponible;
-        }
-
-        // Aplicar penalización con el monto disponible
-        $montoPenalizacion = min($montoDisponible, $penalizacionPendiente);
-        $pago->recargo += $montoPenalizacion;
-
-        $origenPenalizacion = ($penalizacionUsuario !== null) ? "ingresada por usuario" : "calculada automáticamente";
-        $detallesPago['descripcion'] .= "Se abonó por penalización ({$origenPenalizacion}) Q{$montoPenalizacion} de Q{$penalizacionTotal} total; ";
-        $detallesPago['penalizacion'] += $montoPenalizacion;
-
-        $this->log("✅ Penalización procesada: Q{$montoPenalizacion} de Q{$penalizacionPendiente} pendiente");
-
-        return $montoDisponible - $montoPenalizacion;
     }
 
     /**
@@ -1334,7 +1255,7 @@ class CuotaHipotecaService extends CuotaService
      * @param string|null $fechaFin Fecha hasta (fecha del pago). Si es null, se calcula +1 mes
      * @return float Interés calculado
      */
-    private function calcularInteres($monto, $tasa, $fechaInicio, $fechaFin = null)
+    public function calcularInteres($monto, $tasa, $fechaInicio, $fechaFin = null)
     {
         try {
             if ($monto < 0) {

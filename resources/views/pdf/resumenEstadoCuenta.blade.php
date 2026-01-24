@@ -20,7 +20,7 @@
         </tr>
         <tr>
             <th>Saldo Pendiente Intereses</th>
-            <td>Q. {{ number_format($prestamo->saldoPendienteIntereses(), 2) }}</td>
+            <td>Q. {{ number_format($interes_pendiente, 2) }}</td>
         </tr>
         <tr>
             <th>Saldo Pendiente Penalización</th>
@@ -28,7 +28,7 @@
         </tr>
         <tr>
             <th>Total Saldo Pendiente</th>
-            <td>Q. {{ number_format($prestamo->saldoPendienteConInteresAlDia(), 2) }}</td>
+            <td>Q. {{ number_format( $prestamo->saldoPendienteCapital() + $interes_pendiente + $prestamo->saldoPendientePenalizacion(), 2) }}</td>
         </tr>
     </table>
 </div>

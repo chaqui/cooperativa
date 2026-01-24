@@ -7,13 +7,16 @@ use App\Models\Prestamo_Hipotecario;
 use App\EstadosPrestamo\ControladorEstado;
 use App\Constants\Orientacion;
 use App\Traits\ErrorHandler;
+use App\Traits\Loggable;
 
 class PrestamoPdfService extends PrestamoService
 {
     use ErrorHandler;
+    use Loggable;
 
     private $pdfService;
 
+    private $bitacoraInteresService;
 
     public function __construct(
         PdfService $pdfService,
@@ -25,10 +28,12 @@ class PrestamoPdfService extends PrestamoService
         CuotaHipotecaService $cuotaHipotecaService,
         PrestamoExistenService $prestamoExistenteService,
         PrestamoArchivoService $prestamoArchivoService,
-        PrestamoRemplazadoService $prestamoRemplazadoService
+        PrestamoRemplazadoService $prestamoRemplazadoService,
+        BitacoraInteresService $bitacoraInteresService
     ) {
         parent::__construct($controladorEstado, $clientService, $propiedadService, $catalogoService, $userService, $cuotaHipotecaService, $prestamoExistenteService, $prestamoArchivoService, $prestamoRemplazadoService);
         $this->pdfService = $pdfService;
+        $this->bitacoraInteresService = $bitacoraInteresService;
     }
 
     /**
@@ -54,12 +59,13 @@ class PrestamoPdfService extends PrestamoService
 
             // Determinar la plantilla a usar
             $plantilla = $inicial ? 'pdf.estadoCuenta' : 'pdf.estadoCuentaActual';
-
+            $interes_pendiente = $inicial ? $prestamo->interes_pendiente(): $this->bitacoraInteresService->calcularInteresPendiente( $prestamo->cuotaActiva(), date('Y-m-d'))['interes_pendiente'] ?? 0;
             // Renderizar la vista HTML
             $html = view($plantilla, [
                 'prestamo' => $prestamo,
                 'pagos' => $pagos,
                 'orientation' => $orientation,
+                'interes_pendiente' => $interes_pendiente,
             ])->render();
 
             // Generar el PDF
@@ -204,11 +210,15 @@ class PrestamoPdfService extends PrestamoService
         $prestamo = $this->get($id);
 
         $depositos = $prestamo->depositos();
+        $interes_pendiente = $this->bitacoraInteresService->calcularInteresPendiente( $prestamo->cuotaActiva(), date('Y-m-d'))['interes_pendiente'] ?? 0;
         $this->enriquecerDatosPrestamo($prestamo);
+
+        $this->log("Interés pendiente calculado: " . ($interes_pendiente ?? 0));
         // Renderizar la vista HTML
         $html = view('pdf.depositos', [
             'prestamo' => $prestamo,
             'depositos' => $depositos,
+            'interes_pendiente' => $interes_pendiente,
         ])->render();
         $pdf = $this->pdfService->generatePdf($html);
 
