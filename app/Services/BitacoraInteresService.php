@@ -91,7 +91,7 @@ class BitacoraInteresService
             $interesTotal = $this->calcularInteresNormal($saldo, $interesMensual, $fechaUltimoPago, $fechaDeposito);
         } else {
             // Caso 3: Pago en la misma fecha del pago programado (sin interés)
-            $interesTotal = $this->calcularInteresNormal($saldo, $interesMensual, $fechaUltimoPago, $fechaDeposito);
+            $interesTotal = $this->calcularInteresNormal($saldo, $interesMensual, $fechaUltimoPago, $fechaPago);
         }
         return $interesTotal;
     }
