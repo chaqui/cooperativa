@@ -20,7 +20,7 @@ class BitacoraInteresService
         $historico->saldo = $nuevoSaldo;
         $historico->interes_pagado = 0;
         $historico->prestamo_hipotecario_id = $prestamo->id;
-        $historico->created_at = $fecha;
+        $historico->created_at = date('Y-m-d 00:00:00', strtotime($fecha));
         $historico->save();
 
         $this->log("Histórico de saldo registrado para el préstamo ID {$prestamo->id} con saldo {$historico->saldo} e interés pagado {$historico->interes_pagado}");
@@ -49,7 +49,7 @@ class BitacoraInteresService
         $saldo = $ultimoHistorico->saldo;
         $tasaInteresAnual = $prestamo->interes;
         $fechaUltimoPago = new DateTime($ultimoHistorico->created_at);
-        $fechaPagoObj = new DateTime($fechaPago);
+        $fechaPagoObj = new DateTime(datetime: $fechaPago);
         if ($fechaPagoObj < $fechaUltimoPago) {
             $this->lanzarExcepcionConCodigo("La fecha de pago no puede ser anterior al último registro de histórico");
         }

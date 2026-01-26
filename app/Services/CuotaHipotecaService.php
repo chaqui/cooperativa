@@ -282,13 +282,11 @@ class CuotaHipotecaService extends CuotaService
 
         // Actualizar fecha final del préstamo después del pago
         $this->actualizarFechaFinalPrestamo($prestamo);
-        if($existente) {
-           return $pago->nuevo_saldo;
-        }
-        else {
+        if ($existente) {
+            return $pago->nuevo_saldo;
+        } else {
             return $idDeposito;
         }
-
     }
 
     /**
@@ -748,20 +746,18 @@ class CuotaHipotecaService extends CuotaService
         if (!$fecha) {
             $this->lanzarExcepcionConCodigo("La fecha de inicio del préstamo es requerida");
         }
-
-        // Calcular el interés diario y multiplicarlo por los días restantes del mes
-        $diasRestantes = $this->calcularDiasFaltantes($fecha);
-        $tasaInteresDiaria = $this->calcularInteresDiario($prestamo->interes, $fecha);
-        $interesAcumulado = $prestamo->monto * $tasaInteresDiaria;
-
-        $this->log("Días restantes hasta próximo mes: {$diasRestantes}, Interés acumulado: {$interesAcumulado}");
+        $tasaInteresMensual = $this->calcularTaza($prestamo->interes);
+        $fechaFin = $this->obtenerFechaSiguienteMes($fecha, true);
+        // Calculars el interés diario y multiplicarlo por los días restantes del mes
+        $interesAcumulado = $this->calcularInteres($prestamo->monto, $tasaInteresMensual, $prestamo->fecha_inicio, $fechaFin);
+        $this->log("Interés mensual calculado: Q{$interesAcumulado}");
 
         // Crear el registro de pago inicial
-        $fecha = $this->obtenerFechaSiguienteMes($fecha, true);
+
         $pago = Pago::generarPagoInvalido(
             $prestamo,
             $interesAcumulado,
-            $fecha
+            $fechaFin
         );
 
         $pago->save();
@@ -888,7 +884,7 @@ class CuotaHipotecaService extends CuotaService
      */
     private function procesarPenalizacionExistente($pago, $montoDisponible, &$detallesPago, $deposito)
     {
-        $penalizacion = $deposito['penalizacion'] ? $deposito['penalizacion']: 0;
+        $penalizacion = $deposito['penalizacion'] ? $deposito['penalizacion'] : 0;
         $pago->penalizacion = $pago->penalizacion + $penalizacion;
         $this->log("Procesando penalización existente: {$pago->penalizacion}");
         return $this->procesarPenalizacion($pago, $montoDisponible, $detallesPago);
@@ -1133,7 +1129,7 @@ class CuotaHipotecaService extends CuotaService
             ' fecha ' . now();
         // Crear depósito
         $deposito = $this->depositoService->crearDeposito([
-            'tipo_documento' => $data ['tipo_documento'],
+            'tipo_documento' => $data['tipo_documento'],
             'id_pago' => $pago->id,
             'monto' => $data['monto'],
             'numero_documento' => $data['no_documento'],
@@ -1295,46 +1291,6 @@ class CuotaHipotecaService extends CuotaService
         }
     }
 
-    /**
-     * Calcula la tasa de interés diario para un período específico
-     *
-     * @param float $interes Tasa de interés mensual
-     * @param string $fecha Fecha de referencia
-     * @return float Tasa de interés diario ajustada
-     * @throws \Exception Si los parámetros son inválidos
-     */
-    private function calcularInteresDiario($interes, $fecha)
-    {
-        try {
-            $this->log("Calculando interés diario: Interés={$interes}%, Fecha={$fecha}");
-
-            if ($interes < 0) {
-                $this->lanzarExcepcionConCodigo("El interés no puede ser negativo");
-            }
-            if (empty($fecha)) {
-                $this->lanzarExcepcionConCodigo("La fecha es requerida para cálculo de interés diario");
-            }
-
-            $diasFaltantes = $this->calcularDiasFaltantes($fecha);
-            $diasDelMes = $this->obtenerDiasDelMes($fecha, 0);
-
-            $this->log("Días faltantes: {$diasFaltantes}, Días del mes: {$diasDelMes}");
-
-            if ($diasDelMes <= 0) {
-                $this->lanzarExcepcionConCodigo("Los días del mes deben ser mayor a cero");
-            }
-
-            // Calcular tasa diaria
-            $tasaDiaria = ($interes / 100) / $diasDelMes; // Convertir porcentaje a decimal
-            $tasaInteresDiaria = $tasaDiaria * $diasFaltantes;
-
-            $this->log("Tasa de interés diario calculada: {$tasaInteresDiaria}");
-            return $tasaInteresDiaria;
-        } catch (\Exception $e) {
-            $this->manejarError($e, 'calcularInteresDiario');
-            return 0; // Esta línea nunca se ejecutará
-        }
-    }
 
     /**
      * Calcula los días faltantes hasta el siguiente mes de pago
