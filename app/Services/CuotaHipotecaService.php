@@ -275,7 +275,7 @@ class CuotaHipotecaService extends CuotaService
             'tipo_documento' => $deposito['tipo_documento'],
             'no_documento' => $existente ? $deposito['numero_documento'] : $deposito['no_documento'],
             'fecha_documento' => $deposito['fecha_documento'],
-            'id_cuenta' => $this->tipoCuentaInternaService->getCuentaParaDepositosAnteriores()->id,
+            'id_cuenta' => $deposito["existente"] ? $this->tipoCuentaInternaService->getCuentaParaDepositosAnteriores()->id : $deposito['id_cuenta'],
             'existente' => true
         ];
         $idDeposito = $this->registrarDepositoYTransaccion($data, $pago, $detallesPago, $saldoActualReal);
@@ -1408,44 +1408,6 @@ class CuotaHipotecaService extends CuotaService
         }
     }
 
-    /**
-     * Obtiene la fecha anterior de pago (día 5 del mes anterior o actual)
-     *
-     * @param string $fecha Fecha de referencia
-     * @return string Fecha anterior en formato Y-m-d
-     * @throws \Exception Si la fecha es inválida
-     */
-    private function obtenerFechaAnterior($fecha)
-    {
-        try {
-            $this->log('Obteniendo fecha anterior desde: ' . $fecha);
-
-            if (empty($fecha)) {
-                $this->lanzarExcepcionConCodigo("La fecha no puede estar vacía");
-            }
-
-            $timestamp = strtotime($fecha);
-            if ($timestamp === false) {
-                $this->lanzarExcepcionConCodigo("Formato de fecha inválido: {$fecha}");
-            }
-
-            $dia = (int)date('j', $timestamp);
-            $this->log("Día de la fecha: {$dia}");
-
-            if ($dia <= 5) {
-                $fechaAnterior = date('Y-m-05', strtotime($fecha . ' - 1 month'));
-                $this->log("Fecha anterior (día <= 5): {$fechaAnterior}");
-                return $fechaAnterior;
-            }
-
-            $fechaActual = date('Y-m-05', $timestamp);
-            $this->log("Fecha del mes actual (día > 5): {$fechaActual}");
-            return $fechaActual;
-        } catch (\Exception $e) {
-            $this->manejarError($e, 'obtenerFechaAnterior');
-            return date('Y-m-05', strtotime('-1 month')); // Esta línea nunca se ejecutará
-        }
-    }
 
 
 
