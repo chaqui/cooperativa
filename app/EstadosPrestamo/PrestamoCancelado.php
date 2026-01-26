@@ -4,6 +4,7 @@ namespace App\EstadosPrestamo;
 
 use App\Constants\EstadoPrestamo;
 use App\Models\Prestamo_Hipotecario;
+use App\Services\BitacoraInteresService;
 use App\Services\DepositoService;
 use App\Traits\ErrorHandler;
 
@@ -16,10 +17,13 @@ class PrestamoCancelado extends EstadoBasePrestamo
     private string $cancelacionPorAmpliacion = '25';
     private DepositoService $depositoService;
 
-    public function __construct(DepositoService $depositoService)
+     private $bitacoraInteresService;
+
+    public function __construct(DepositoService $depositoService, BitacoraInteresService $bitacoraInteresService)
     {
         parent::__construct(null, EstadoPrestamo::$CANCELADO);
         $this->depositoService = $depositoService;
+        $this->bitacoraInteresService = $bitacoraInteresService;
     }
 
     public function cambiarEstado(Prestamo_Hipotecario $prestamo, $data)
@@ -27,7 +31,15 @@ class PrestamoCancelado extends EstadoBasePrestamo
         if (!$data['razon']) {
             $this->lanzarExcepcionConCodigo('La razón es requerida');
         }
-        if ($prestamo->interesPendiente() > 0) {
+        $pagoActivo = $prestamo->cuotaActiva();
+        if (!$pagoActivo) {
+            $prestamoPendiente = 0;
+        } else {
+            $resultado = $this->bitacoraInteresService->calcularInteresPendiente($pagoActivo, date('Y-m-d'));
+            $prestamoPendiente = $resultado['interes_pendiente'] ?? 0;
+        }
+
+        if ($prestamoPendiente > 0) {
             $this->lanzarExcepcionConCodigo('No se puede cancelar el préstamo mientras haya intereses pendientes.');
         }
         $prestamo->motivo_cancelacion = $data['razon'];

@@ -59,7 +59,19 @@ class PrestamoPdfService extends PrestamoService
 
             // Determinar la plantilla a usar
             $plantilla = $inicial ? 'pdf.estadoCuenta' : 'pdf.estadoCuentaActual';
-            $interes_pendiente = $inicial ? $prestamo->interes_pendiente(): $this->bitacoraInteresService->calcularInteresPendiente( $prestamo->cuotaActiva(), date('Y-m-d'))['interes_pendiente'] ?? 0;
+            $interes_pendiente = 0;
+            if ($inicial) {
+                $interes_pendiente = $prestamo->interes_pendiente();
+            } else {
+                $cuotaActiva = $prestamo->cuotaActiva();
+                if (!$cuotaActiva) {
+                    $interes_pendiente = 0;
+                } else {
+                    $resultado = $this->bitacoraInteresService->calcularInteresPendiente($cuotaActiva, date('Y-m-d'));
+                    $interes_pendiente = $resultado['interes_pendiente'] ?? 0;
+                }
+            }
+
             // Renderizar la vista HTML
             $html = view($plantilla, [
                 'prestamo' => $prestamo,
@@ -210,7 +222,13 @@ class PrestamoPdfService extends PrestamoService
         $prestamo = $this->get($id);
 
         $depositos = $prestamo->depositos();
-        $interes_pendiente = $this->bitacoraInteresService->calcularInteresPendiente( $prestamo->cuotaActiva(), date('Y-m-d'))['interes_pendiente'] ?? 0;
+
+        $cuotaActiva = $prestamo->cuotaActiva();
+        if (!$cuotaActiva) {
+            $interes_pendiente = 0;
+        } else {
+            $interes_pendiente = $this->bitacoraInteresService->calcularInteresPendiente($prestamo->cuotaActiva(), date('Y-m-d'))['interes_pendiente'] ?? 0;
+        }
         $this->enriquecerDatosPrestamo($prestamo);
 
         $this->log("Interés pendiente calculado: " . ($interes_pendiente ?? 0));

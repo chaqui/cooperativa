@@ -92,7 +92,7 @@ class ControladorEstado
             ],
             EstadoPrestamo::$CANCELADO => [
                 'clase' => PrestamoCancelado::class,
-                'dependencias' => [app(DepositoService::class)]
+                'dependencias' => [app(DepositoService::class), $this->bitacoraInteresService]
             ],
             EstadoPrestamo::$RECHAZADO => [
                 'clase' => PrestamoRechazado::class,

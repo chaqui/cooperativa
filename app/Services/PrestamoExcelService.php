@@ -206,7 +206,14 @@ class PrestamoExcelService extends PrestamoService
                 }
 
                 $p->nombreDestino = $this->catalogoService->getCatalogo($p->destino)['value'] ?? 'No especificado';
-                $interesAcumulado = $p->cuotaActiva() ? $this->bitacoraInteresService->calcularInteresPendiente($p->cuotaActiva(), fechaPago: now()->format('Y-m-d'))['interes_pendiente'] ?? 0 : 0;
+
+                $cuotaActiva = $p->cuotaActiva();
+                if (!$cuotaActiva) {
+                    $interesAcumulado = 0;
+                } else {
+                    $interesAcumulado = $p->cuotaActiva() ? $this->bitacoraInteresService->calcularInteresPendiente($p->cuotaActiva(), now()->format('Y-m-d'))['interes_pendiente'] ?? 0 : 0;
+                }
+
                 // Llenar las celdas
                 $sheet->setCellValue('A' . $row, $asesorNombre);
                 $sheet->setCellValue('B' . $row, $p->codigo ?? '');
