@@ -61,7 +61,7 @@ class PrestamoPdfService extends PrestamoService
             $plantilla = $inicial ? 'pdf.estadoCuenta' : 'pdf.estadoCuentaActual';
             $interes_pendiente = 0;
             if ($inicial) {
-                $interes_pendiente = $prestamo->interes_pendiente();
+                $interes_pendiente = $prestamo->saldoPendienteIntereses();
             } else {
                 $cuotaActiva = $prestamo->cuotaActiva();
                 if (!$cuotaActiva) {
