@@ -177,7 +177,30 @@
                     @endif
                 </div>
             @endif
+            @if($mostrar_beneficiario)
+                <div class="content-section">
+                    <h3>MONTOS DEL PRESTAMO</h3>
 
+                    <p><strong>Monto Liquido:</strong>
+                        Q. {{ $retiro->prestamo ? number_format($retiro->prestamo->montoLiquido(), 2) : 'No especificado' }}
+                    </p>
+
+                    <p><strong>Gastos Administrativos:</strong>
+                         Q. {{ $retiro->prestamo ? number_format($retiro->prestamo->gastos_administrativos, 2) : 'No especificado' }}
+                    </p>
+
+                    <p><strong>Gastos De Formalidad:</strong>
+                        Q. {{ $retiro->prestamo ? number_format($retiro->prestamo->gastos_formalidad, 2) : 'No especificado' }}
+                    </p>
+                    @if($retiro->prestamo->capitalPrestamosCancelados() > 0)
+                        <p><strong> Pago de Saldo del Financiamiento No.
+                            {{ implode(', ', $retiro->prestamo->codigoPrestamosCancelados() ?? []) }} : </strong>
+                            Q. {{ number_format($retiro->prestamo->capitalPrestamosCancelados(), 2) }}
+                        </p>
+                    @endif
+
+                </div>
+            @endif
             <div class="content-section">
                 <h3>DATOS DEL RETIRO</h3>
                 <p><strong>Monto:</strong> <span class="amount">Q{{ number_format($retiro->monto, 2) }}</span></p>
