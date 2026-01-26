@@ -81,7 +81,7 @@ class BitacoraInteresService
 
         $fechaLimiteStr = date('Y-m-10', strtotime($fechaPago->format('Y-m-d')));
         $fechaLimite = new DateTime($fechaLimiteStr);
-        $this->log("Fecha de pago: " . $fechaDeposito->format('Y-m-d') . ", Fecha límite: " . $fechaLimite->format('Y-m-d'));
+        $this->log("Fecha de pago: " . $fechaPago->format('Y-m-d') . ", Fecha límite: " . $fechaLimite->format('Y-m-d'));
         // Caso 1: Pago después de la fecha límite (genera mora)
         if ($fechaDeposito > $fechaLimite) {
             $fechaPagoMasUnMes = (clone $fechaPago)->modify('+1 month');
