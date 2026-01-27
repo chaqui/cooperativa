@@ -275,7 +275,7 @@ class CuotaHipotecaService extends CuotaService
             'tipo_documento' => $deposito['tipo_documento'],
             'no_documento' => $existente ? $deposito['numero_documento'] : $deposito['no_documento'],
             'fecha_documento' => $deposito['fecha_documento'],
-            'id_cuenta' => $deposito["existente"] ? $this->tipoCuentaInternaService->getCuentaParaDepositosAnteriores()->id : $deposito['id_cuenta'],
+            'id_cuenta' => $existente ? $this->tipoCuentaInternaService->getCuentaParaDepositosAnteriores()->id : $deposito['id_cuenta'],
             'existente' => true
         ];
         $idDeposito = $this->registrarDepositoYTransaccion($data, $pago, $detallesPago, $saldoActualReal);

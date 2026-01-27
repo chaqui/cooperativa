@@ -76,7 +76,7 @@
 
     <div class="section">
         <h2>Pagos Realizados</h2>
-        <table>
+        <table style="font-size:7px;">
             <thead>
                 <tr>
                     <th># Cuota</th>

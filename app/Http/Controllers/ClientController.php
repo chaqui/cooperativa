@@ -168,8 +168,13 @@ class ClientController extends Controller
 
     public function cuotas(string $id)
     {
-        $cuotas = $this->clientService->getCuotas($id);
-        return CuotaResource::collection($cuotas);
+        try {
+            $cuotas = $this->clientService->getCuotas($id);
+            return CuotaResource::collection($cuotas);
+        } catch (\Exception $e) {
+            $this->log('Error al obtener cuotas para el cliente: ' . $id . '. Error: ' . $e->getMessage());
+            return response()->json(['message' => 'Error al obtener cuotas: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
