@@ -369,7 +369,7 @@
         @if($prestamo->uso_prestamo)
             <tr>
                 <td><strong>USO DEL FINANCIAMIENTO:</strong></td>
-                <td>{{ $prestamo->uso_prestamo }}</td>
+                <td colspan="4">{{ $prestamo->uso_prestamo }}</td>
             </tr>
         @endif
         <tr>
