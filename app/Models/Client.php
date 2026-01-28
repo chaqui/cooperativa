@@ -169,7 +169,7 @@ class Client extends Model
 
     public function getCuotasPendientes()
     {
-        $prestamos = $this->prestamosHipotecarios;
+        $prestamos = $this->prestamosHipotecarios()->where('estado_id', '!=', 6)->get();
         $cuotas = collect();
         foreach ($prestamos as $prestamo) {
             $cuotasPendientes = $prestamo->getCuotasPendientes();
