@@ -7,12 +7,15 @@ use App\Models\Prestamo_Hipotecario;
 use App\Models\Historico_Saldo;
 use App\Traits\ErrorHandler;
 use App\Traits\Loggable;
+use App\Traits\RegistrarRollback;
+use App\Constants\RollBackCampos;
 use DateTime;
 
 class BitacoraInteresService
 {
     use Loggable;
     use ErrorHandler;
+    use RegistrarRollback;
 
     public function registrarHistoricoSaldo(Prestamo_Hipotecario $prestamo, $nuevoSaldo, $fecha)
     {
@@ -22,7 +25,7 @@ class BitacoraInteresService
         $historico->prestamo_hipotecario_id = $prestamo->id;
         $historico->created_at = date('Y-m-d 00:00:00', strtotime($fecha));
         $historico->save();
-
+        $this->agregarDatosEliminar($prestamo->id, $historico->id, RollBackCampos::$interesPagado);
         $this->log("Histórico de saldo registrado para el préstamo ID {$prestamo->id} con saldo {$historico->saldo} e interés pagado {$historico->interes_pagado}");
     }
 
@@ -102,7 +105,7 @@ class BitacoraInteresService
         if (!$historico) {
             throw new \Exception("Histórico de saldo no encontrado con ID {$idHistorico}");
         }
-
+        $this->agregarDatosModificar($historico->prestamo_hipotecario_id, $historico, RollBackCampos::$interesPagado);
         $historico->interes_pagado += $montoPagado;
         $historico->save();
 

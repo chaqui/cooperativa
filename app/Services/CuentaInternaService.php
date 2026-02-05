@@ -6,12 +6,15 @@ use App\Models\Cuenta_Interna;
 use App\Traits\Loggable;
 use Illuminate\Support\Facades\DB;
 use App\Traits\ErrorHandler;
+use App\Traits\RegistrarRollback;
+use App\Constants\RollBackCampos;
 
 class CuentaInternaService
 {
 
     use ErrorHandler;
     use Loggable;
+    use RegistrarRollback;
     /**
      * Obtiene todas las cuentas internas
      *
@@ -59,6 +62,9 @@ class CuentaInternaService
 
             // Crear el registro
             $cuenta = Cuenta_Interna::create($cuentaData);
+            if ($data['id_prestamo_hipotecario'] ?? false) {
+                $this->agregarDatosEliminar($data['id_prestamo_hipotecario'], $cuenta->id, RollBackCampos::$cuentasInternas);
+            }
 
             DB::commit();
 
@@ -77,7 +83,7 @@ class CuentaInternaService
     private function validarDatosCuenta(array $data)
     {
         // Validar campos requeridos
-        $camposRequeridos = ['ingreso', 'egreso', 'descripcion', 'tipo_cuenta_interna_id','capital','interes'];
+        $camposRequeridos = ['ingreso', 'egreso', 'descripcion', 'tipo_cuenta_interna_id', 'capital', 'interes'];
 
         foreach ($camposRequeridos as $campo) {
             if (!isset($data[$campo])) {

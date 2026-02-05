@@ -2,19 +2,24 @@
 
 namespace App\Services;
 
-use App\Constants\FrecuenciaPago;
-use App\Models\Prestamo_Hipotecario;
-use App\Models\Pago;
-use App\Traits\Loggable;
 use Illuminate\Support\Facades\DB;
+use App\Constants\FrecuenciaPago;
+use App\Constants\RollBackCampos;
+use App\Http\Resources\Rol;
+use App\Models\Pago;
+use App\Models\Prestamo_Hipotecario;
 use App\Services\DepositoService;
+use App\Traits\Loggable;
 use App\Traits\ErrorHandler;
+use App\Traits\RegistrarRollback;
 
 class CuotaHipotecaService extends CuotaService
 {
     use ErrorHandler;
 
     use Loggable;
+
+    use RegistrarRollback;
 
 
     private DepositoService $depositoService;
@@ -116,7 +121,7 @@ class CuotaHipotecaService extends CuotaService
         return Pago::findOrFail($id);
     }
 
-    public function getPagos(Prestamo_Hipotecario $prestamoHipotecario)
+    private function getPagos(Prestamo_Hipotecario $prestamoHipotecario)
     {
         return Pago::where('id_prestamo', $prestamoHipotecario->id)->get();
     }
@@ -221,7 +226,8 @@ class CuotaHipotecaService extends CuotaService
             'descripcion' => '',
             'penalizacion' => 0
         ];
-
+        $this->iniciarRollback($prestamo->id);
+        $this->agregarDatosModificar($prestamo->id, $prestamo->pagos, RollBackCampos::$cuotas);
         // Obtener el saldo actual correcto para múltiples depósitos
         $saldoActualPago = $this->obtenerSaldoActualPago($pago);
         $saldoActualReal = $this->bitacoraInteresService->obtenerUltimoHistorico($prestamo)->saldo;
@@ -312,36 +318,6 @@ class CuotaHipotecaService extends CuotaService
     }
 
     /**
-     * Actualiza pagos siguientes solo si es necesario para evitar múltiples actualizaciones
-     *
-     * @param object $pago Pago actual
-     * @param float $nuevoSaldo Nuevo saldo calculado
-     */
-    private function actualizarSiguentesPagoSiEsNecesario($pago, $nuevoSaldo)
-    {
-        try {
-            $pagoSiguiente = $pago->pagoSiguiente();
-
-            // Solo actualizar si hay un pago siguiente y el saldo cambió significativamente
-            if ($pagoSiguiente) {
-                $diferenciaSaldo = abs($pagoSiguiente->saldo - ($nuevoSaldo - $pagoSiguiente->capital));
-
-                // Si la diferencia es mayor a 0.01 (1 centavo), actualizar
-                if ($diferenciaSaldo > 0.01) {
-                    $this->log("Actualizando pagos siguientes");
-                    $descripcionCambios = $this->actualizarSiguentePago($pago, $nuevoSaldo);
-                    if (!empty($descripcionCambios)) {
-                        $this->log("Cambios realizados: {$descripcionCambios}");
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            $this->manejarError($e, 'actualizarSiguentesPagoSiEsNecesario');
-        }
-    }
-
-
-    /**
      * Actualiza la fecha de pago y la fecha del pago en el modelo Pago.
      *
      * @param Pago $pago
@@ -375,22 +351,6 @@ class CuotaHipotecaService extends CuotaService
         }
     }
 
-    private function calcularNuevaFecha($pago, $fechaDeposito)
-    {
-        $diasDeposito = (new \DateTime($fechaDeposito))->format('d');
-        if ($diasDeposito > 10) {
-            $nuevaFecha = (new \DateTime($fechaDeposito))->modify('+1 month')->format('Y-m-d');
-            $nuevaFecha = date('Y-m-05', strtotime($nuevaFecha));
-        } else {
-            $nuevaFecha = (new \DateTime($fechaDeposito))->format('Y-m-05');
-        }
-
-        $this->log("Actualizando fechas del pago #{$pago->id} a {$nuevaFecha}");
-        return $nuevaFecha;
-    }
-
-
-
     private function validarPago($data)
     {
         $this->log('Validando pago');
@@ -421,6 +381,7 @@ class CuotaHipotecaService extends CuotaService
 
     private function generarCuotas(Prestamo_Hipotecario $prestamoHipotecario,  $plazo)
     {
+        $this->iniciarRollback($prestamoHipotecario->id);
         $this->eliminarPagosExistentes($prestamoHipotecario);
         $pagoAnterior = null;
 
@@ -448,7 +409,7 @@ class CuotaHipotecaService extends CuotaService
         $pagosGenerados = Pago::where('id_prestamo', $prestamoHipotecario->id)->get();
         $amortizacionTotal = $pagosGenerados->sum('capital');
         $this->log("Amortización total calculada: Q{$amortizacionTotal}");
-
+        $this->agregarDatosModificar($prestamoHipotecario->id, $pagosGenerados->toArray(), RollBackCampos::$cuotas);
         // Actualizar la fecha final del préstamo basándose en la última cuota generada
         $this->actualizarFechaFinalPrestamo($prestamoHipotecario);
     }
@@ -636,6 +597,10 @@ class CuotaHipotecaService extends CuotaService
                 $prestamo->save();
 
                 $this->log("Fecha final actualizada de {$fechaAnterior} a {$prestamo->fecha_fin}");
+                $this->agregarDatosModificar($prestamo->id, [
+                    'fecha_fin_anterior' => $fechaAnterior,
+                    'fecha_fin_nueva' => $prestamo->fecha_fin
+                ], RollBackCampos::$fecha_fin_prestamo);
             } else {
                 $this->log("Fecha final ya está correcta: {$prestamo->fecha_fin}");
             }
@@ -796,55 +761,6 @@ class CuotaHipotecaService extends CuotaService
         }
     }
 
-    /**
-     * Procesa la penalización utilizando el cálculo estandarizado
-     *
-     * @param Pago $pago Cuota a procesar
-     * @param float $montoDisponible Monto disponible para el pago
-     * @param array $detallesPago Array de detalles del pago (por referencia)
-     * @param string $fechaPago Fecha del pago
-     * @return float Monto restante después de aplicar penalización
-     */
-    private function procesarPenalizacionEstandarizada($pago, $montoDisponible, &$detallesPago, $fechaPago)
-    {
-        if ($montoDisponible <= 0) {
-            $this->log("No hay monto disponible para procesar penalización");
-            return $montoDisponible;
-        }
-
-        // Calcular penalización estandarizada basada en retraso real
-        $penalizacionCalculada = $this->calcularPenalizacionPorRetraso($pago, $fechaPago);
-
-        if ($penalizacionCalculada <= 0) {
-            $this->log("No hay penalización por retraso");
-            return $montoDisponible;
-        }
-
-        // Verificar si ya se ha pagado parte de la penalización
-        $penalizacionPendiente = $penalizacionCalculada - $pago->recargo;
-
-        if ($penalizacionPendiente <= 0) {
-            $this->log("Penalización ya pagada completamente");
-            return $montoDisponible;
-        }
-
-        // Aplicar penalización con el monto disponible
-        $montoPenalizacion = min($montoDisponible, $penalizacionPendiente);
-        $pago->recargo += $montoPenalizacion;
-
-        // Actualizar penalización en el pago si es necesario
-        if ($pago->penalizacion < $penalizacionCalculada) {
-            $this->log("Actualizando penalización en pago de Q{$pago->penalizacion} a Q{$penalizacionCalculada}");
-            $pago->penalizacion = $penalizacionCalculada;
-        }
-
-        $detallesPago['descripcion'] .= "Se abonó por penalización estandarizada Q{$montoPenalizacion} (Calculada: Q{$penalizacionCalculada}); ";
-        $detallesPago['penalizacion'] += $montoPenalizacion;
-
-        $this->log("✅ Penalización procesada: Q{$montoPenalizacion} de Q{$penalizacionPendiente} pendiente");
-
-        return $montoDisponible - $montoPenalizacion;
-    }
 
     /**
      * Procesa el pago de penalización si existe

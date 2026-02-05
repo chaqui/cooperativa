@@ -270,6 +270,16 @@ class Prestamo_Hipotecario extends Model
         return !$this->estaCancelado();
     }
 
+    public function rollbacks()
+    {
+        return $this->hasMany(Rollback_prestamo::class, 'prestamo_hipotecario_id');
+    }
+
+    public function tieneRollback(): bool
+    {
+        return $this->rollbacks()->count() > 0;
+    }
+
     /**
      * Obtiene el motivo de cancelación si existe
      *

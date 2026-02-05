@@ -54,6 +54,7 @@ class Deposito extends Model
             'interes' => $interes ?? 0,
             'descripcion' => $descripcion,
             'tipo_cuenta_interna_id' => $this->tipo_cuenta_interna_id,
+            'id_prestamo_hipotecario' => $this->pago ? $this->pago->id_prestamo : null,
         ];
     }
 

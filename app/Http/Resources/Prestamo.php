@@ -49,6 +49,7 @@ class Prestamo extends JsonResource
             'saldo_capital' => $this->saldoPendienteCapital(),
             'prestamos_cancelados' => $this->codigoPrestamosCancelados(),
             'capital_prestamos_cancelados' => $this->capitalPrestamosCancelados(),
+            'tiene_rollback' => $this->tieneRollback()
         ];
     }
 }

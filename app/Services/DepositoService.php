@@ -7,14 +7,18 @@ use App\Models\Deposito;
 use App\Models\Pago;
 use App\Traits\Loggable;
 use App\Constants\TipoImpuesto;
+use App\Constants\RollBackCampos;
+use App\Traits\RegistrarRollback;
 use Illuminate\Support\Facades\DB;
 use App\Traits\ErrorHandler;
+
 
 class DepositoService
 {
 
     use ErrorHandler;
     use Loggable;
+    use RegistrarRollback;
 
     private $pdfService;
 
@@ -57,10 +61,13 @@ class DepositoService
     {
 
         $deposito = Deposito::crear($datos);
+        $prestamo = $deposito->pago ? $deposito->pago->prestamo : null;
 
         // Guardar el depósito
         $deposito->save();
-
+        if ($prestamo) {
+            $this->agregarDatosEliminar($prestamo->id, $deposito->id, RollBackCampos::$depositos);
+        }
         // Si está asociado a un pago, procesarlo automáticamente
         if ($procesarInmediatamente || $deposito->id_pago) {
             $datos['existente'] = true;
@@ -267,6 +274,8 @@ class DepositoService
                 $impuesto->monto_impuesto,
                 $idCuenta
             ));
+
+            $this->agregarDatosEliminar($pago->id_prestamo, $impuesto->id, RollBackCampos::$impuestosTransacciones);
         } catch (\Exception $e) {
             $this->manejarError($e);
         }

@@ -25,6 +25,7 @@ use App\Http\Controllers\ImpuestoController;
 use App\Http\Controllers\OrientacionController;
 use App\Http\Controllers\ExcelTemplateController;
 use App\Http\Controllers\ArchivoController;
+use App\Http\Controllers\RollBackController;
 
 $rolesEdicion = implode('|', [Roles::$ADMIN, Roles::$ASESOR]);
 $rolesSoloLectura = implode('|', [Roles::$ADMIN, Roles::$ASESOR, Roles::$CAJERO, Roles::$SECRETARIA]);
@@ -164,6 +165,7 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::post('prestamos/{id}/pagos', [PrestamoController::class, 'pagarCuota']);
     Route::get('prestamos/{id}/depositos/pdf', [PrestamoController::class, 'generarEstadoCuentaDepositos']);
     Route::get('prestamos/{id}/propiedad', [PrestamoController::class, 'getPropiedad']);
+    Route::post('prestamos/{id}/rollbacks', [RollBackController::class, 'solicitarRollback']);
 });
 
 //estados
@@ -181,7 +183,7 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
 
 //depositos
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
-    Route::post('depositos', [DepositoController::class, 'crearDepositoyDepositar']);
+    Route::post('depositos', action: [DepositoController::class, 'crearDepositoyDepositar']);
     Route::get('depositos/excel/por-fecha/{fecha}', [DepositoController::class, 'obtenerDepositosPorFecha']);
     Route::get('depositos/excel', [ExcelTemplateController::class, 'downloadDepositTemplate']);
     Route::put('depositos/{id}', [DepositoController::class, 'depositar']);
@@ -230,4 +232,13 @@ Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function ()
 
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
     Route::get('archivos', [ArchivoController::class, 'obtenerArchivo']);
+});
+
+//rollbacks
+Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
+    Route::get('rollbacks', action: [RollBackController::class, 'index']);
+    Route::get('rollbacks/pendientes', [RollBackController::class, 'getRollBacksPendientes']);
+});
+Route::middleware(CheckRole::class . ':' . Roles::$ADMIN)->group(function () {
+    Route::put('rollbacks/{rollBackHistoricoId}/autorizar', [RollBackController::class, 'autorizarRollback']);
 });
