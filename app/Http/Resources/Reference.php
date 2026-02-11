@@ -19,6 +19,7 @@ class Reference extends JsonResource
             'nombre' => $this->nombre,
             'telefono' => $this->telefono,
             'tipo' => $this->tipo,
+            'afinidad' => $this->afinidad,
         ];
     }
 }

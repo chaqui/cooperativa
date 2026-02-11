@@ -277,7 +277,19 @@ class Prestamo_Hipotecario extends Model
 
     public function tieneRollback(): bool
     {
-        return $this->rollbacks()->count() > 0;
+        if ($this->rollbacks()->count() > 0) {
+            $rollbacks = $this->rollbacks()->get();
+            $tienRollbacksValidos = true;
+            foreach ($rollbacks as $rollback) {
+                if ($rollback->historicos()->count() > 0) {
+                    $tienRollbacksValidos = false;
+                } else {
+                    $tienRollbacksValidos = true;
+                }
+            }
+            return $tienRollbacksValidos;
+        }
+        return false;
     }
 
     /**

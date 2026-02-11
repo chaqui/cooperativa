@@ -121,6 +121,8 @@ class Client extends Model
         $client->direccionEmpresa = $data['direccionEmpresa'];
         $client->nombreEmpresa = $data['nombreEmpresa'];
         $client->numeroPatente = $data['patente'];
+        $client->otrosIngresos = $data['otrosIngresos'] ?? null;
+        $client->razon_otros_ingresos = $data['razon_otros_ingresos'] ?? null;
         $client->telefonoEmpresa = $data['telefonoEmpresa'];
         return $client;
     }
