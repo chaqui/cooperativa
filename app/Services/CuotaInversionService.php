@@ -24,8 +24,27 @@ class CuotaInversionService extends CuotaService
             $pago->fecha = $this->sumarMesesDesdeFecha($inversion->fecha_inicio, $i);
             $pago->realizado = false;
             $pago->fecha_pago = $this->obtenerSiguienteDiaHabil($pago->fecha);
+            $pago->existente = $this->esPagoExistente($pago, $inversion->existente);
             $pago->save();
         }
+    }
+
+    private function esPagoExistente( $pago,  $inversionExistente): bool
+    {
+       if($inversionExistente){
+            $fechaHoy = new DateTime();
+            if ($pago->fecha_pago instanceof \DateTimeInterface) {
+                $fechaPago = $pago->fecha_pago;
+            } elseif (is_numeric($pago->fecha_pago)) {
+                $fechaPago = (new DateTime())->setTimestamp((int) $pago->fecha_pago);
+            } elseif (is_string($pago->fecha_pago) && $pago->fecha_pago !== '') {
+                $fechaPago = new DateTime($pago->fecha_pago);
+            } else {
+                return false;
+            }
+            return $fechaPago <= $fechaHoy;
+       }
+       return false;
     }
 
     public function getCuotasInversion(Inversion $inversion)
