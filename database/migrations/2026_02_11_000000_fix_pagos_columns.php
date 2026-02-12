@@ -19,6 +19,7 @@ return new class extends Migration
             $table->decimal('monto_pagado', 12, 2)->nullable()->change();
             $table->decimal('penalizacion', 12, 2)->change();
             $table->decimal('capital_pagado', 12, 2)->nullable()->change();
+            $table->decimal('recargo', 12, 2)->nullable()->change();
         });
     }
 
@@ -35,6 +36,7 @@ return new class extends Migration
             $table->float('monto_pagado')->nullable()->change();
             $table->float('penalizacion')->change();
             $table->float('capital_pagado')->nullable()->change();
+            $table->float('recargo')->nullable()->change();
         });
     }
 };
