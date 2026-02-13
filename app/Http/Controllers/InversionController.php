@@ -127,4 +127,34 @@ class InversionController extends Controller
     {
         return $this->inversionService->getPdf($id);
     }
+
+    public function getExcelDePagosInversion($id)
+    {
+        $this->log("Generando Excel de pagos para la inversión ID: $id");
+        try {
+            $excelData = $this->inversionService->generarPagosInversionExistenteExcel($id);
+            return response()->json($excelData, 200);
+        } catch (\Exception $e) {
+            $this->log("Error al generar Excel: " . $e->getMessage());
+            return response()->json(['message' => 'Error al generar Excel: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function procesarExcelDePagosInversion(Request $request, $id)
+    {
+        $this->log("Procesando Excel de pagos para la inversión ID: $id");
+        try {
+            $archivo = $request->file('archivo');
+            if (!$archivo) {
+                return response()->json(['message' => 'Archivo es requerido'], 400);
+            }
+
+            $resultado = $this->inversionService->procesarExcelPagosExistente($archivo, $id);
+            return response()->json($resultado, 200);
+
+        } catch (\Exception $e) {
+            $this->log("Error al procesar Excel: " . $e->getMessage());
+            return response()->json(['message' => 'Error al procesar Excel: ' . $e->getMessage()], 500);
+        }
+    }
 }
