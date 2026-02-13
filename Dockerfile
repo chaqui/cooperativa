@@ -20,12 +20,17 @@ RUN apk update && apk add --no-cache \
     g++ \
     make \
     autoconf \
+    tzdata \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-configure intl \
     && docker-php-ext-install intl
 
 # Install PHP extensions
 RUN docker-php-ext-install mbstring exif pcntl bcmath gd pdo_pgsql pdo_mysql zip calendar
+
+# Configure timezone for Guatemala
+ENV TZ=America/Guatemala
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
