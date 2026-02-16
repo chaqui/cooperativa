@@ -23,8 +23,3 @@ yarn-error.log
 /.zed
 tests/TestCase.php
 config/database.php
-database/migrations/2025_01_28_214536_add_secuence.php
-database/migrations/2025_02_04_192008_add_id.php
-database/migrations/2025_02_28_171720_delete_tipo_taza.php
-database/migrations/2025_03_11_224951_delete_cliente.php
-tests/TestCase.php

@@ -13,7 +13,6 @@ use DateTime;
 
 class BitacoraInteresService
 {
-    use Loggable;
     use ErrorHandler;
     use RegistrarRollback;
 
