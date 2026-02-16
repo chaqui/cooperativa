@@ -27,6 +27,7 @@ class BitacoraInteresService
         $historico->save();
         $this->agregarDatosEliminar($prestamo->id, $historico->id, RollBackCampos::$interesPagado);
         $this->log("Histórico de saldo registrado para el préstamo ID {$prestamo->id} con saldo {$historico->saldo} e interés pagado {$historico->interes_pagado}");
+        return $historico->id;
     }
 
     public function obtenerUltimoHistorico(Prestamo_Hipotecario $prestamo)
@@ -110,5 +111,7 @@ class BitacoraInteresService
         $historico->save();
 
         $this->log("Interés pagado actualizado en el histórico ID {$idHistorico}. Nuevo interés pagado: {$historico->interes_pagado}");
+
+        return $historico->id;
     }
 }

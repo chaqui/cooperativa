@@ -5,7 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\DB;
 use App\Constants\FrecuenciaPago;
 use App\Constants\RollBackCampos;
-use App\Http\Resources\Rol;
+
 use App\Models\Pago;
 use App\Models\Prestamo_Hipotecario;
 use App\Services\DepositoService;
@@ -17,8 +17,6 @@ class CuotaHipotecaService extends CuotaService
 {
     use ErrorHandler;
 
-    use Loggable;
-
     use RegistrarRollback;
 
 
@@ -28,13 +26,20 @@ class CuotaHipotecaService extends CuotaService
 
     private BitacoraInteresService $bitacoraInteresService;
 
+    private DepositoHistoricoSaldoService $depositoHistoricoSaldoService;
 
 
-    public function __construct(DepositoService $depositoService, TipoCuentaInternaService $tipoCuentaInternaService, BitacoraInteresService $bitacoraInteresService)
-    {
+
+    public function __construct(
+        DepositoService $depositoService,
+        TipoCuentaInternaService $tipoCuentaInternaService,
+        BitacoraInteresService $bitacoraInteresService,
+        DepositoHistoricoSaldoService $depositoHistoricoSaldoService
+    ) {
         $this->depositoService = $depositoService;
         $this->tipoCuentaInternaService = $tipoCuentaInternaService;
         $this->bitacoraInteresService = $bitacoraInteresService;
+        $this->depositoHistoricoSaldoService = $depositoHistoricoSaldoService;
     }
 
     /**
@@ -158,47 +163,6 @@ class CuotaHipotecaService extends CuotaService
         }
     }
 
-    /**
-     * Calcula la penalización por retraso de forma estandarizada
-     *
-     * @param Pago $pago Cuota a evaluar
-     * @param string $fechaPago Fecha del pago
-     * @return float Monto de penalización
-     */
-    private function calcularPenalizacionPorRetraso($pago, $fechaPago)
-    {
-        if (!$pago || !$pago->fecha_vencimiento) {
-            $this->log("⚠️ No hay pago o fecha de vencimiento para calcular penalización");
-            return 0;
-        }
-
-        $fechaVencimiento = new \DateTime($pago->fecha_vencimiento);
-        $fechaActualPago = new \DateTime($fechaPago);
-
-        // Si no hay retraso, no hay penalización
-        if ($fechaActualPago <= $fechaVencimiento) {
-            $this->log("✅ Pago a tiempo - No hay penalización");
-            return 0;
-        }
-
-        // Calcular días de retraso
-        $diasRetraso = $fechaActualPago->diff($fechaVencimiento)->days;
-        $this->log("📅 Días de retraso: {$diasRetraso}");
-
-        // Penalización estándar: 3% del valor de la cuota por mes de retraso
-        $tasaPenalizacionMensual = 0.03; // 3% mensual
-        $mesesRetraso = ceil($diasRetraso / 30); // Redondear hacia arriba
-
-        $penalizacion = $pago->valor_cuota * $tasaPenalizacionMensual * $mesesRetraso;
-
-        $this->log("💰 Cálculo de penalización:");
-        $this->log("   - Valor cuota: Q{$pago->valor_cuota}");
-        $this->log("   - Meses de retraso: {$mesesRetraso}");
-        $this->log("   - Tasa penalización mensual: {$tasaPenalizacionMensual}%");
-        $this->log("   - Penalización calculada: Q{$penalizacion}");
-
-        return round($penalizacion, 2);
-    }
 
     public function registrarPagoExistente($prestamo, $deposito)
     {
@@ -233,7 +197,7 @@ class CuotaHipotecaService extends CuotaService
         $saldoActualReal = $this->bitacoraInteresService->obtenerUltimoHistorico($prestamo)->saldo;
 
         $montoRestante = $this->procesarPenalizacionExistente($pago, $montoRestante, $detallesPago, $deposito);
-        $montoRestante = $this->procesarIntereses($pago, $montoRestante, $detallesPago, $deposito['fecha_documento']);
+        [$montoRestante, $idBitacora] = $this->procesarIntereses($pago, $montoRestante, $detallesPago, $deposito['fecha_documento']);
         $montoRestante = $this->procesarCapital($pago, $montoRestante, $detallesPago);
         $pago->monto_pagado += $montoOriginal;
         $pago->fecha_pago = $deposito['fecha_documento'];
@@ -243,7 +207,7 @@ class CuotaHipotecaService extends CuotaService
             $saldoActualReal = $saldoActualReal - $detallesPago['capitalGanado'];
 
             $this->log("Capital: Q{$detallesPago['capitalGanado']} - Saldo: Q{$saldoActualReal}");
-            $this->bitacoraInteresService->registrarHistoricoSaldo($pago->prestamo, $saldoActualReal, $deposito['fecha_documento']);
+            $idBitacora = $this->bitacoraInteresService->registrarHistoricoSaldo($pago->prestamo, $saldoActualReal, $deposito['fecha_documento']);
         }
 
         if ($pago->capitalFaltante() <= 0) {
@@ -262,6 +226,7 @@ class CuotaHipotecaService extends CuotaService
         }
 
 
+        $pago->save();
 
         // Verificar que la fecha del pago existe antes de procesarla
         if ($pago->fecha) {
@@ -285,6 +250,9 @@ class CuotaHipotecaService extends CuotaService
             'existente' => true
         ];
         $idDeposito = $this->registrarDepositoYTransaccion($data, $pago, $detallesPago, $saldoActualReal);
+        if (!is_null($idBitacora)) {
+            $this->depositoHistoricoSaldoService->crearRegistro($idDeposito, $idBitacora, $prestamo->id);
+        }
 
         // Actualizar fecha final del préstamo después del pago
         $this->actualizarFechaFinalPrestamo($prestamo);
@@ -753,7 +721,7 @@ class CuotaHipotecaService extends CuotaService
         }
 
         // Validar que el saldo sea mayor que cero
-        if ($pago->saldo <= 0) {
+        if ($pago->capitalFaltante() <= 0) {
             $pago->realizado = true;
             $pago->save();
             DB::commit();
@@ -858,8 +826,8 @@ class CuotaHipotecaService extends CuotaService
         $detallesPago['interesGanado'] += $montoInteres;
         $this->log("Se abonó a interés la cantidad de Q.{$montoInteres}");
         $detallesPago['descripcion'] .= "Se abonó a interés la cantidad de Q.{$montoInteres}; ";
-        $this->bitacoraInteresService->actualizarInteresPagado($respuesta['id_historico'], $montoInteres);
-        return $montoDisponible - $montoInteres;
+        $idBitacora = $this->bitacoraInteresService->actualizarInteresPagado($respuesta['id_historico'], $montoInteres);
+        return [$montoDisponible - $montoInteres, $idBitacora];
     }
 
     /**

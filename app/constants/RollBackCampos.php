@@ -16,6 +16,8 @@ class RollBackCampos
 
     public static $impuestosTransacciones = 'impuestos_transacciones';
 
+    public static $depositoHistoricoSaldo = 'deposito_historico_saldo';
+
     public static function getCampos()
     {
         return [
@@ -24,7 +26,8 @@ class RollBackCampos
             self::$interesPagado,
             self::$depositos,
             self::$cuentasInternas,
-            self::$impuestosTransacciones
+            self::$impuestosTransacciones,
+            self::$depositoHistoricoSaldo
         ];
     }
 

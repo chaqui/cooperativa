@@ -2,17 +2,18 @@
 
 namespace App\Services;
 
-use App\Models\Cuenta_Interna;
-use App\Models\Rollback_prestamo;
-use App\Models\HistoricoRollback;
 use App\Traits\Loggable;
 use App\Traits\ErrorHandler;
 use App\Constants\RollBackCampos;
+use App\Models\Pago;
 use App\Models\Deposito;
+use App\Models\Cuenta_Interna;
 use App\Models\historico_saldo;
+use App\Models\Rollback_prestamo;
+use App\Models\HistoricoRollback;
 use App\Models\ImpuestoTransaccion;
 use App\Models\Prestamo_Hipotecario;
-use App\Models\Pago;
+use App\Models\DepositoHistoricoSaldo;
 use Illuminate\Support\Facades\DB;
 
 
@@ -117,6 +118,12 @@ class RollBackservice
                     $this->log("Cuentas internas eliminadas: " . count($idsAEliminar) . " registros para el préstamo hipotecario ID: $prestamoId");
                 }
 
+                if ($nombreCampo == RollBackCampos::$depositoHistoricoSaldo) {
+                    $datosAnteriores[$nombreCampo] = DepositoHistoricoSaldo::whereIn('id', $idsAEliminar)->get()->toArray();
+                    DepositoHistoricoSaldo::whereIn('id', $idsAEliminar)->delete();
+                    $this->log("Depósitos históricos de saldo eliminados: " . count($idsAEliminar) . " registros para el préstamo hipotecario ID: $prestamoId");
+                }
+
                 if ($nombreCampo == RollBackCampos::$depositos) {
                     $datosAnteriores[$nombreCampo] = Deposito::whereIn('id', $idsAEliminar)->get()->toArray();
                     Deposito::whereIn('id', $idsAEliminar)->delete();
@@ -169,7 +176,7 @@ class RollBackservice
                         if ($cuota) {
                             $datosAnteriores[$nombreCampo][$cuotaId] = $cuota->toArray();
                             // Filtrar 'id' para evitar violación de PRIMARY KEY
-                            $camposAActualizar = array_filter($campos, function($key) {
+                            $camposAActualizar = array_filter($campos, function ($key) {
                                 return $key !== 'id';
                             }, ARRAY_FILTER_USE_KEY);
                             foreach ($camposAActualizar as $campo => $valor) {
@@ -201,7 +208,7 @@ class RollBackservice
                         if ($historico) {
                             $datosAnteriores[$nombreCampo][$historicoId] = $historico->toArray();
                             // Filtrar 'id' para evitar violación de PRIMARY KEY
-                            $camposAActualizar = array_filter($campos, function($key) {
+                            $camposAActualizar = array_filter($campos, function ($key) {
                                 return $key !== 'id';
                             }, ARRAY_FILTER_USE_KEY);
                             foreach ($camposAActualizar as $campo => $valor) {
