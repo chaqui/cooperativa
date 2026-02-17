@@ -8,7 +8,7 @@ use App\Constants\RollBackCampos;
 use App\Models\Pago;
 use App\Models\Deposito;
 use App\Models\Cuenta_Interna;
-use App\Models\historico_saldo;
+use App\Models\Historico_Saldo;
 use App\Models\Rollback_prestamo;
 use App\Models\HistoricoRollback;
 use App\Models\ImpuestoTransaccion;
