@@ -184,6 +184,8 @@ class CuotaHipotecaService extends CuotaService
         $this->log("Registrando depósito Q{$montoOriginal} - Pago #{$pago->numero_pago_prestamo}");
 
         $montoRestante = $montoOriginal;
+        $this->log("Monto original recibido: Q{$montoOriginal}");
+        $this->log('Datos del depósito: ' . json_encode($deposito));
         $detallesPago = [
             'interesGanado' => 0,
             'capitalGanado' => 0,
@@ -197,8 +199,11 @@ class CuotaHipotecaService extends CuotaService
         $saldoActualReal = $this->bitacoraInteresService->obtenerUltimoHistorico($prestamo)->saldo;
 
         $montoRestante = $this->procesarPenalizacionExistente($pago, $montoRestante, $detallesPago, $deposito);
+        $this->log("Monto restante después de penalización: Q{$montoRestante}");
         [$montoRestante, $idBitacora] = $this->procesarIntereses($pago, $montoRestante, $detallesPago, $deposito['fecha_documento']);
+        $this->log("Monto restante después de intereses: Q{$montoRestante}");
         $montoRestante = $this->procesarCapital($pago, $montoRestante, $detallesPago);
+        $this->log("Monto restante después de capital: Q{$montoRestante}");
         $pago->monto_pagado += $montoOriginal;
         $pago->fecha_pago = $deposito['fecha_documento'];
         $pago->save();
@@ -810,7 +815,7 @@ class CuotaHipotecaService extends CuotaService
         // Validar que el monto disponible sea mayor que cero
         if ($montoDisponible <= 0) {
             $this->log("No hay monto disponible para procesar intereses");
-            return 0;
+            return [$montoDisponible, null];
         }
 
         $respuesta = $this->bitacoraInteresService->calcularInteresPendiente($pago, $fechaPago);
@@ -818,7 +823,7 @@ class CuotaHipotecaService extends CuotaService
         $this->log("Interés pendiente calculado: Q{$interesPendiente}");
         if ($interesPendiente <= 0) {
             $this->log("No hay interés pendiente para procesar");
-            return $montoDisponible;
+            return [$montoDisponible, null];
         }
         $this->log("Procesando interés: {$interesPendiente}");
         $montoInteres = min($montoDisponible, $interesPendiente);

@@ -165,9 +165,9 @@ class RollBackservice
                 if ($nombreCampo == RollBackCampos::$cuotas) {
                     $datosAnteriores[$nombreCampo] = [];
                     $datosNuevos[$nombreCampo] = [];
-                    foreach ($datos as $cuotaId => $campos) {
+                    foreach ($datos as $campos) {
                         // Validar y convertir ID a integer
-                        $cuotaId = (int) $cuotaId;
+                        $cuotaId = (int) ($campos['id'] ?? 0); // Intentar obtener ID de los campos, si existe
                         if ($cuotaId <= 0) {
                             $this->log("Advertencia: ID de cuota inválido: $cuotaId. Se omite.");
                             continue;
@@ -197,9 +197,9 @@ class RollBackservice
                 if ($nombreCampo === RollBackCampos::$interesPagado) {
                     $datosAnteriores[$nombreCampo] = [];
                     $datosNuevos[$nombreCampo] = [];
-                    foreach ($datos as $historicoId => $campos) {
+                    foreach ($datos as $campos) {
                         // Validar y convertir ID a integer
-                        $historicoId = (int) $historicoId;
+                        $historicoId = (int) ($campos['id'] ?? 0); // Intentar obtener ID de los campos, si existe
                         if ($historicoId <= 0) {
                             $this->log("Advertencia: ID de histórico inválido: $historicoId. Se omite.");
                             continue;
