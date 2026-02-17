@@ -4,6 +4,8 @@ namespace App\Models;
 
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Deposito;
+use App\Models\Historico_Saldo;
 
 
 class DepositoHistoricoSaldo extends Model
@@ -29,6 +31,6 @@ class DepositoHistoricoSaldo extends Model
 
     public function historicoSaldo()
     {
-        return $this->belongsTo(historico_saldo::class, 'id_historico_saldo');
+        return $this->belongsTo(Historico_Saldo::class, 'id_historico_saldo');
     }
 }
