@@ -131,8 +131,8 @@ class RollBackservice
                 }
 
                 if ($nombreCampo == RollBackCampos::$interesPagado) {
-                    $datosAnteriores[$nombreCampo] = historico_saldo::whereIn('id', $idsAEliminar)->get()->toArray();
-                    historico_saldo::whereIn('id', $idsAEliminar)->delete();
+                    $datosAnteriores[$nombreCampo] = Historico_Saldo::whereIn('id', $idsAEliminar)->get()->toArray();
+                    Historico_Saldo::whereIn('id', $idsAEliminar)->delete();
                     $this->log("Intereses pagados eliminados: " . count($idsAEliminar) . " registros para el préstamo hipotecario ID: $prestamoId");
                 }
             } catch (\Exception $e) {
@@ -204,7 +204,7 @@ class RollBackservice
                             $this->log("Advertencia: ID de histórico inválido: $historicoId. Se omite.");
                             continue;
                         }
-                        $historico = historico_saldo::find($historicoId);
+                        $historico = Historico_Saldo::find($historicoId);
                         if ($historico) {
                             $datosAnteriores[$nombreCampo][$historicoId] = $historico->toArray();
                             // Filtrar 'id' para evitar violación de PRIMARY KEY
@@ -219,7 +219,7 @@ class RollBackservice
                             $datosNuevos[$nombreCampo][$historicoId] = $historico->toArray();
                             $this->log("Histórico de saldo ID: $historicoId restaurado.");
                         } else {
-                            $historico = historico_saldo::create($campos);
+                            $historico = Historico_Saldo::create($campos);
                             $this->log("Histórico de saldo ID: $historicoId recreado.");
                             $datosNuevos[$nombreCampo][$historicoId] = $historico->toArray();
                         }
@@ -244,16 +244,26 @@ class RollBackservice
         $datosAModificar = $rollBack->datos_a_modificar ? json_decode($rollBack->datos_a_modificar, true) : [];
 
         foreach ($datosAModificar as $nombreCampo => $datos) {
-            if (is_array($datos)) {
-                foreach ($datos as $id => $campos) {
-                    // Validar que la clave sea numérica
-                    if (!is_numeric($id) || (int)$id <= 0) {
-                        $this->logError("Advertencia: Campo '$nombreCampo' contiene ID inválido: '$id'. Esperaba ID numérico positivo.");
-                    }
-                    // Validar que no haya 'id' dentro de los campos a modificar
-                    if (is_array($campos) && isset($campos['id'])) {
-                        $this->logError("Advertencia: Campo '$nombreCampo' contiene 'id' en los datos a modificar. El 'id' será ignorado para evitar violación de PRIMARY KEY.");
-                    }
+            if (!is_array($datos)) {
+                continue;
+            }
+
+            // Si $datos es un array asociativo cuyas claves NO son IDs (p.ej. contiene nombres de columna),
+            // no hacemos la validación por ID. Esto evita advertencias cuando la estructura es de campos únicos.
+            $firstKey = array_key_first($datos);
+            if ($firstKey !== null && !is_numeric((string) $firstKey)) {
+                // Estructura tipo ['fecha_fin' => '2026-01-01', ...] -> no validar IDs aquí
+                continue;
+            }
+
+            foreach ($datos as $id => $campos) {
+                // Validar que la clave sea numérica
+                if (!is_numeric($id) || (int) $id <= 0) {
+                    $this->logError("Advertencia: Campo '$nombreCampo' contiene ID inválido: '$id'. Esperaba ID numérico positivo.");
+                }
+                // Validar que no haya 'id' dentro de los campos a modificar
+                if (is_array($campos) && isset($campos['id'])) {
+                    $this->logError("Advertencia: Campo '$nombreCampo' contiene 'id' en los datos a modificar. El 'id' será ignorado para evitar violación de PRIMARY KEY.");
                 }
             }
         }
