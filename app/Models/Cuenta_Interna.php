@@ -31,8 +31,9 @@ class Cuenta_Interna extends Model
         return $this->belongsTo(TipoCuentaInterna::class, 'tipo_cuenta_interna_id');
     }
 
-    public function saldo()
+    // Computed attribute for saldo (ingreso - egreso)
+    public function getSaldoAttribute()
     {
-        return $this->ingreso - $this->egreso;
+        return ($this->ingreso ?? 0) - ($this->egreso ?? 0);
     }
 }
