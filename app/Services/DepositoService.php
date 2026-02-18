@@ -17,7 +17,7 @@ class DepositoService
 {
 
     use ErrorHandler;
-    use Loggable;
+
     use RegistrarRollback;
 
     private $pdfService;
@@ -26,14 +26,18 @@ class DepositoService
 
     private BitacoraInteresService $bitacoraInteresService;
 
+    private $catalogoService;
+
     public function __construct(
         PdfService $pdfService,
         ImpuestoTransaccionService $impuestoTransaccionService,
-        BitacoraInteresService $bitacoraInteresService
+        BitacoraInteresService $bitacoraInteresService,
+        CatologoService $catalogoService
     ) {
         $this->pdfService = $pdfService;
         $this->impuestoTransaccionService = $impuestoTransaccionService;
         $this->bitacoraInteresService = $bitacoraInteresService;
+        $this->catalogoService = $catalogoService;
     }
     /**
      * Crea un nuevo registro de depósito en el sistema - No es llamado desde el controlador
@@ -327,7 +331,8 @@ class DepositoService
         $this->log("Iniciando generación de PDF para depósito #{$deposito->id}");
 
         $prestamo = $deposito->pago ? $deposito->pago->prestamo : null;
-
+        $catalogo = $this->catalogoService->getCatalogo($deposito->tipo_documento);
+        $nombre_tipo_documento =  $catalogo['value'] ?? 'N/A';
 
         // Calculate loan information only if there's an associated loan
         $montoPendiente = 0;
@@ -361,7 +366,8 @@ class DepositoService
             'interesPendiente' => $interesPendiente,
             'capitalPendiente' => $capitalPendiente,
             'prestamo' => $prestamo,
-            'cliente' => $cliente
+            'cliente' => $cliente,
+            'nombre_tipo_documento' => $nombre_tipo_documento
         ])->render();
 
         $this->log("HTML del PDF generado para depósito #{$deposito->id}");
