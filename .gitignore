@@ -22,3 +22,4 @@ yarn-error.log
 /.vscode
 /.zed
 tests/TestCase.php
+config/database.php

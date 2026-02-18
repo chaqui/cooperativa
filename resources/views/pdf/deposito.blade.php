@@ -172,7 +172,7 @@
             </div>
             <div class="amount-box">Q{{ number_format($deposito->monto, 2) }}</div>
             <div class="row">
-                <span style="font-weight:bold;">Tipo:</span> {{ $deposito->tipo_documento }} |
+                <span style="font-weight:bold;">Tipo:</span> {{ $nombre_tipo_documento }} |
                 <span style="font-weight:bold;">No. Doc:</span> {{ $deposito->numero_documento }}
             </div>
             <div class="row"><span style="font-weight:bold;">Motivo:</span> {{ $deposito->motivo }}</div>

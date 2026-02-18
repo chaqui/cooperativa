@@ -2,17 +2,18 @@
 
 namespace App\Services;
 
-use App\Models\Cuenta_Interna;
-use App\Models\Rollback_prestamo;
-use App\Models\HistoricoRollback;
 use App\Traits\Loggable;
 use App\Traits\ErrorHandler;
 use App\Constants\RollBackCampos;
+use App\Models\Pago;
 use App\Models\Deposito;
-use App\Models\historico_saldo;
+use App\Models\Cuenta_Interna;
+use App\Models\Historico_Saldo;
+use App\Models\Rollback_prestamo;
+use App\Models\HistoricoRollback;
 use App\Models\ImpuestoTransaccion;
 use App\Models\Prestamo_Hipotecario;
-use App\Models\Pago;
+use App\Models\DepositoHistoricoSaldo;
 use Illuminate\Support\Facades\DB;
 
 
@@ -117,6 +118,12 @@ class RollBackservice
                     $this->log("Cuentas internas eliminadas: " . count($idsAEliminar) . " registros para el préstamo hipotecario ID: $prestamoId");
                 }
 
+                if ($nombreCampo == RollBackCampos::$depositoHistoricoSaldo) {
+                    $datosAnteriores[$nombreCampo] = DepositoHistoricoSaldo::whereIn('id', $idsAEliminar)->get()->toArray();
+                    DepositoHistoricoSaldo::whereIn('id', $idsAEliminar)->delete();
+                    $this->log("Depósitos históricos de saldo eliminados: " . count($idsAEliminar) . " registros para el préstamo hipotecario ID: $prestamoId");
+                }
+
                 if ($nombreCampo == RollBackCampos::$depositos) {
                     $datosAnteriores[$nombreCampo] = Deposito::whereIn('id', $idsAEliminar)->get()->toArray();
                     Deposito::whereIn('id', $idsAEliminar)->delete();
@@ -124,8 +131,8 @@ class RollBackservice
                 }
 
                 if ($nombreCampo == RollBackCampos::$interesPagado) {
-                    $datosAnteriores[$nombreCampo] = historico_saldo::whereIn('id', $idsAEliminar)->get()->toArray();
-                    historico_saldo::whereIn('id', $idsAEliminar)->delete();
+                    $datosAnteriores[$nombreCampo] = Historico_Saldo::whereIn('id', $idsAEliminar)->get()->toArray();
+                    Historico_Saldo::whereIn('id', $idsAEliminar)->delete();
                     $this->log("Intereses pagados eliminados: " . count($idsAEliminar) . " registros para el préstamo hipotecario ID: $prestamoId");
                 }
             } catch (\Exception $e) {
@@ -158,9 +165,9 @@ class RollBackservice
                 if ($nombreCampo == RollBackCampos::$cuotas) {
                     $datosAnteriores[$nombreCampo] = [];
                     $datosNuevos[$nombreCampo] = [];
-                    foreach ($datos as $cuotaId => $campos) {
+                    foreach ($datos as $campos) {
                         // Validar y convertir ID a integer
-                        $cuotaId = (int) $cuotaId;
+                        $cuotaId = (int) ($campos['id'] ?? 0); // Intentar obtener ID de los campos, si existe
                         if ($cuotaId <= 0) {
                             $this->log("Advertencia: ID de cuota inválido: $cuotaId. Se omite.");
                             continue;
@@ -169,7 +176,7 @@ class RollBackservice
                         if ($cuota) {
                             $datosAnteriores[$nombreCampo][$cuotaId] = $cuota->toArray();
                             // Filtrar 'id' para evitar violación de PRIMARY KEY
-                            $camposAActualizar = array_filter($campos, function($key) {
+                            $camposAActualizar = array_filter($campos, function ($key) {
                                 return $key !== 'id';
                             }, ARRAY_FILTER_USE_KEY);
                             foreach ($camposAActualizar as $campo => $valor) {
@@ -190,18 +197,18 @@ class RollBackservice
                 if ($nombreCampo === RollBackCampos::$interesPagado) {
                     $datosAnteriores[$nombreCampo] = [];
                     $datosNuevos[$nombreCampo] = [];
-                    foreach ($datos as $historicoId => $campos) {
+                    foreach ($datos as $campos) {
                         // Validar y convertir ID a integer
-                        $historicoId = (int) $historicoId;
+                        $historicoId = (int) ($campos['id'] ?? 0); // Intentar obtener ID de los campos, si existe
                         if ($historicoId <= 0) {
                             $this->log("Advertencia: ID de histórico inválido: $historicoId. Se omite.");
                             continue;
                         }
-                        $historico = historico_saldo::find($historicoId);
+                        $historico = Historico_Saldo::find($historicoId);
                         if ($historico) {
                             $datosAnteriores[$nombreCampo][$historicoId] = $historico->toArray();
                             // Filtrar 'id' para evitar violación de PRIMARY KEY
-                            $camposAActualizar = array_filter($campos, function($key) {
+                            $camposAActualizar = array_filter($campos, function ($key) {
                                 return $key !== 'id';
                             }, ARRAY_FILTER_USE_KEY);
                             foreach ($camposAActualizar as $campo => $valor) {
@@ -212,7 +219,7 @@ class RollBackservice
                             $datosNuevos[$nombreCampo][$historicoId] = $historico->toArray();
                             $this->log("Histórico de saldo ID: $historicoId restaurado.");
                         } else {
-                            $historico = historico_saldo::create($campos);
+                            $historico = Historico_Saldo::create($campos);
                             $this->log("Histórico de saldo ID: $historicoId recreado.");
                             $datosNuevos[$nombreCampo][$historicoId] = $historico->toArray();
                         }
@@ -237,16 +244,26 @@ class RollBackservice
         $datosAModificar = $rollBack->datos_a_modificar ? json_decode($rollBack->datos_a_modificar, true) : [];
 
         foreach ($datosAModificar as $nombreCampo => $datos) {
-            if (is_array($datos)) {
-                foreach ($datos as $id => $campos) {
-                    // Validar que la clave sea numérica
-                    if (!is_numeric($id) || (int)$id <= 0) {
-                        $this->logError("Advertencia: Campo '$nombreCampo' contiene ID inválido: '$id'. Esperaba ID numérico positivo.");
-                    }
-                    // Validar que no haya 'id' dentro de los campos a modificar
-                    if (is_array($campos) && isset($campos['id'])) {
-                        $this->logError("Advertencia: Campo '$nombreCampo' contiene 'id' en los datos a modificar. El 'id' será ignorado para evitar violación de PRIMARY KEY.");
-                    }
+            if (!is_array($datos)) {
+                continue;
+            }
+
+            // Si $datos es un array asociativo cuyas claves NO son IDs (p.ej. contiene nombres de columna),
+            // no hacemos la validación por ID. Esto evita advertencias cuando la estructura es de campos únicos.
+            $firstKey = array_key_first($datos);
+            if ($firstKey !== null && !is_numeric((string) $firstKey)) {
+                // Estructura tipo ['fecha_fin' => '2026-01-01', ...] -> no validar IDs aquí
+                continue;
+            }
+
+            foreach ($datos as $id => $campos) {
+                // Validar que la clave sea numérica
+                if (!is_numeric($id) || (int) $id <= 0) {
+                    $this->logError("Advertencia: Campo '$nombreCampo' contiene ID inválido: '$id'. Esperaba ID numérico positivo.");
+                }
+                // Validar que no haya 'id' dentro de los campos a modificar
+                if (is_array($campos) && isset($campos['id'])) {
+                    $this->logError("Advertencia: Campo '$nombreCampo' contiene 'id' en los datos a modificar. El 'id' será ignorado para evitar violación de PRIMARY KEY.");
                 }
             }
         }

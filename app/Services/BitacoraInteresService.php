@@ -13,7 +13,6 @@ use DateTime;
 
 class BitacoraInteresService
 {
-    use Loggable;
     use ErrorHandler;
     use RegistrarRollback;
 
@@ -27,6 +26,7 @@ class BitacoraInteresService
         $historico->save();
         $this->agregarDatosEliminar($prestamo->id, $historico->id, RollBackCampos::$interesPagado);
         $this->log("Histórico de saldo registrado para el préstamo ID {$prestamo->id} con saldo {$historico->saldo} e interés pagado {$historico->interes_pagado}");
+        return $historico->id;
     }
 
     public function obtenerUltimoHistorico(Prestamo_Hipotecario $prestamo)
@@ -84,7 +84,7 @@ class BitacoraInteresService
 
         $fechaLimiteStr = date('Y-m-10', strtotime($fechaPago->format('Y-m-d')));
         $fechaLimite = new DateTime($fechaLimiteStr);
-        $this->log("Fecha de pago: " . $fechaPago->format('Y-m-d') . ", Fecha límite: " . $fechaLimite->format('Y-m-d'));
+        $this->log("Fecha de pago: " . $fechaPago->format(format: 'Y-m-d') . ", Fecha límite: " . $fechaLimite->format('Y-m-d'));
         // Caso 1: Pago después de la fecha límite (genera mora)
         if ($fechaDeposito > $fechaLimite) {
             $fechaPagoMasUnMes = (clone $fechaPago)->modify('+1 month');
@@ -110,5 +110,7 @@ class BitacoraInteresService
         $historico->save();
 
         $this->log("Interés pagado actualizado en el histórico ID {$idHistorico}. Nuevo interés pagado: {$historico->interes_pagado}");
+
+        return $historico->id;
     }
 }

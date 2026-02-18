@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\PrestamoHipotecario;
+use App\Models\Prestamo_Hipotecario;
 
-class historico_saldo extends Model
+class Historico_Saldo extends Model
 {
     protected $table = 'historial_saldo_interes';
 
