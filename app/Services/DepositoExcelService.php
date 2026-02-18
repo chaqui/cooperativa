@@ -14,9 +14,10 @@ class DepositoExcelService extends DepositoService
     public function __construct(
         PdfService $pdfService,
         ImpuestoTransaccionService $impuestoTransaccionService,
-        BitacoraInteresService $bitacoraInteresService
+        BitacoraInteresService $bitacoraInteresService,
+        CatologoService $catalogoService
     ) {
-        parent::__construct($pdfService, $impuestoTransaccionService, $bitacoraInteresService);
+        parent::__construct($pdfService, $impuestoTransaccionService, $bitacoraInteresService, $catalogoService);
     }
 
     public function generarExcelDepositosPorFecha($fecha)
