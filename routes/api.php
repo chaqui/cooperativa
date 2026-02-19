@@ -65,7 +65,8 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::put('inversiones/{id}', [InversionController::class, 'update']);
     Route::delete('inversiones/{id}', [InversionController::class, 'destroy']);
     Route::put('inversiones/{id}/estados', [InversionController::class, 'cambiarEstado']);
-    Route::get('inversiones/{id}/generar-excel-pagos', [InversionController::class, 'generarPagosInversionExcel']);
+    Route::get('inversiones/{id}/generar-excel-pagos', [InversionController::class, 'getExcelDePagosInversion']);
+    Route::get('inversiones/{id}/procesar-excel-pagos', [InversionController::class, 'procesarExcelDePagosInversion']);
 });
 
 Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {

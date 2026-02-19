@@ -63,5 +63,11 @@ class Inversion extends Model
         return $this->hasOne(Deposito::class, 'id_inversion');
     }
 
-
+    public function tienePagosPendientesExistentes()
+    {
+        return $this->pagosInversion()
+            ->where('existente', true)
+            ->where('realizado', false)
+            ->exists();
+    }
 }
