@@ -15,9 +15,12 @@ class TipoCuentaInternaService
 
     private $cuentaInternaService;
 
-    public function __construct(CuentaInternaService $cuentaInternaService)
+    private $cuentaInternaPdfService;
+
+    public function __construct(CuentaInternaService $cuentaInternaService, CuentaInternaPdfService $cuentaInternaPdfService)
     {
         $this->cuentaInternaService = $cuentaInternaService;
+        $this->cuentaInternaPdfService = $cuentaInternaPdfService;
     }
 
     public function getAll()
@@ -161,5 +164,18 @@ class TipoCuentaInternaService
         $tipoCuentaInterna->save();
         $this->log("Monto Q{$monto} bloqueado en cuenta interna #{$id}");
         return $tipoCuentaInterna;
+    }
+
+    public function generarPdfCuentasInternas($id, $anio, $mes = null)
+    {
+        $tipoCuentaInterna = $this->getById($id);
+
+        if ($mes) {
+            $cuentasInternas = $tipoCuentaInterna->getCuentasInternasByAnioYMes($anio, $mes);
+        } else {
+            $cuentasInternas = $tipoCuentaInterna->getCuentasInternasByAnio($anio);
+        }
+
+        return $this->cuentaInternaPdfService->generarPdf($cuentasInternas, $tipoCuentaInterna, $anio, $mes);
     }
 }

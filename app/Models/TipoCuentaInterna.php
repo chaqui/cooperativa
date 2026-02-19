@@ -47,4 +47,17 @@ class TipoCuentaInterna extends Model
     {
         return $this->ingresos() - $this->egresos() - $this->monto_bloqueado;
     }
+
+    public function getCuentasInternasByAnio($anio)
+    {
+        return $this->cuentaInternas()->whereYear('created_at', $anio)->get();
+    }
+
+    public function getCuentasInternasByAnioYMes($anio, $mes)
+    {
+        return $this->cuentaInternas()
+            ->whereYear('created_at', $anio)
+            ->whereMonth('created_at', $mes)
+            ->get();
+    }
 }

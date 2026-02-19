@@ -13,7 +13,6 @@ class CuentaInternaService
 {
 
     use ErrorHandler;
-    use Loggable;
     use RegistrarRollback;
     /**
      * Obtiene todas las cuentas internas

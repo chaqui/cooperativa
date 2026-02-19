@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\PdfCuentasInternasRequest;
 use App\Traits\Loggable;
 use App\Http\Resources\Caja as CajaResource;
 use App\Services\TipoCuentaInternaService;
@@ -67,5 +68,18 @@ class TipoCuentaInternaController extends Controller
         return RetiroResource::collection($retiros);
     }
 
+    public function generarPdfCuentasInternas(string $id, PdfCuentasInternasRequest $request)
+    {
+        $params = $request->validated();
+        $anio = $params['anio'] ?? null;
+        $mes = $params['mes'] ?? null;
+
+        $pdfContent = $this->tipoCuentaInternaService->generarPdfCuentasInternas($id, $anio, $mes);
+
+        $filename = 'cuentas_interna_' . $id . '_' . $anio . ($mes ? '_' . $mes : '') . '.pdf';
+        return response($pdfContent, 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
 
 }

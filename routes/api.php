@@ -206,6 +206,7 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::get('cuentas/{id}/detalles', [TipoCuentaInternaController::class, 'getDetalles']);
     Route::get('cuentas/{id}/depositos', [TipoCuentaInternaController::class, 'getDepositos']);
     Route::get('cuentas/{id}/retiros', [TipoCuentaInternaController::class, 'getRetiros']);
+    Route::get('cuentas/{id}/pdf', [TipoCuentaInternaController::class, 'generarPdfCuentasInternas']);
 });
 
 //impuestos
