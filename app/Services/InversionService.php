@@ -129,7 +129,8 @@ class InversionService extends CodigoService
         // Refrescar la inversión para obtener el estado actualizado después del depósito
         $inversion->refresh();
         $this->log("Estado actual de la inversión después del depósito automático: {$inversion->id_estado}");
-        $this->controladorEstado->cambiarEstado($inversion, ['estado' => EstadoInversion::$APROBADO]);
+        $this->controladorEstado->cambiarEstado($inversion, ['estado' => EstadoInversion::$APROBADO, 'fecha_inicio'=>$datos['fecha_inicio'] ?? now()]);
+         $this->log("Estado actual de la inversión después del cambio a APROBADO: {$inversion->id_estado}");
         $this->log("Estado actual de la inversión después del cambio a APROBADO: {$inversion->id_estado}");
 
         // Otras reglas pueden ser añadidas aquí
@@ -281,7 +282,7 @@ class InversionService extends CodigoService
     {
         $inversion = $this->getInversion($id);
 
-        if(!$inversion->existente) {
+        if(!$inversion->exists) {
             $this->lanzarExcepcionConCodigo("No se puede generar excel para una inversión que no es anterior. ID: {$id}");
         }
         return $this->pagoInversionExcelService->generarExcel($inversion);

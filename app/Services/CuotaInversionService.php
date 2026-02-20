@@ -24,13 +24,14 @@ class CuotaInversionService extends CuotaService
             $pago->fecha = $this->sumarMesesDesdeFecha($inversion->fecha_inicio, $i);
             $pago->realizado = false;
             $pago->fecha_pago = $this->obtenerSiguienteDiaHabil($pago->fecha);
-            $pago->existente = $this->esPagoExistente($pago, $inversion->existente);
+            $pago->existente = $this->esPagoExistente($pago, $inversion->exists);
             $pago->save();
         }
     }
 
     private function esPagoExistente( $pago,  $inversionExistente): bool
     {
+        $this->log("Verificando existencia de pago para inversión existente: " . ($inversionExistente ? 'Sí' : 'No') );
        if($inversionExistente){
             $fechaHoy = new DateTime();
             if ($pago->fecha_pago instanceof \DateTimeInterface) {
@@ -42,7 +43,10 @@ class CuotaInversionService extends CuotaService
             } else {
                 return false;
             }
-            return $fechaPago <= $fechaHoy;
+            $this->log("Comparando fecha de pago: {$fechaPago->format('Y-m-d')} con fecha actual: {$fechaHoy->format('Y-m-d')}");
+            $resultado = $fechaPago <= $fechaHoy;
+            $this->log("Resultado de la comparación: " . ($resultado ? 'Pago existente' : 'Pago no existente'));
+            return $resultado;
        }
        return false;
     }
@@ -69,9 +73,16 @@ class CuotaInversionService extends CuotaService
     {
         Pago_Inversion::where('inversion_id', $idInversion)->delete();
     }
-    private function sumarMesesDesdeFecha(\DateTime $fecha, int $meses): \DateTime
+    private function sumarMesesDesdeFecha($fecha, int $meses)
     {
-        $nuevaFecha = clone $fecha;
+        // Handle both DatePoint objects and DateTime objects
+        if ($fecha instanceof \Symfony\Component\Clock\DatePoint) {
+            $nuevaFecha = \DateTime::createFromInterface($fecha);
+        } elseif ($fecha instanceof \DateTime) {
+            $nuevaFecha = clone $fecha;
+        } else {
+            $nuevaFecha = new \DateTime($fecha);
+        }
         return $nuevaFecha->modify("+{$meses} months");
     }
     private function obtenerSiguienteDiaHabil($fecha)

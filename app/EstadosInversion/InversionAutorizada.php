@@ -22,8 +22,8 @@ class InversionAutorizada extends EstadoBaseInversion
     {
         $this->log("Iniciando cambio de estado: {$inversion->id_estado} -> {$this->estadoFin}");
         $inversion->fecha_inicio = $data['fecha_inicio'] ?? now();
+        $this->log("Fecha de inicio establecida para inversión #{$inversion->id}: {$inversion->fecha_inicio}");
         parent::cambiarEstado($inversion, $data);
-
         $this->cuotaInversionService->createCuotas($inversion);
     }
 }
