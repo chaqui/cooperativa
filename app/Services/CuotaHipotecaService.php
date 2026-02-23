@@ -1180,39 +1180,6 @@ class CuotaHipotecaService extends CuotaService
         }
     }
 
-
-    /**
-     * Calcula los días faltantes hasta el siguiente mes de pago
-     *
-     * @param string $fecha Fecha de referencia
-     * @return int Número de días faltantes
-     * @throws \Exception Si la fecha es inválida
-     */
-    private function calcularDiasFaltantes($fecha)
-    {
-        try {
-            $this->log('Calculando días faltantes desde fecha: ' . $fecha);
-
-            if (empty($fecha)) {
-                $this->lanzarExcepcionConCodigo("La fecha no puede estar vacía");
-            }
-
-            $fechaActual = new \DateTime($fecha);
-            $fechaSiguiente = $this->obtenerFechaSiguienteMes($fecha);
-            $this->log('Fecha siguiente de pago: ' . $fechaSiguiente);
-
-            $fechaSiguienteObj = new \DateTime($fechaSiguiente);
-            $diferencia = $fechaActual->diff($fechaSiguienteObj);
-
-            $diasFaltantes = (int)$diferencia->format("%a") + 1;
-            $this->log("Días faltantes calculados: {$diasFaltantes}");
-
-            return $diasFaltantes;
-        } catch (\Exception $e) {
-            $this->manejarError($e, 'calcularDiasFaltantes');
-            return 0; // Esta línea nunca se ejecutará
-        }
-    }
     /**
      * Obtiene la fecha del siguiente mes de pago (siempre día 5)
      *
