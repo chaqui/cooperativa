@@ -34,13 +34,15 @@ class InversionService extends CodigoService
         ControladorEstado $controladorEstado,
         PdfService $pdfService,
         TipoCuentaInternaService $tipoCuentaInternaService,
-        ArchivoService $archivoService
+        ArchivoService $archivoService,
+        PagoInversionExcelService $pagoInversionExcelService
     ) {
         $this->cuotaInversionService = $cuotaInversionService;
         $this->controladorEstado = $controladorEstado;
         $this->pdfService = $pdfService;
         $this->tipoCuentaInternaService = $tipoCuentaInternaService;
         $this->archivoService = $archivoService;
+        $this->pagoInversionExcelService = $pagoInversionExcelService;
         parent::__construct(InicialesCodigo::$Inversion);
     }
 
@@ -278,7 +280,7 @@ class InversionService extends CodigoService
         return $this->archivoService->guardarArchivo($archivo, $path, $fileName);
     }
 
-    public function generarPagosInversionExistenteExcel($id): array
+    public function generarPagosInversionExistenteExcel($id)
     {
         $inversion = $this->getInversion($id);
 
@@ -291,7 +293,7 @@ class InversionService extends CodigoService
     public function procesarExcelPagosExistente($archivo,  $id): array
     {
         $inversion = $this->getInversion($id);
-        if(!$inversion->existente) {
+        if(!$inversion->exists) {
             $this->lanzarExcepcionConCodigo("No se puede procesar excel para una inversión que no es anterior. ID: {$id}");
         }
         return $this->pagoInversionExcelService->procesarExcelPagos($archivo, $inversion);

@@ -53,7 +53,7 @@ class CuotaInversionService extends CuotaService
 
     public function getCuotasInversion(Inversion $inversion)
     {
-        return Pago_Inversion::where('inversion_id', $inversion->id)->get();
+        return Pago_Inversion::where('inversion_id', $inversion->id)->orderBy('fecha')->get();
     }
 
     public function realizarPago($id, $no_boleta)

@@ -132,8 +132,8 @@ class InversionController extends Controller
     {
         $this->log("Generando Excel de pagos para la inversión ID: $id");
         try {
-            $excelData = $this->inversionService->generarPagosInversionExistenteExcel($id);
-            return response()->json($excelData, 200);
+            return $this->inversionService->generarPagosInversionExistenteExcel($id);
+
         } catch (\Exception $e) {
             $this->log("Error al generar Excel: " . $e->getMessage());
             return response()->json(['message' => 'Error al generar Excel: ' . $e->getMessage()], 500);

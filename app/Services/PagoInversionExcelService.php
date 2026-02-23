@@ -8,7 +8,13 @@ use App\Traits\ErrorHandler;
 use App\Traits\Loggable;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Font;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class PagoInversionExcelService extends PagoInversionService
 {
@@ -17,7 +23,14 @@ class PagoInversionExcelService extends PagoInversionService
     use Loggable;
 
 
-    public function generarExcel(Inversion $inversion): array
+    /**
+     * Genera y descarga directamente un archivo Excel con pagos pendientes de inversión
+     *
+     * @param Inversion $inversion Inversión de la cual obtener los pagos pendientes
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse Descarga del archivo Excel
+     * @throws \Exception Si no hay pagos pendientes o hay error al crear el archivo
+     */
+    public function generarExcel(Inversion $inversion)
     {
        $pagos = $inversion->pagosInversion()->where('existente', true)->where('realizado', false)->get();
 
@@ -25,7 +38,11 @@ class PagoInversionExcelService extends PagoInversionService
             $this->lanzarExcepcionConCodigo("No se encontraron pagos pendientes para la inversión ID: {$inversion->id}");
         }
 
-        return $this->generarExcelData($pagos);
+        $datosExcel = $this->generarExcelData($pagos);
+        $rutaArchivo = $this->crearArchivoExcel($datosExcel, $inversion->id);
+
+        // Retornar descarga directa del archivo sin guardarlo permanentemente
+        return $this->descargarArchivo($rutaArchivo);
     }
 
     /**
@@ -81,10 +98,130 @@ class PagoInversionExcelService extends PagoInversionService
     }
 
     /**
+     * Crea el archivo Excel físico con los datos proporcionados
+     *
+     * @param array $datosExcel Datos del Excel generados por generarExcelData
+     * @param int $inversionId ID de la inversión para el nombre del archivo
+     * @return string Ruta del archivo creado
+     * @throws \Exception Si hay error al crear el archivo
+     */
+    private function crearArchivoExcel(array $datosExcel, int $inversionId)
+    {
+        try {
+            $this->log("Creando archivo Excel para inversión ID: {$inversionId}");
+
+            // Crear nueva spreadsheet
+            $spreadsheet = new Spreadsheet();
+            $worksheet = $spreadsheet->getActiveSheet();
+            $worksheet->setTitle('Pagos Pendientes');
+
+            $filaActual = 1;
+
+            // Agregar instrucciones
+            foreach ($datosExcel['instrucciones'] as $instruccion) {
+                $worksheet->setCellValue('A' . $filaActual, $instruccion);
+
+                // Estilizar las instrucciones
+                if ($filaActual === 1) {
+                    // Título principal en negrita
+                    $worksheet->getStyle('A' . $filaActual)->getFont()->setBold(true)->setSize(12);
+                    $worksheet->getStyle('A' . $filaActual)->getFill()
+                        ->setFillType(Fill::FILL_SOLID)
+                        ->getStartColor()->setARGB('FFE6E6FA');
+                } else {
+                    // Instrucciones en texto normal
+                    $worksheet->getStyle('A' . $filaActual)->getFont()->setSize(10);
+                }
+
+                $filaActual++;
+            }
+
+            // Agregar una fila vacía después de las instrucciones
+            $filaActual++;
+
+            // Agregar encabezados
+            $columnas = ['A', 'B', 'C', 'D', 'E'];
+            foreach ($datosExcel['encabezados'] as $index => $encabezado) {
+                $worksheet->setCellValue($columnas[$index] . $filaActual, $encabezado);
+
+                // Estilizar encabezados
+                $worksheet->getStyle($columnas[$index] . $filaActual)->getFont()
+                    ->setBold(true)
+                    ->setSize(11);
+                $worksheet->getStyle($columnas[$index] . $filaActual)->getFill()
+                    ->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()->setARGB('FFD3D3D3');
+                $worksheet->getStyle($columnas[$index] . $filaActual)->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            }
+
+            $filaEncabezados = $filaActual;
+            $filaActual++;
+
+            // Agregar datos
+            foreach ($datosExcel['datos'] as $filaData) {
+                $worksheet->setCellValue('A' . $filaActual, $filaData['id']);
+                $worksheet->setCellValue('B' . $filaActual, $filaData['numeroPago']);
+                $worksheet->setCellValue('C' . $filaActual, $filaData['monto']);
+                $worksheet->setCellValue('D' . $filaActual, $filaData['fecha']);
+                $worksheet->setCellValue('E' . $filaActual, $filaData['no_boleta']);
+
+                // Centrar los datos
+                foreach ($columnas as $col) {
+                    $worksheet->getStyle($col . $filaActual)->getAlignment()
+                        ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                }
+
+                $filaActual++;
+            }
+
+            // Ajustar ancho de columnas
+            $worksheet->getColumnDimension('A')->setWidth(10);  // ID
+            $worksheet->getColumnDimension('B')->setWidth(12);  // No. Pago
+            $worksheet->getColumnDimension('C')->setWidth(15);  // Monto
+            $worksheet->getColumnDimension('D')->setWidth(12);  // Fecha
+            $worksheet->getColumnDimension('E')->setWidth(30);  // No. Boleta
+
+            // Agregar bordes a la tabla de datos
+            $rangoTabla = 'A' . $filaEncabezados . ':E' . ($filaActual - 1);
+            $worksheet->getStyle($rangoTabla)->getBorders()->getAllBorders()
+                ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+            // Proteger celdas (excepto la columna E - No. Boleta)
+            $worksheet->getProtection()->setSheet(true);
+            $worksheet->getStyle('E:E')->getProtection()->setLocked(false);
+
+            // Crear el nombre del archivo
+            $nombreArchivo = "pagos_pendientes_inversion_{$inversionId}.xlsx";
+            $rutaCompleta = storage_path("app/temp/{$nombreArchivo}");
+
+            // Asegurar que el directorio existe
+            $directorio = dirname($rutaCompleta);
+            if (!file_exists($directorio)) {
+                mkdir($directorio, 0755, true);
+            }
+
+            // Guardar el archivo
+            $writer = new Xlsx($spreadsheet);
+            $writer->save($rutaCompleta);
+
+            $this->log("Archivo Excel creado exitosamente: {$rutaCompleta}");
+
+            return $rutaCompleta;
+
+        } catch (\Exception $e) {
+            $this->logError("Error al crear archivo Excel: {$e->getMessage()}");
+            $this->lanzarExcepcionConCodigo("Error al crear el archivo Excel: {$e->getMessage()}");
+        }
+    }
+
+    /**
      * Lee un archivo Excel y extrae los datos
+     * Busca automáticamente donde empiezan los datos (después de las instrucciones)
      * Espera las columnas: ID, No. Pago, Monto, Fecha, No. Boleta
      *
      * @param UploadedFile $archivo Archivo Excel a leer
+     * @return array Datos extraídos del Excel
      * @throws \Exception Si hay error al leer el archivo
      */
     private function leerExcel(UploadedFile $archivo)
@@ -99,8 +236,23 @@ class PagoInversionExcelService extends PagoInversionService
             $datos = [];
             $filas = $worksheet->toArray();
 
-            // Omitir la primera fila (encabezados)
-            for ($i = 1; $i < count($filas); $i++) {
+            // Buscar donde empiezan los encabezados (buscar la fila que contiene "ID")
+            $filaEncabezados = -1;
+            for ($i = 0; $i < count($filas); $i++) {
+                if (!empty($filas[$i][0]) && strtoupper(trim($filas[$i][0])) === 'ID') {
+                    $filaEncabezados = $i;
+                    break;
+                }
+            }
+
+            if ($filaEncabezados === -1) {
+                throw new \Exception("No se encontraron los encabezados en el archivo Excel");
+            }
+
+            $this->log("Encabezados encontrados en la fila: " . ($filaEncabezados + 1));
+
+            // Leer los datos a partir de la fila siguiente a los encabezados
+            for ($i = $filaEncabezados + 1; $i < count($filas); $i++) {
                 $fila = $filas[$i];
 
                 // Ignorar filas vacías
@@ -118,7 +270,7 @@ class PagoInversionExcelService extends PagoInversionService
                 ];
             }
 
-            $this->log("Archivo Excel leído exitosamente. Total de filas: " . count($datos));
+            $this->log("Archivo Excel leído exitosamente. Total de filas de datos: " . count($datos));
 
             return $datos;
 
@@ -231,6 +383,58 @@ class PagoInversionExcelService extends PagoInversionService
             DB::rollBack();
             $this->logError("Error al procesar Excel de pagos: {$e->getMessage()}");
             throw $e;
+        }
+    }
+
+    /**
+     * Descarga el archivo Excel y lo elimina del servidor
+     *
+     * @param string $rutaArchivo Ruta completa del archivo a descargar
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
+     * @throws \Exception Si el archivo no existe
+     */
+    public function descargarArchivo(string $rutaArchivo)
+    {
+        if (!file_exists($rutaArchivo)) {
+            $this->lanzarExcepcionConCodigo("El archivo no existe: {$rutaArchivo}");
+        }
+
+        $nombreArchivo = basename($rutaArchivo);
+
+        return response()->download($rutaArchivo, $nombreArchivo)->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Limpia archivos temporales de Excel antiguos
+     *
+     * @param int $diasAntiguedad Archivos más antiguos que este número de días serán eliminados
+     */
+    public function limpiarArchivosTemporales(int $diasAntiguedad = 1): void
+    {
+        try {
+            $directorioTemp = storage_path('app/temp');
+
+            if (!is_dir($directorioTemp)) {
+                return;
+            }
+
+            $archivos = glob($directorioTemp . '/pagos_pendientes_inversion_*.xlsx');
+            $tiempoLimite = time() - ($diasAntiguedad * 24 * 60 * 60);
+
+            $archivosEliminados = 0;
+            foreach ($archivos as $archivo) {
+                if (filemtime($archivo) < $tiempoLimite) {
+                    unlink($archivo);
+                    $archivosEliminados++;
+                }
+            }
+
+            if ($archivosEliminados > 0) {
+                $this->log("Archivos temporales eliminados: {$archivosEliminados}");
+            }
+
+        } catch (\Exception $e) {
+            $this->logError("Error al limpiar archivos temporales: {$e->getMessage()}");
         }
     }
 }
