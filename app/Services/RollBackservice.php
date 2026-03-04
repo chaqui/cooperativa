@@ -159,6 +159,8 @@ class RollBackservice
                         $prestamo->save();
                         $datosNuevos[$nombreCampo] = $datos['fecha_fin'] ?? null;
                         $this->log("Fecha fin del préstamo hipotecario ID: $prestamoId restaurada de {$datosAnteriores[$nombreCampo]} a {$datosNuevos[$nombreCampo]}");
+                    } else {
+                        $this->log("Préstamo hipotecario ID: $prestamoId no encontrado para modificar fecha_fin.");
                     }
                 }
 
@@ -172,6 +174,7 @@ class RollBackservice
                             $this->log("Advertencia: ID de cuota inválido: $cuotaId. Se omite.");
                             continue;
                         }
+                        $this->log("Procesando cuota ID: $cuotaId");
                         $cuota = Pago::find($cuotaId);
                         if ($cuota) {
                             $datosAnteriores[$nombreCampo][$cuotaId] = $cuota->toArray();
@@ -197,32 +200,30 @@ class RollBackservice
                 if ($nombreCampo === RollBackCampos::$interesPagado) {
                     $datosAnteriores[$nombreCampo] = [];
                     $datosNuevos[$nombreCampo] = [];
-                    foreach ($datos as $campos) {
-                        // Validar y convertir ID a integer
-                        $historicoId = (int) ($campos['id'] ?? 0); // Intentar obtener ID de los campos, si existe
-                        if ($historicoId <= 0) {
-                            $this->log("Advertencia: ID de histórico inválido: $historicoId. Se omite.");
-                            continue;
+                    // Validar y convertir ID a integer
+                    $historicoId = (int) ($datos['id'] ?? 0); // Intentar obtener ID de los campos, si existe
+                    if ($historicoId <= 0) {
+                        $this->log("Advertencia: ID de histórico inválido: $historicoId. Se omite.");
+                        continue;
+                    }
+                    $historico = Historico_Saldo::find($historicoId);
+                    if ($historico) {
+                        $datosAnteriores[$nombreCampo][$historicoId] = $historico->toArray();
+                        // Filtrar 'id' para evitar violación de PRIMARY KEY
+                        $camposAActualizar = array_filter($datos, function ($key) {
+                            return $key !== 'id';
+                        }, ARRAY_FILTER_USE_KEY);
+                        foreach ($camposAActualizar as $campo => $valor) {
+                            $historico->$campo = $valor;
                         }
-                        $historico = Historico_Saldo::find($historicoId);
-                        if ($historico) {
-                            $datosAnteriores[$nombreCampo][$historicoId] = $historico->toArray();
-                            // Filtrar 'id' para evitar violación de PRIMARY KEY
-                            $camposAActualizar = array_filter($campos, function ($key) {
-                                return $key !== 'id';
-                            }, ARRAY_FILTER_USE_KEY);
-                            foreach ($camposAActualizar as $campo => $valor) {
-                                $historico->$campo = $valor;
-                            }
-                            $historico->save();
-                            // Guardar estado post-guardado para auditoría
-                            $datosNuevos[$nombreCampo][$historicoId] = $historico->toArray();
-                            $this->log("Histórico de saldo ID: $historicoId restaurado.");
-                        } else {
-                            $historico = Historico_Saldo::create($campos);
-                            $this->log("Histórico de saldo ID: $historicoId recreado.");
-                            $datosNuevos[$nombreCampo][$historicoId] = $historico->toArray();
-                        }
+                        $historico->save();
+                        // Guardar estado post-guardado para auditoría
+                        $datosNuevos[$nombreCampo][$historicoId] = $historico->toArray();
+                        $this->log("Histórico de saldo ID: $historicoId restaurado.");
+                    } else {
+                        $historico = Historico_Saldo::create($datos);
+                        $this->log("Histórico de saldo ID: $historicoId recreado.");
+                        $datosNuevos[$nombreCampo][$historicoId] = $historico->toArray();
                     }
                 }
             } catch (\Exception $e) {

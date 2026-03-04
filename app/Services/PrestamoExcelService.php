@@ -85,21 +85,22 @@ class PrestamoExcelService extends PrestamoService
             'B1' => 'No. de Financiamiento',
             'C1' => 'No. de Cliente',
             'D1' => 'Nombre del Cliente',
-            'E1' => 'Teléfono',
-            'F1' => 'GENERO',
-            'G1' => 'MONTO ORIGINAL',
-            'H1' => 'INTERES MENSUAL',
-            'I1' => 'GARANTIA',
-            'J1' => 'PLAZO (MESESx)',
-            'K1' => 'DESTINO',
-            'L1' => 'FECHA DE DESEMBOLSO',
-            'M1' => 'FECHA DE FINALIZACION',
-            'N1' => 'SALDO CAPITAL ACTUAL',
-            'O1' => 'CUOTA CAPITAL',
-            'P1' => 'INTERES A LA FECHA',
-            'Q1' => 'ESTATUS',
-            'R1' => 'Días de atraso',
-            'S1' => 'CUOTA TOTAL'
+            'E1' => 'NIT del Cliente',
+            'F1' => 'Teléfono',
+            'G1' => 'GENERO',
+            'H1' => 'MONTO ORIGINAL',
+            'I1' => 'INTERES MENSUAL',
+            'J1' => 'GARANTIA',
+            'K1' => 'PLAZO (MESESx)',
+            'L1' => 'DESTINO',
+            'M1' => 'FECHA DE DESEMBOLSO',
+            'N1' => 'FECHA DE FINALIZACION',
+            'O1' => 'SALDO CAPITAL ACTUAL',
+            'P1' => 'CUOTA CAPITAL',
+            'Q1' => 'INTERES A LA FECHA',
+            'R1' => 'ESTATUS',
+            'S1' => 'Días de atraso',
+            'T1' => 'CUOTA TOTAL'
         ];
 
         // Aplicar encabezados
@@ -151,10 +152,12 @@ class PrestamoExcelService extends PrestamoService
                 }
 
                 $clienteNombre = '';
+                $clienteNit = '';
                 if (isset($p->cliente) && $p->cliente) {
                     $nombres = $p->cliente->nombres ?? '';
                     $apellidos = $p->cliente->apellidos ?? '';
                     $clienteNombre = trim($nombres . ' ' . $apellidos);
+                    $clienteNit = $p->cliente->nit ?? '';
                 }
 
                 $clienteCodigo = '';
@@ -219,21 +222,22 @@ class PrestamoExcelService extends PrestamoService
                 $sheet->setCellValue('B' . $row, $p->codigo ?? '');
                 $sheet->setCellValue('C' . $row, $clienteCodigo);
                 $sheet->setCellValue('D' . $row, $clienteNombre);
-                $sheet->setCellValue('E' . $row, $clienteTelefono);
-                $sheet->setCellValue('F' . $row, $clienteGenero);
-                $sheet->setCellValue('G' . $row, $p->monto ?? 0);
-                $sheet->setCellValue('H' . $row, ($p->interes ?? 0) / 100);
-                $sheet->setCellValue('I' . $row, $propiedadInfo);
-                $sheet->setCellValue('J' . $row, $p->plazo ?? 0);
-                $sheet->setCellValue('K' . $row, $p->nombreDestino ?? ($p->destino ?? ''));
-                $sheet->setCellValue('L' . $row, $fechaInicio);
-                $sheet->setCellValue('M' . $row, $fechaFin);
-                $sheet->setCellValue('N' . $row, method_exists($p, 'saldoPendiente') ? $p->saldoPendiente() : ($p->saldo_pendiente ?? 0));
-                $sheet->setCellValue('O' . $row, $capitalCuota);
-                $sheet->setCellValue('P' . $row, $interesAcumulado);
-                $sheet->setCellValue('Q' . $row, method_exists($p, 'morosidad') ? $p->morosidad() : ($p->dias_atraso ?? 0));
-                $sheet->setCellValue('R' . $row, method_exists($p, 'diasDeAtraso') ? $p->diasDeAtraso() : ($p->dias_atraso ?? 0));
-                $sheet->setCellValue('S' . $row, $p->cuota ?? 0);
+                $sheet->setCellValue('E' . $row, $clienteNit);
+                $sheet->setCellValue('F' . $row, $clienteTelefono);
+                $sheet->setCellValue('G' . $row, $clienteGenero);
+                $sheet->setCellValue('H' . $row, $p->monto ?? 0);
+                $sheet->setCellValue('I' . $row, ($p->interes ?? 0) / 100);
+                $sheet->setCellValue('J' . $row, $propiedadInfo);
+                $sheet->setCellValue('K' . $row, $p->plazo ?? 0);
+                $sheet->setCellValue('L' . $row, $p->nombreDestino ?? ($p->destino ?? ''));
+                $sheet->setCellValue('M' . $row, $fechaInicio);
+                $sheet->setCellValue('N' . $row, $fechaFin);
+                $sheet->setCellValue('O' . $row, method_exists($p, 'saldoPendiente') ? $p->saldoPendiente() : ($p->saldo_pendiente ?? 0));
+                $sheet->setCellValue('P' . $row, $capitalCuota);
+                $sheet->setCellValue('Q' . $row, $interesAcumulado);
+                $sheet->setCellValue('R' . $row, method_exists($p, 'morosidad') ? $p->morosidad() : ($p->dias_atraso ?? 0));
+                $sheet->setCellValue('S' . $row, method_exists($p, 'diasDeAtraso') ? $p->diasDeAtraso() : ($p->dias_atraso ?? 0));
+                $sheet->setCellValue('T' . $row, $p->cuota ?? 0);
                 $row++;
             } catch (\Exception $e) {
                 $this->log('Error al procesar préstamo ID ' . ($p->id ?? 'desconocido') . ': ' . $e->getMessage());
@@ -264,7 +268,7 @@ class PrestamoExcelService extends PrestamoService
         $sheet->getStyle('H2:H' . ($row - 1))->getNumberFormat()->setFormatCode('0.00%');
 
         // Ajustar ancho de columnas
-        foreach (range('A', 'Q') as $col) {
+        foreach (range('A', 'T') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
