@@ -190,7 +190,11 @@ class RollBackservice
                             $datosNuevos[$nombreCampo][$cuotaId] = $cuota->toArray();
                             $this->log("Pago hipotecario ID: $cuotaId restaurado.");
                         } else {
-                            $cuota = Pago::create($campos);
+                            $cuota = new Pago();
+                            foreach ($campos as $campo => $valor) {
+                                $cuota->$campo = $valor;
+                            }
+                            $cuota->save();
                             $this->log("Pago hipotecario ID: $cuotaId recreado.");
                             $datosNuevos[$nombreCampo][$cuotaId] = $cuota->toArray();
                         }
