@@ -200,12 +200,15 @@ Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
 //cuentas
 Route::middleware(CheckRole::class . ':' . $rolesEdicion)->group(function () {
     Route::post('cuentas', [TipoCuentaInternaController::class, 'store']);
-    Route::get('cuentas', [TipoCuentaInternaController::class, 'index']);
-    Route::get('cuentas/{id}', [TipoCuentaInternaController::class, 'show']);
     Route::get('cuentas/{id}/detalles', [TipoCuentaInternaController::class, 'getDetalles']);
     Route::get('cuentas/{id}/depositos', [TipoCuentaInternaController::class, 'getDepositos']);
     Route::get('cuentas/{id}/retiros', [TipoCuentaInternaController::class, 'getRetiros']);
     Route::get('cuentas/{id}/pdf', [TipoCuentaInternaController::class, 'generarPdfCuentasInternas']);
+});
+
+Route::middleware(CheckRole::class . ':' . $rolesSoloLectura)->group(function () {
+    Route::get('cuentas', [TipoCuentaInternaController::class, 'index']);
+    Route::get('cuentas/{id}', [TipoCuentaInternaController::class, 'show']);
 });
 
 //impuestos
